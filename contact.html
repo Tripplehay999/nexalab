@@ -46,12 +46,44 @@
       </section>
 
       <section class="section">
-        <div class="container cta-box">
-          <div>
-            <h2>Email NexaLab Studios</h2>
-            <p class="muted">We typically reply within 1 business day.</p>
-          </div>
-          <a class="btn" href="mailto:hello@nexalab.io">hello@nexalab.io</a>
+        <div class="container tool-card">
+          <h2>Project intake form</h2>
+          <p class="muted">Complete the fields below and we’ll open a pre-filled email draft to speed up handoff.</p>
+
+          <form id="intake-form" novalidate>
+            <div class="form-grid">
+              <label class="form-field" for="full-name">
+                Full name *
+                <input id="full-name" name="fullName" type="text" required />
+              </label>
+              <label class="form-field" for="work-email">
+                Work email *
+                <input id="work-email" name="workEmail" type="email" required />
+              </label>
+              <label class="form-field" for="company-name">
+                Company
+                <input id="company-name" name="company" type="text" />
+              </label>
+              <label class="form-field" for="budget-range">
+                Monthly budget range *
+                <select id="budget-range" name="budget" required>
+                  <option value="">Select budget</option>
+                  <option value="$1k-$3k">$1k-$3k</option>
+                  <option value="$3k-$7k">$3k-$7k</option>
+                  <option value="$7k-$15k">$7k-$15k</option>
+                  <option value="$15k+">$15k+</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="form-field" for="primary-goal">
+              Primary goal *
+              <textarea id="primary-goal" name="goal" rows="4" required></textarea>
+            </label>
+
+            <p class="error-text" id="intake-error" aria-live="polite"></p>
+            <button class="btn" type="submit">Create inquiry email</button>
+          </form>
         </div>
       </section>
     </main>
