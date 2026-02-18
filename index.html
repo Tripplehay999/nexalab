@@ -3,37 +3,106 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NexaLab Studios | Digital Systems That Compound</title>
+    <title>NexaLab Studios | SaaS Growth Infrastructure</title>
     <meta
       name="description"
+      content="NexaLab builds and operates SaaS-grade growth infrastructure: high-converting websites, activation flows, and monthly optimization systems."
       content="NexaLab Studios designs premium websites, conversion systems, and monthly optimization programs for companies that need serious digital execution."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="bg-grid" aria-hidden="true"></div>
     <header class="site-header">
       <div class="container nav-wrap">
         <a class="brand" href="index.html">NexaLab Studios</a>
-        <button id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="primary-nav">
-          Menu
-        </button>
+        <button id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="primary-nav">Menu</button>
         <nav id="primary-nav" class="nav-links">
-          <a href="index.html" class="active">Home</a>
-          <a href="what-we-do.html">What We Do</a>
-          <a href="who-we-serve.html">Who We Serve</a>
-          <a href="philosophy.html">Philosophy</a>
-          <a href="contact.html" class="btn btn-sm">Book a Strategy Call</a>
+          <a href="index.html" class="active">Platform</a>
+          <a href="what-we-do.html">Services</a>
+          <a href="who-we-serve.html">Customers</a>
+          <a href="philosophy.html">Method</a>
+          <a href="contact.html" class="btn btn-sm btn-primary">Book Demo</a>
         </nav>
       </div>
     </header>
 
     <main>
+      <section class="hero saas-hero">
+        <div class="container">
+          <p class="eyebrow">SaaS Growth Infrastructure</p>
+          <h1>
+            Ship your funnel
+            <span class="text-gradient">faster, cleaner, and smarter.</span>
+          </h1>
+          <p class="subtitle hero-subtitle">
+            NexaLab helps SaaS and service teams replace fragmented marketing ops with one high-performance system:
+            positioning, pages, onboarding UX, analytics, and monthly conversion iteration.
+          </p>
+          <div class="hero-actions">
+            <a href="contact.html" class="btn btn-primary">Start 14-Day Growth Sprint</a>
+            <a href="#product-tour" class="btn btn-outline">View Product Tour</a>
+          </div>
+          <div class="hero-kpis">
+            <article><strong>+31%</strong><span>avg. qualified demo lift</span></article>
+            <article><strong>4-6 weeks</strong><span>typical relaunch window</span></article>
+            <article><strong>Weekly shipping</strong><span>inside retainer execution</span></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="product-tour" class="section">
+        <div class="container">
+          <div class="terminal-mock reveal">
+            <div class="terminal-top">
+              <span class="dots"></span>
+              <span class="terminal-url">dashboard.nexalab.io / growth-engine</span>
+            </div>
+            <div class="terminal-content">
+              <div class="mock-row">
+                <h3>Pipeline Command Center</h3>
+                <p>Single view of acquisition, activation, and conversion blockers.</p>
+              </div>
+              <div class="mock-metrics">
+                <article><p>Paid signup CVR</p><strong>7.8%</strong><span>+1.4% MoM</span></article>
+                <article><p>Activation completion</p><strong>62%</strong><span>+9% MoM</span></article>
+                <article><p>Demo qualified rate</p><strong>48%</strong><span>+6% MoM</span></article>
+              </div>
+              <button class="btn btn-primary mock-btn" type="button">Deploy next experiment</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-alt">
+        <div class="container">
+          <p class="section-label">Platform modules</p>
+          <h2>Everything your growth team needs in one operating layer.</h2>
+          <div class="feature-shell" data-feature-tabs>
+            <div class="segment-row" role="tablist" aria-label="Feature tabs">
+              <button class="segment-btn is-active" type="button" data-tab="acquisition">Acquisition</button>
+              <button class="segment-btn" type="button" data-tab="activation">Activation</button>
+              <button class="segment-btn" type="button" data-tab="retention">Retention</button>
+              <button class="segment-btn" type="button" data-tab="analytics">Analytics</button>
+            </div>
+            <div class="tab-panel is-active" data-panel="acquisition">
+              <h3>Acquisition engine</h3>
+              <p>Landing pages, ad-message matching, and qualification paths designed to improve cost-per-qualified-lead.</p>
+            </div>
+            <div class="tab-panel" data-panel="activation">
+              <h3>Activation UX</h3>
+              <p>Onboarding flows and first-session experiences that reduce churn risk and time-to-value.</p>
+            </div>
+            <div class="tab-panel" data-panel="retention">
+              <h3>Retention loops</h3>
+              <p>Lifecycle messaging, in-app prompts, and expansion paths tied to product usage behavior.</p>
+            </div>
+            <div class="tab-panel" data-panel="analytics">
+              <h3>Decision-grade analytics</h3>
+              <p>Clean event taxonomy and reporting views so the team knows exactly what to ship next.</p>
       <section class="hero">
         <div class="container hero-grid">
           <div class="hero-copy">
@@ -117,6 +186,45 @@
 
       <section class="section">
         <div class="container">
+          <p class="section-label">Pricing simulator</p>
+          <h2>Choose your operating mode.</h2>
+          <div class="pricing-wrap" data-pricing>
+            <div class="pricing-toggle" role="group" aria-label="Pricing mode">
+              <button class="segment-btn is-active" type="button" data-price-mode="monthly">Monthly</button>
+              <button class="segment-btn" type="button" data-price-mode="annual">Annual (save 15%)</button>
+            </div>
+            <div class="service-grid">
+              <article class="card pricing-card">
+                <p class="muted">Launch</p>
+                <h3>Growth Foundation</h3>
+                <p class="price" data-monthly="$3,200" data-annual="$2,720">$3,200</p>
+                <ul class="list">
+                  <li>Website + tracking rebuild</li>
+                  <li>2 experiments / month</li>
+                  <li>Monthly strategy call</li>
+                </ul>
+              </article>
+              <article class="card pricing-card featured-tier">
+                <p class="muted">Scale</p>
+                <h3>Growth Ops</h3>
+                <p class="price" data-monthly="$5,800" data-annual="$4,930">$5,800</p>
+                <ul class="list">
+                  <li>Funnel + onboarding optimization</li>
+                  <li>5 experiments / month</li>
+                  <li>Weekly implementation sync</li>
+                </ul>
+              </article>
+              <article class="card pricing-card">
+                <p class="muted">Enterprise</p>
+                <h3>Revenue Systems</h3>
+                <p class="price" data-monthly="$9,500" data-annual="$8,075">$9,500</p>
+                <ul class="list">
+                  <li>Cross-channel conversion ownership</li>
+                  <li>Dedicated squad lane</li>
+                  <li>Executive reporting dashboard</li>
+                </ul>
+              </article>
+            </div>
           <p class="section-label">Quick answers</p>
           <h2>FAQ</h2>
           <div class="faq-list">
@@ -154,6 +262,50 @@
         </div>
       </section>
 
+      <section class="section section-alt">
+        <div class="container two-col">
+          <article class="tool-card">
+            <p class="section-label">ROI forecast</p>
+            <h2>Quick model</h2>
+            <label class="form-field" for="mrr-input">Current MRR ($)
+              <input id="mrr-input" type="number" min="1000" step="500" value="45000" />
+            </label>
+            <label class="form-field" for="uplift-input">Expected conversion uplift (%)
+              <input id="uplift-input" type="range" min="2" max="30" value="12" />
+            </label>
+            <p class="muted">Uplift: <span id="uplift-value">12%</span></p>
+            <div class="result-box" id="roi-result">Projected incremental MRR: $5,400</div>
+          </article>
+          <article class="tool-card">
+            <p class="section-label">Execution timeline</p>
+            <h2>First 30 days</h2>
+            <ol class="list">
+              <li><strong>Week 1:</strong> audit + KPI alignment.</li>
+              <li><strong>Week 2:</strong> message and UX architecture.</li>
+              <li><strong>Week 3:</strong> implementation + tracking hardening.</li>
+              <li><strong>Week 4:</strong> launch + experiment queue.</li>
+            </ol>
+            <a href="contact.html" class="btn btn-outline">Request your tailored timeline</a>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <p class="section-label">FAQ</p>
+          <h2>Questions we usually get from SaaS teams</h2>
+          <div class="faq-list">
+            <article class="faq-item">
+              <button class="faq-toggle" type="button" data-faq-toggle aria-expanded="false">Can you work with our in-house product and marketing team?</button>
+              <div class="faq-panel"><p class="faq-content">Yes. We plug into your current team and own execution lanes where velocity or clarity is missing.</p></div>
+            </article>
+            <article class="faq-item">
+              <button class="faq-toggle" type="button" data-faq-toggle aria-expanded="false">Do you support only websites or full funnel work?</button>
+              <div class="faq-panel"><p class="faq-content">Full funnel. Web pages, onboarding states, conversion points, lifecycle loops, and reporting are all included.</p></div>
+            </article>
+            <article class="faq-item">
+              <button class="faq-toggle" type="button" data-faq-toggle aria-expanded="false">How quickly can we start?</button>
+              <div class="faq-panel"><p class="faq-content">Typical kickoff is within 7–10 days after alignment call, scope lock, and access setup.</p></div>
       <section class="section">
         <div class="container">
           <p class="section-label">How to work with us</p>
@@ -233,6 +385,8 @@
 
     <footer class="site-footer">
       <div class="container footer-wrap">
+        <p>© <span id="year"></span> NexaLab Studios.</p>
+        <a href="contact.html">hello@nexalab.io</a>
         <p>© <span id="year"></span> NexaLab Studios. Digital systems that compound.</p>
         <a href="contact.html">hello@nexalab.studio</a>
       </div>

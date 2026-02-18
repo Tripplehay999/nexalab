@@ -4,31 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>What We Do | NexaLab Studios</title>
-    <meta
-      name="description"
-      content="NexaLab services: conversion-focused website development and recurring monthly retainers for stability, growth, and e-commerce performance."
-    />
+    <meta name="description" content="Service models at NexaLab: premium website builds and monthly growth retainers." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="site-header">
       <div class="container nav-wrap">
         <a class="brand" href="index.html">NexaLab Studios</a>
-        <button id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="primary-nav">
-          Menu
-        </button>
+        <button id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="primary-nav">Menu</button>
         <nav id="primary-nav" class="nav-links">
           <a href="index.html">Home</a>
           <a href="what-we-do.html" class="active">What We Do</a>
           <a href="who-we-serve.html">Who We Serve</a>
           <a href="philosophy.html">Philosophy</a>
-          <a href="contact.html" class="btn btn-sm">Book a Strategy Call</a>
+          <a href="contact.html" class="btn btn-sm btn-primary">Book a Strategy Call</a>
         </nav>
       </div>
     </header>
@@ -37,11 +29,41 @@
       <section class="page-hero">
         <div class="container">
           <p class="eyebrow">What We Do</p>
+          <h1>Execution-first web and growth support.</h1>
+          <p class="subtitle">Choose the model based on whether you need a full rebuild, ongoing velocity, or deeper e-commerce support.</p>
           <h1>What we deliver: premium build quality plus ongoing growth execution.</h1>
         </div>
       </section>
 
       <section class="section">
+        <div class="container service-grid">
+          <article class="card">
+            <h3>Website Rebuild</h3>
+            <p class="card-intro">For companies replacing an underperforming site.</p>
+            <ul class="list">
+              <li>Positioning and page architecture</li>
+              <li>Premium UI + frontend implementation</li>
+              <li>Tracking setup and launch QA</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>Growth Retainer</h3>
+            <p class="card-intro">For teams with active campaigns and frequent changes.</p>
+            <ul class="list">
+              <li>Landing page and funnel updates</li>
+              <li>Performance and UX optimization</li>
+              <li>Monthly reporting and roadmap</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>E-commerce Retainer</h3>
+            <p class="card-intro">For stores balancing catalog, checkout, and conversion pressure.</p>
+            <ul class="list">
+              <li>Storefront and checkout improvements</li>
+              <li>Merchandising and technical maintenance</li>
+              <li>Advanced integration ownership</li>
+            </ul>
+          </article>
         <div class="container">
           <h2>1. Website Design & Development</h2>
           <p class="subtitle">We plan and ship websites that look sharp, load fast, and convert qualified traffic.</p>
@@ -57,6 +79,22 @@
       </section>
 
       <section class="section section-alt">
+        <div class="container tool-card" data-estimator>
+          <p class="section-label">Interactive tool</p>
+          <h2>Retainer estimator</h2>
+          <p class="muted">Move the sliders for a quick recommendation based on operating complexity.</p>
+          <div class="estimator-grid">
+            <label class="form-field" for="traffic-volume">Monthly traffic: <span id="traffic-value">20,000</span>
+              <input id="traffic-volume" type="range" min="1000" max="120000" step="1000" value="20000" />
+            </label>
+            <label class="form-field" for="campaign-intensity">Campaign intensity: <span id="campaign-value">4</span>/10
+              <input id="campaign-intensity" type="range" min="1" max="10" step="1" value="4" />
+            </label>
+          </div>
+          <label class="check-row" for="ecommerce-toggle">
+            <input id="ecommerce-toggle" type="checkbox" />
+            We run ongoing storefront promotions and catalog updates
+          </label>
         <div class="container">
           <h2>2. Monthly Retainer Plans (Core Offering)</h2>
           <p class="subtitle">
@@ -141,6 +179,7 @@
     <footer class="site-footer">
       <div class="container footer-wrap">
         <p>© <span id="year"></span> NexaLab Studios.</p>
+        <a href="contact.html">Let’s talk →</a>
         <a href="contact.html">Book a strategy call →</a>
       </div>
     </footer>
