@@ -31,6 +31,10 @@
           <p class="eyebrow">Contact</p>
           <h1>Tell us what’s broken, what matters, and what timeline you’re targeting.</h1>
           <p class="subtitle">We’ll reply with the clearest next step for your team.</p>
+          <h1>Let’s map the exact system your business needs next.</h1>
+          <p class="subtitle">
+            Share your context and goals. We will respond with a practical recommendation, scope direction, and best-fit engagement path.
+          </p>
         </div>
       </section>
 
@@ -50,6 +54,24 @@
                 <input id="company-name" name="company" type="text" />
               </label>
               <label class="form-field" for="budget-range">Monthly budget range *
+          <p class="muted">Complete the fields below and we’ll open a pre-filled email draft to speed up handoff.</p>
+
+          <form id="intake-form" novalidate>
+            <div class="form-grid">
+              <label class="form-field" for="full-name">
+                Full name *
+                <input id="full-name" name="fullName" type="text" required />
+              </label>
+              <label class="form-field" for="work-email">
+                Work email *
+                <input id="work-email" name="workEmail" type="email" required />
+              </label>
+              <label class="form-field" for="company-name">
+                Company
+                <input id="company-name" name="company" type="text" />
+              </label>
+              <label class="form-field" for="budget-range">
+                Monthly budget range *
                 <select id="budget-range" name="budget" required>
                   <option value="">Select budget</option>
                   <option value="$1k-$3k">$1k-$3k</option>
@@ -64,6 +86,14 @@
             </label>
             <p class="error-text" id="intake-error" aria-live="polite"></p>
             <button class="btn btn-primary" type="submit">Create inquiry email</button>
+
+            <label class="form-field" for="primary-goal">
+              Primary goal *
+              <textarea id="primary-goal" name="goal" rows="4" required></textarea>
+            </label>
+
+            <p class="error-text" id="intake-error" aria-live="polite"></p>
+            <button class="btn" type="submit">Create inquiry email</button>
           </form>
         </div>
       </section>
