@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Client Portal — NexaLab</title>
+  <meta name="robots" content="noindex" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <div class="auth-wrap">
+    <div class="auth-card">
+
+      <!-- Brand -->
+      <a href="index.html" class="auth-brand">NexaLab</a>
+      <p class="auth-portal-label">Client Portal</p>
+
+      <!-- Tabs -->
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab is-active" id="tab-signin" role="tab" aria-selected="true"  data-auth-tab="signin">Sign in</button>
+        <button class="auth-tab"            id="tab-signup" role="tab" aria-selected="false" data-auth-tab="signup">Create account</button>
+      </div>
+
+      <!-- ── Sign In ──────────────────────────────────────── -->
+      <form id="signin-form" class="auth-form" novalidate>
+        <label class="auth-field">
+          Email address
+          <input id="si-email" name="email" type="email" placeholder="you@brand.com" autocomplete="email" required />
+        </label>
+        <label class="auth-field">
+          Password
+          <input id="si-password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+        </label>
+        <div class="auth-row">
+          <button type="button" class="auth-link" id="forgot-btn">Forgot password?</button>
+        </div>
+        <p class="auth-error" id="si-error" aria-live="polite"></p>
+        <button class="btn btn-primary auth-submit" type="submit" id="si-submit">
+          <span id="si-label">Sign in</span>
+          <svg id="si-spinner" class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" hidden><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/><path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </button>
+        <p class="auth-footer-note">Access is invite-only. <a href="contact.html" class="auth-link">Book a demo</a> to get started.</p>
+      </form>
+
+      <!-- ── Sign Up ──────────────────────────────────────── -->
+      <form id="signup-form" class="auth-form" hidden novalidate>
+        <div class="auth-grid-2">
+          <label class="auth-field">
+            First name *
+            <input id="su-fname" name="firstName" type="text" placeholder="Jane" autocomplete="given-name" required />
+          </label>
+          <label class="auth-field">
+            Last name *
+            <input id="su-lname" name="lastName" type="text" placeholder="Smith" autocomplete="family-name" required />
+          </label>
+        </div>
+        <label class="auth-field">
+          Company / brand name
+          <input id="su-company" name="company" type="text" placeholder="Acme Inc." autocomplete="organization" />
+        </label>
+        <label class="auth-field">
+          Work email *
+          <input id="su-email" name="email" type="email" placeholder="you@brand.com" autocomplete="email" required />
+        </label>
+        <label class="auth-field">
+          Password * <span class="auth-field-hint">(min 8 characters)</span>
+          <input id="su-password" name="password" type="password" placeholder="••••••••" autocomplete="new-password" required minlength="8" />
+        </label>
+        <label class="auth-field">
+          Confirm password *
+          <input id="su-confirm" name="confirm" type="password" placeholder="••••••••" autocomplete="new-password" required />
+        </label>
+        <p class="auth-error" id="su-error" aria-live="polite"></p>
+        <button class="btn btn-primary auth-submit" type="submit" id="su-submit">
+          <span id="su-label">Create account</span>
+          <svg id="su-spinner" class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" hidden><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/><path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </button>
+        <p class="auth-footer-note">By creating an account you agree to NexaLab's terms of service.</p>
+      </form>
+
+      <!-- ── Check email message ─────────────────────────── -->
+      <div id="check-email-panel" hidden>
+        <div class="auth-success-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#22d3a8" stroke-width="1.5"/><path d="M7 12l4 4 6-7" stroke="#22d3a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3 class="auth-success-title" id="check-email-title">Check your inbox</h3>
+        <p class="auth-success-body" id="check-email-body">We've sent a confirmation link to your email. Click it to activate your account and get access to the client portal.</p>
+        <button class="btn btn-outline auth-submit" style="margin-top:1.2rem;" onclick="location.reload()">Back to sign in</button>
+      </div>
+
+      <!-- ── Reset password message ──────────────────────── -->
+      <div id="reset-email-panel" hidden>
+        <div class="auth-success-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#9aa8ff" stroke-width="1.5"/><polyline points="22,6 12,13 2,6" stroke="#9aa8ff" stroke-width="1.5"/></svg>
+        </div>
+        <h3 class="auth-success-title">Reset link sent</h3>
+        <p class="auth-success-body">Check your inbox for a password reset link. It expires in 1 hour.</p>
+        <button class="btn btn-outline auth-submit" style="margin-top:1.2rem;" onclick="document.getElementById('reset-email-panel').hidden=true;">Back to sign in</button>
+      </div>
+
+    </div><!-- /auth-card -->
+
+    <p class="auth-back"><a href="index.html">← Back to NexaLab</a></p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script>
+  (async function authPage() {
+    // Redirect if already logged in
+    const { data: { session } } = await nexaSupabase.auth.getSession();
+    if (session) { window.location.href = 'dashboard.html'; return; }
+
+    // ── Tabs ─────────────────────────────────────────────
+    const tabs    = document.querySelectorAll('.auth-tab');
+    const siForm  = document.getElementById('signin-form');
+    const suForm  = document.getElementById('signup-form');
+
+    tabs.forEach((tab) => tab.addEventListener('click', () => {
+      tabs.forEach((t) => { t.classList.remove('is-active'); t.setAttribute('aria-selected', 'false'); });
+      tab.classList.add('is-active');
+      tab.setAttribute('aria-selected', 'true');
+      const which = tab.dataset.authTab;
+      siForm.hidden = (which !== 'signin');
+      suForm.hidden = (which !== 'signup');
+    }));
+
+    // ── Loading helpers ───────────────────────────────────
+    function setLoading(prefix, on) {
+      document.getElementById(`${prefix}-submit`).disabled = on;
+      document.getElementById(`${prefix}-label`).style.display = on ? 'none' : '';
+      document.getElementById(`${prefix}-spinner`).hidden = !on;
+    }
+    function setError(prefix, msg) {
+      document.getElementById(`${prefix}-error`).textContent = msg;
+      setLoading(prefix, false);
+    }
+
+    // ── Sign In ───────────────────────────────────────────
+    siForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email    = document.getElementById('si-email').value.trim();
+      const password = document.getElementById('si-password').value;
+      if (!email || !password) { setError('si', 'Please fill in all fields.'); return; }
+      setLoading('si', true);
+      document.getElementById('si-error').textContent = '';
+
+      const { error } = await nexaSupabase.auth.signInWithPassword({ email, password });
+      if (error) { setError('si', error.message); return; }
+      window.location.href = 'dashboard.html';
+    });
+
+    // ── Sign Up ───────────────────────────────────────────
+    suForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const firstName = document.getElementById('su-fname').value.trim();
+      const lastName  = document.getElementById('su-lname').value.trim();
+      const company   = document.getElementById('su-company').value.trim();
+      const email     = document.getElementById('su-email').value.trim();
+      const password  = document.getElementById('su-password').value;
+      const confirm   = document.getElementById('su-confirm').value;
+
+      if (!firstName || !lastName || !email || !password) { setError('su', 'Please fill in all required fields.'); return; }
+      if (password.length < 8) { setError('su', 'Password must be at least 8 characters.'); return; }
+      if (password !== confirm) { setError('su', 'Passwords do not match.'); return; }
+      setLoading('su', true);
+      document.getElementById('su-error').textContent = '';
+
+      const fullName = `${firstName} ${lastName}`;
+      const { error } = await nexaSupabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName, company: company || null } },
+      });
+
+      if (error) { setError('su', error.message); return; }
+      suForm.hidden = true;
+      document.getElementById('check-email-title').textContent = `Check your inbox, ${firstName}`;
+      document.getElementById('check-email-panel').hidden = false;
+    });
+
+    // ── Forgot password ───────────────────────────────────
+    document.getElementById('forgot-btn').addEventListener('click', async () => {
+      const email = document.getElementById('si-email').value.trim();
+      if (!email) { setError('si', 'Enter your email above first.'); return; }
+      setLoading('si', true);
+      const { error } = await nexaSupabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/auth.html',
+      });
+      setLoading('si', false);
+      if (error) { setError('si', error.message); return; }
+      siForm.hidden = true;
+      document.getElementById('reset-email-panel').hidden = false;
+    });
+  })();
+  </script>
+</body>
+</html>

@@ -1,397 +1,528 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NexaLab Studios | SaaS Growth Infrastructure</title>
-    <meta
-      name="description"
-      content="NexaLab builds and operates SaaS-grade growth infrastructure: high-converting websites, activation flows, and monthly optimization systems."
-      content="NexaLab Studios designs premium websites, conversion systems, and monthly optimization programs for companies that need serious digital execution."
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="bg-grid" aria-hidden="true"></div>
-    <header class="site-header">
-      <div class="container nav-wrap">
-        <a class="brand" href="index.html">NexaLab Studios</a>
-        <button id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="primary-nav">Menu</button>
-        <nav id="primary-nav" class="nav-links">
-          <a href="index.html" class="active">Platform</a>
-          <a href="what-we-do.html">Services</a>
-          <a href="who-we-serve.html">Customers</a>
-          <a href="philosophy.html">Method</a>
-          <a href="contact.html" class="btn btn-sm btn-primary">Book Demo</a>
-        </nav>
-      </div>
-    </header>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NexaLab — The Commerce OS for Serious Brands</title>
+  <meta name="description" content="NexaLab is the end-to-end commerce platform: storefront, checkout, inventory, fulfillment, and growth ops — all in one system." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
 
-    <main>
-      <section class="hero saas-hero">
-        <div class="container">
-          <p class="eyebrow">SaaS Growth Infrastructure</p>
-          <h1>
-            Ship your funnel
-            <span class="text-gradient">faster, cleaner, and smarter.</span>
-          </h1>
-          <p class="subtitle hero-subtitle">
-            NexaLab helps SaaS and service teams replace fragmented marketing ops with one high-performance system:
-            positioning, pages, onboarding UX, analytics, and monthly conversion iteration.
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">NexaLab</a>
+      <button id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="primary-nav">Menu</button>
+      <nav id="primary-nav" class="nav-links">
+        <a href="index.html" class="active">Home</a>
+        <a href="platform.html">Platform</a>
+        <a href="#pricing">Pricing</a>
+        <a href="contact.html" class="btn btn-sm btn-primary">Book Demo</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── Hero ───────────────────────────────── -->
+    <section class="saas-hero">
+      <div class="container hero-grid">
+
+        <div class="hero-text">
+          <p class="eyebrow">The Shopify alternative for serious brands</p>
+          <h1>Commerce, built to<br /><span class="text-gradient">actually scale.</span></h1>
+          <p class="hero-subtitle">
+            NexaLab is your complete commerce OS — storefront engineering, checkout, inventory, and shipping. One team, one system, zero gaps.
           </p>
           <div class="hero-actions">
-            <a href="contact.html" class="btn btn-primary">Start 14-Day Growth Sprint</a>
-            <a href="#product-tour" class="btn btn-outline">View Product Tour</a>
+            <a href="contact.html" class="btn btn-primary">Start a 14-Day Sprint</a>
+            <a href="platform.html" class="btn btn-outline">See the Platform</a>
           </div>
-          <div class="hero-kpis">
-            <article><strong>+31%</strong><span>avg. qualified demo lift</span></article>
-            <article><strong>4-6 weeks</strong><span>typical relaunch window</span></article>
-            <article><strong>Weekly shipping</strong><span>inside retainer execution</span></article>
-          </div>
-        </div>
-      </section>
-
-      <section id="product-tour" class="section">
-        <div class="container">
-          <div class="terminal-mock reveal">
-            <div class="terminal-top">
-              <span class="dots"></span>
-              <span class="terminal-url">dashboard.nexalab.io / growth-engine</span>
+          <div class="hero-proof">
+            <div class="proof-avatars">
+              <span>JM</span>
+              <span>SA</span>
+              <span>TK</span>
             </div>
-            <div class="terminal-content">
-              <div class="mock-row">
-                <h3>Pipeline Command Center</h3>
-                <p>Single view of acquisition, activation, and conversion blockers.</p>
-              </div>
-              <div class="mock-metrics">
-                <article><p>Paid signup CVR</p><strong>7.8%</strong><span>+1.4% MoM</span></article>
-                <article><p>Activation completion</p><strong>62%</strong><span>+9% MoM</span></article>
-                <article><p>Demo qualified rate</p><strong>48%</strong><span>+6% MoM</span></article>
-              </div>
-              <button class="btn btn-primary mock-btn" type="button">Deploy next experiment</button>
-            </div>
+            <span>Trusted by <strong>50+ brands</strong> across fashion, beauty &amp; tech</span>
           </div>
         </div>
-      </section>
 
-      <section class="section section-alt">
-        <div class="container">
-          <p class="section-label">Platform modules</p>
-          <h2>Everything your growth team needs in one operating layer.</h2>
-          <div class="feature-shell" data-feature-tabs>
-            <div class="segment-row" role="tablist" aria-label="Feature tabs">
-              <button class="segment-btn is-active" type="button" data-tab="acquisition">Acquisition</button>
-              <button class="segment-btn" type="button" data-tab="activation">Activation</button>
-              <button class="segment-btn" type="button" data-tab="retention">Retention</button>
-              <button class="segment-btn" type="button" data-tab="analytics">Analytics</button>
-            </div>
-            <div class="tab-panel is-active" data-panel="acquisition">
-              <h3>Acquisition engine</h3>
-              <p>Landing pages, ad-message matching, and qualification paths designed to improve cost-per-qualified-lead.</p>
-            </div>
-            <div class="tab-panel" data-panel="activation">
-              <h3>Activation UX</h3>
-              <p>Onboarding flows and first-session experiences that reduce churn risk and time-to-value.</p>
-            </div>
-            <div class="tab-panel" data-panel="retention">
-              <h3>Retention loops</h3>
-              <p>Lifecycle messaging, in-app prompts, and expansion paths tied to product usage behavior.</p>
-            </div>
-            <div class="tab-panel" data-panel="analytics">
-              <h3>Decision-grade analytics</h3>
-              <p>Clean event taxonomy and reporting views so the team knows exactly what to ship next.</p>
-      <section class="hero">
-        <div class="container hero-grid">
-          <div class="hero-copy">
-            <p class="eyebrow">NexaLab Studios</p>
-            <h1>Design, engineering, and growth systems for teams that are done with mediocre websites.</h1>
-            <p class="subtitle">
-              We help ambitious companies turn their site into a serious commercial asset: clear positioning,
-              high-performance build quality, and monthly optimization tied to pipeline goals.
-            </p>
-            <div class="hero-actions">
-              <a href="what-we-do.html" class="btn btn-premium">View Engagement Tracks</a>
-              <a href="contact.html" class="btn btn-ghost">Apply for a Strategy Call</a>
-            </div>
-            <p class="micro-proof">
-              Typical clients come to us after wasting time with slow agencies, bloated builds, or disconnected vendors.
-            </p>
-          </div>
-
-          <aside class="highlight-card premium-panel">
-            <p class="panel-kicker">What this looks like in practice</p>
-            <h2>A focused operating model.</h2>
-            <ul>
-              <li><strong>Step 1 — Clarify:</strong> sharpen offer messaging, page hierarchy, and conversion paths.</li>
-              <li><strong>Step 2 — Build:</strong> ship a fast, premium frontend + robust tracking foundation.</li>
-              <li><strong>Step 3 — Compound:</strong> run monthly experiments and iterations that improve outcomes.</li>
-            </ul>
-            <div class="panel-metrics">
-              <div>
-                <strong>30-45 days</strong>
-                <span>for most premium rebuilds</span>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="dash-mock">
+            <div class="dash-topbar">
+              <div class="dash-dots">
+                <div class="dash-dot r"></div>
+                <div class="dash-dot y"></div>
+                <div class="dash-dot g"></div>
               </div>
-              <div>
-                <strong>Monthly cadence</strong>
-                <span>for measurable iteration</span>
+              <span class="dash-title">NexaLab — Store Dashboard</span>
+              <span class="dash-badge">● Live</span>
+            </div>
+            <div class="dash-body">
+              <div class="dash-metrics">
+                <div class="dash-metric">
+                  <div class="dash-metric-label">Revenue</div>
+                  <div class="dash-metric-val">$48.2k</div>
+                  <div class="dash-metric-delta">↑ 18% MTD</div>
+                </div>
+                <div class="dash-metric">
+                  <div class="dash-metric-label">Orders</div>
+                  <div class="dash-metric-val">1,284</div>
+                  <div class="dash-metric-delta">↑ 12%</div>
+                </div>
+                <div class="dash-metric">
+                  <div class="dash-metric-label">Conv. Rate</div>
+                  <div class="dash-metric-val">3.8%</div>
+                  <div class="dash-metric-delta">↑ 0.4pp</div>
+                </div>
+              </div>
+              <div class="dash-section-label">Recent Orders</div>
+              <div class="dash-orders">
+                <div class="dash-order">
+                  <span class="dash-order-id">#4821</span>
+                  <span class="dash-order-name">Air Force Gel Kit</span>
+                  <span class="dash-order-amt">$124</span>
+                  <span class="dash-status status-shipped">Shipped</span>
+                </div>
+                <div class="dash-order">
+                  <span class="dash-order-id">#4820</span>
+                  <span class="dash-order-name">Glow Serum Bundle</span>
+                  <span class="dash-order-amt">$89</span>
+                  <span class="dash-status status-processing">Processing</span>
+                </div>
+                <div class="dash-order">
+                  <span class="dash-order-id">#4819</span>
+                  <span class="dash-order-name">Wireless Earbuds Pro</span>
+                  <span class="dash-order-amt">$249</span>
+                  <span class="dash-status status-shipped">Shipped</span>
+                </div>
+                <div class="dash-order">
+                  <span class="dash-order-id">#4818</span>
+                  <span class="dash-order-name">Streetwear Hoodie XL</span>
+                  <span class="dash-order-amt">$78</span>
+                  <span class="dash-status status-pending">Pending</span>
+                </div>
               </div>
             </div>
-          </aside>
-        </div>
-      </section>
-
-      <section class="section section-alt">
-        <div class="container">
-          <p class="section-label">Outcome signals</p>
-          <div class="stats-grid">
-            <article class="stat-card">
-              <p class="stat-value">Clearer ICP</p>
-              <p class="stat-label">Messaging that speaks to the buyer you actually want.</p>
-            </article>
-            <article class="stat-card">
-              <p class="stat-value">Faster pages</p>
-              <p class="stat-label">Performance improvements that reduce drop-off and ad waste.</p>
-            </article>
-            <article class="stat-card">
-              <p class="stat-value">Better conversion data</p>
-              <p class="stat-label">Reliable tracking from first click to qualified inquiry.</p>
-            </article>
-            <article class="stat-card">
-              <p class="stat-value">Ongoing iteration</p>
-              <p class="stat-label">A retained partner that ships improvements every month.</p>
-          <p class="section-label">NexaLab by the numbers</p>
-          <div class="stats-grid">
-            <article class="stat-card">
-              <p class="stat-value">30-45</p>
-              <p class="stat-label">day typical launch timeline</p>
-            </article>
-            <article class="stat-card">
-              <p class="stat-value">72h</p>
-              <p class="stat-label">average first support response window</p>
-            </article>
-            <article class="stat-card">
-              <p class="stat-value">3-step</p>
-              <p class="stat-label">build → retain → optimize operating model</p>
-            </article>
-            <article class="stat-card">
-              <p class="stat-value">Monthly</p>
-              <p class="stat-label">reporting and iteration cadence</p>
-            </article>
           </div>
         </div>
-      </section>
 
-      <section class="section">
-        <div class="container">
-          <p class="section-label">Pricing simulator</p>
-          <h2>Choose your operating mode.</h2>
-          <div class="pricing-wrap" data-pricing>
-            <div class="pricing-toggle" role="group" aria-label="Pricing mode">
-              <button class="segment-btn is-active" type="button" data-price-mode="monthly">Monthly</button>
-              <button class="segment-btn" type="button" data-price-mode="annual">Annual (save 15%)</button>
-            </div>
-            <div class="service-grid">
-              <article class="card pricing-card">
-                <p class="muted">Launch</p>
-                <h3>Growth Foundation</h3>
-                <p class="price" data-monthly="$3,200" data-annual="$2,720">$3,200</p>
-                <ul class="list">
-                  <li>Website + tracking rebuild</li>
-                  <li>2 experiments / month</li>
-                  <li>Monthly strategy call</li>
-                </ul>
-              </article>
-              <article class="card pricing-card featured-tier">
-                <p class="muted">Scale</p>
-                <h3>Growth Ops</h3>
-                <p class="price" data-monthly="$5,800" data-annual="$4,930">$5,800</p>
-                <ul class="list">
-                  <li>Funnel + onboarding optimization</li>
-                  <li>5 experiments / month</li>
-                  <li>Weekly implementation sync</li>
-                </ul>
-              </article>
-              <article class="card pricing-card">
-                <p class="muted">Enterprise</p>
-                <h3>Revenue Systems</h3>
-                <p class="price" data-monthly="$9,500" data-annual="$8,075">$9,500</p>
-                <ul class="list">
-                  <li>Cross-channel conversion ownership</li>
-                  <li>Dedicated squad lane</li>
-                  <li>Executive reporting dashboard</li>
-                </ul>
-              </article>
-            </div>
-          <p class="section-label">Quick answers</p>
-          <h2>FAQ</h2>
-          <div class="faq-list">
-            <article class="faq-item">
-              <button class="faq-toggle" type="button" data-faq-toggle aria-expanded="false">
-                How fast can we start?
-              </button>
-              <div class="faq-panel">
-                <p class="faq-content">
-                  Most engagements start within 1-2 weeks after scope and onboarding, with immediate planning in week one.
-                </p>
-              </div>
-            </article>
-            <article class="faq-item">
-              <button class="faq-toggle" type="button" data-faq-toggle aria-expanded="false">
-                Do we need a retainer after launch?
-              </button>
-              <div class="faq-panel">
-                <p class="faq-content">
-                  If you want reliable momentum, yes. Retainers are where ongoing improvements and performance gains compound.
-                </p>
-              </div>
-            </article>
-            <article class="faq-item">
-              <button class="faq-toggle" type="button" data-faq-toggle aria-expanded="false">
-                What does onboarding look like?
-              </button>
-              <div class="faq-panel">
-                <p class="faq-content">
-                  We begin with goals, current tech stack, and constraints, then define a 30-day priority roadmap and communication rhythm.
-                </p>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="section section-alt">
-        <div class="container two-col">
-          <article class="tool-card">
-            <p class="section-label">ROI forecast</p>
-            <h2>Quick model</h2>
-            <label class="form-field" for="mrr-input">Current MRR ($)
-              <input id="mrr-input" type="number" min="1000" step="500" value="45000" />
-            </label>
-            <label class="form-field" for="uplift-input">Expected conversion uplift (%)
-              <input id="uplift-input" type="range" min="2" max="30" value="12" />
-            </label>
-            <p class="muted">Uplift: <span id="uplift-value">12%</span></p>
-            <div class="result-box" id="roi-result">Projected incremental MRR: $5,400</div>
-          </article>
-          <article class="tool-card">
-            <p class="section-label">Execution timeline</p>
-            <h2>First 30 days</h2>
-            <ol class="list">
-              <li><strong>Week 1:</strong> audit + KPI alignment.</li>
-              <li><strong>Week 2:</strong> message and UX architecture.</li>
-              <li><strong>Week 3:</strong> implementation + tracking hardening.</li>
-              <li><strong>Week 4:</strong> launch + experiment queue.</li>
-            </ol>
-            <a href="contact.html" class="btn btn-outline">Request your tailored timeline</a>
-          </article>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="container">
-          <p class="section-label">FAQ</p>
-          <h2>Questions we usually get from SaaS teams</h2>
-          <div class="faq-list">
-            <article class="faq-item">
-              <button class="faq-toggle" type="button" data-faq-toggle aria-expanded="false">Can you work with our in-house product and marketing team?</button>
-              <div class="faq-panel"><p class="faq-content">Yes. We plug into your current team and own execution lanes where velocity or clarity is missing.</p></div>
-            </article>
-            <article class="faq-item">
-              <button class="faq-toggle" type="button" data-faq-toggle aria-expanded="false">Do you support only websites or full funnel work?</button>
-              <div class="faq-panel"><p class="faq-content">Full funnel. Web pages, onboarding states, conversion points, lifecycle loops, and reporting are all included.</p></div>
-            </article>
-            <article class="faq-item">
-              <button class="faq-toggle" type="button" data-faq-toggle aria-expanded="false">How quickly can we start?</button>
-              <div class="faq-panel"><p class="faq-content">Typical kickoff is within 7–10 days after alignment call, scope lock, and access setup.</p></div>
-      <section class="section">
-        <div class="container">
-          <p class="section-label">How to work with us</p>
-          <h2>Engagement tracks</h2>
-          <div class="service-grid">
-            <article class="card">
-              <h3>New website build</h3>
-              <p>For teams replacing an outdated site or launching a sharper market position.</p>
-              <ul class="list">
-                <li>Positioning + page architecture</li>
-                <li>Premium design and development</li>
-                <li>Analytics and conversion tracking</li>
-              </ul>
-            </article>
-            <article class="card">
-              <h3>Retainer: Growth Ops</h3>
-              <p>For active businesses that need weekly implementation and monthly reporting.</p>
-              <ul class="list">
-                <li>Landing page and funnel upgrades</li>
-                <li>Performance + UX improvements</li>
-                <li>Experiment roadmap by priority</li>
-              </ul>
-            </article>
-            <article class="card">
-              <h3>Retainer: E-commerce Systems</h3>
-              <p>For stores scaling paid traffic, catalog complexity, and conversion pressure.</p>
-              <ul class="list">
-                <li>Storefront and checkout optimization</li>
-                <li>Merchandising and revenue flow support</li>
-                <li>Technical and integration ownership</li>
-              </ul>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="container">
-          <p class="section-label">Quick answers</p>
-          <h2>FAQ</h2>
-          <div class="faq-list">
-            <article class="faq-item">
-              <button class="faq-toggle" type="button" data-faq-toggle aria-expanded="false">
-                How do we know if NexaLab is a fit?
-              </button>
-              <div class="faq-panel">
-                <p class="faq-content">
-                  We are a fit when you want quality execution, not just a prettier homepage. If you need clearer positioning,
-                  better conversion infrastructure, and ongoing iteration, this model is built for you.
-                </p>
-              </div>
-            </article>
-            <article class="faq-item">
-              <button class="faq-toggle" type="button" data-faq-toggle aria-expanded="false">
-                Do you only do design or also implementation?
-              </button>
-              <div class="faq-panel">
-                <p class="faq-content">
-                  Both. Strategy, UX, UI, frontend/backend implementation, analytics setup, and monthly optimization are handled in one system.
-                </p>
-              </div>
-            </article>
-            <article class="faq-item">
-              <button class="faq-toggle" type="button" data-faq-toggle aria-expanded="false">
-                What happens after launch?
-              </button>
-              <div class="faq-panel">
-                <p class="faq-content">
-                  Most clients stay on retainer so we can keep improving conversion paths, speed, and campaign landing pages instead of letting the site stagnate.
-                </p>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <div class="container footer-wrap">
-        <p>© <span id="year"></span> NexaLab Studios.</p>
-        <a href="contact.html">hello@nexalab.io</a>
-        <p>© <span id="year"></span> NexaLab Studios. Digital systems that compound.</p>
-        <a href="contact.html">hello@nexalab.studio</a>
       </div>
-    </footer>
+    </section>
 
-    <script src="script.js"></script>
-  </body>
+    <!-- ── Trust bar ───────────────────────────── -->
+    <div class="trust-bar">
+      <div class="container">
+        <div class="trust-bar-inner">
+          <p class="trust-label">Powering brands in fashion, beauty, electronics &amp; more</p>
+          <div class="trust-logos">
+            <span class="trust-logo">Vantage Studio</span>
+            <span class="trust-logo">Lumière Co.</span>
+            <span class="trust-logo">AeroKit</span>
+            <span class="trust-logo">Driftwood Supply</span>
+            <span class="trust-logo">Nuveau Label</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Stats ───────────────────────────────── -->
+    <div class="stats-section">
+      <div class="container">
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-val" data-count="12" data-prefix="$" data-suffix="M+">$0</span>
+            <span class="stat-label">GMV Managed</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val" data-count="50" data-suffix="+">0</span>
+            <span class="stat-label">Brands Served</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val" data-count="99.9" data-suffix="%" data-decimals="1">0%</span>
+            <span class="stat-label">Platform Uptime</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val" data-count="40" data-suffix="+">0</span>
+            <span class="stat-label">Carrier &amp; Tool Integrations</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Platform modules ────────────────────── -->
+    <section class="section" id="features">
+      <div class="container">
+        <p class="section-label">The Platform</p>
+        <h2>Everything your brand needs — built in.</h2>
+        <p class="subtitle">From your first product page to your 10,000th fulfilled order, NexaLab handles every layer.</p>
+        <div class="module-grid">
+
+          <div class="module-card">
+            <div class="module-icon" style="background:linear-gradient(135deg,rgba(124,92,252,0.15),rgba(255,79,216,0.08));">
+              <svg fill="none" stroke="#a78bfa" stroke-width="1.8" viewBox="0 0 24 24">
+                <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 8h14M9 21a1 1 0 100-2 1 1 0 000 2zm10 0a1 1 0 100-2 1 1 0 000 2z" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>Storefront &amp; Checkout</h3>
+            <p>Fast, secure storefronts engineered for conversion. Custom checkout flows, payment integrations, and PCI hygiene baked in from day one.</p>
+          </div>
+
+          <div class="module-card">
+            <div class="module-icon" style="background:linear-gradient(135deg,rgba(34,211,168,0.13),rgba(34,211,168,0.04));">
+              <svg fill="none" stroke="#22d3a8" stroke-width="1.8" viewBox="0 0 24 24">
+                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>Inventory &amp; Catalog</h3>
+            <p>Product data, variant management, and automated syncs across channels and warehouses. No more oversells or stockout surprises.</p>
+          </div>
+
+          <div class="module-card">
+            <div class="module-icon" style="background:linear-gradient(135deg,rgba(251,191,36,0.13),rgba(251,191,36,0.04));">
+              <svg fill="none" stroke="#fbbf24" stroke-width="1.8" viewBox="0 0 24 24">
+                <rect x="1" y="3" width="15" height="13" rx="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M16 8h4l3 5v3h-7V8z" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="5.5" cy="18.5" r="2.5"/>
+                <circle cx="18.5" cy="18.5" r="2.5"/>
+              </svg>
+            </div>
+            <h3>Fulfillment &amp; Shipping</h3>
+            <p>Carrier integrations, routing rules, and manifest automation. Predictable delivery with real-time tracking your customers actually trust.</p>
+          </div>
+
+          <div class="module-card">
+            <div class="module-icon" style="background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(239,68,68,0.04));">
+              <svg fill="none" stroke="#f87171" stroke-width="1.8" viewBox="0 0 24 24">
+                <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>Analytics &amp; Growth Ops</h3>
+            <p>Event taxonomy, attribution, and a monthly experiment pipeline. We turn your data into compounding revenue — not just dashboards.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── How it works ────────────────────────── -->
+    <section class="section-alt">
+      <div class="container">
+        <p class="section-label">How it works</p>
+        <h2>Launch fast. Own the stack. Grow every month.</h2>
+        <div class="steps-grid">
+          <div class="step">
+            <div class="step-num">01</div>
+            <h3>Clarify &amp; Map</h3>
+            <p>We audit your current stack, define KPIs, and map every gap in your commerce layer — from checkout friction to fulfillment delays.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">02</div>
+            <h3>Build &amp; Secure</h3>
+            <p>14-day sprint to ship a secure storefront, integrated checkout, and full event tracking. You get a working system — not a proposal deck.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">03</div>
+            <h3>Operate &amp; Compound</h3>
+            <p>Retained monthly ops: inventory syncs, A/B experiments, carrier SLAs, and analytics. Your store keeps improving every month.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Why NexaLab ─────────────────────────── -->
+    <section class="section">
+      <div class="container">
+        <p class="section-label">Why NexaLab</p>
+        <h2>A platform built around your team — not templates.</h2>
+        <p class="subtitle">Shopify gives you a store. NexaLab gives you an operating system.</p>
+        <div class="compare-grid">
+
+          <div class="compare-col nexalab">
+            <p class="compare-col-label">✦ NexaLab</p>
+            <ul class="compare-list">
+              <li><i class="icon">✓</i> Custom storefront engineered to your brand</li>
+              <li><i class="icon">✓</i> Checkout built for conversion, not templates</li>
+              <li><i class="icon">✓</i> Inventory + shipping as a managed service</li>
+              <li><i class="icon">✓</i> Retained growth ops — we own the numbers</li>
+              <li><i class="icon">✓</i> One team across site, ops, and analytics</li>
+              <li><i class="icon">✓</i> PCI hygiene and security built-in</li>
+            </ul>
+          </div>
+
+          <div class="compare-col others">
+            <p class="compare-col-label">Generic alternatives</p>
+            <ul class="compare-list">
+              <li><i class="icon">✗</i> Locked into platform templates and limits</li>
+              <li><i class="icon">✗</i> Transaction fees that compound at scale</li>
+              <li><i class="icon">✗</i> Shipping and inventory left to you</li>
+              <li><i class="icon">✗</i> Analytics dashboards but no action on data</li>
+              <li><i class="icon">✗</i> Stitching 8 different tools yourself</li>
+              <li><i class="icon">✗</i> Security add-ons cost extra</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Testimonials ────────────────────────── -->
+    <section class="section-alt">
+      <div class="container">
+        <p class="section-label">What brands say</p>
+        <h2>Results speak louder than promises.</h2>
+        <div class="testimonials-grid">
+
+          <div class="testimonial-card">
+            <p class="testimonial-quote">NexaLab rebuilt our checkout in under two weeks. Cart abandonment dropped 22% in the first month. That's not a vendor relationship — that's an embedded team.</p>
+            <div class="testimonial-footer">
+              <div class="testimonial-avatar" style="background:linear-gradient(135deg,#7c5cfc,#ff4fd8);">JM</div>
+              <div class="testimonial-meta">
+                <div class="testimonial-name">Jordan M.</div>
+                <div class="testimonial-role">CEO, Vantage Studio</div>
+              </div>
+              <span class="testimonial-metric">−22% abandonment</span>
+            </div>
+          </div>
+
+          <div class="testimonial-card">
+            <p class="testimonial-quote">We were managing inventory across three spreadsheets. NexaLab synced our warehouse and storefront in a week. Stockouts are basically a thing of the past now.</p>
+            <div class="testimonial-footer">
+              <div class="testimonial-avatar" style="background:linear-gradient(135deg,#22d3a8,#3b82f6);">SA</div>
+              <div class="testimonial-meta">
+                <div class="testimonial-name">Simone A.</div>
+                <div class="testimonial-role">Founder, Lumière Co.</div>
+              </div>
+              <span class="testimonial-metric">−94% stockouts</span>
+            </div>
+          </div>
+
+          <div class="testimonial-card">
+            <p class="testimonial-quote">The attribution work alone was worth it. We found out 60% of our Meta spend was wasted. First month ROI was 4x the retainer cost — and that's the floor, not the ceiling.</p>
+            <div class="testimonial-footer">
+              <div class="testimonial-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">TK</div>
+              <div class="testimonial-meta">
+                <div class="testimonial-name">Theo K.</div>
+                <div class="testimonial-role">Head of Growth, AeroKit</div>
+              </div>
+              <span class="testimonial-metric">4× retainer ROI</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Integrations ────────────────────────── -->
+    <section class="section">
+      <div class="container integrations-container">
+        <p class="section-label">Integrations</p>
+        <h2>Works with the tools you already use.</h2>
+        <p class="subtitle">NexaLab connects to your existing payment processors, carriers, analytics, and marketing stack — no ripping and replacing.</p>
+
+        <div class="integrations-categories">
+
+          <div class="integrations-group">
+            <span class="integrations-group-label">Payments</span>
+            <div class="integrations-chips">
+              <span class="integration-chip"><span class="chip-dot" style="background:#635bff;"></span>Stripe</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#0070e0;"></span>PayPal</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#ffb3c7;"></span>Klarna</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#b2fce4;"></span>Afterpay</span>
+            </div>
+          </div>
+
+          <div class="integrations-group">
+            <span class="integrations-group-label">Shipping &amp; Fulfillment</span>
+            <div class="integrations-chips">
+              <span class="integration-chip"><span class="chip-dot" style="background:#4d148c;"></span>FedEx</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#351c15;"></span>UPS</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#ffcc00;"></span>DHL</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#333399;"></span>USPS</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#85c8fa;"></span>ShipStation</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#5cb85c;"></span>EasyPost</span>
+            </div>
+          </div>
+
+          <div class="integrations-group">
+            <span class="integrations-group-label">Analytics &amp; Marketing</span>
+            <div class="integrations-chips">
+              <span class="integration-chip"><span class="chip-dot" style="background:#e8710a;"></span>Google Analytics</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#0081fb;"></span>Meta Pixel</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#ff6900;"></span>Klaviyo</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#010101;"></span>TikTok Pixel</span>
+            </div>
+          </div>
+
+          <div class="integrations-group">
+            <span class="integrations-group-label">Platforms &amp; Ops</span>
+            <div class="integrations-chips">
+              <span class="integration-chip"><span class="chip-dot" style="background:#95bf47;"></span>Shopify</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#7f54b3;"></span>WooCommerce</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#ff5900;"></span>Zapier</span>
+              <span class="integration-chip"><span class="chip-dot" style="background:#4a154b;"></span>Slack</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Pricing ─────────────────────────────── -->
+    <section class="section-alt" id="pricing">
+      <div class="container">
+        <p class="section-label">Pricing</p>
+        <h2>Pick your starting point.</h2>
+        <p class="subtitle">Every engagement includes full access to your team, code, and data. No lock-in.</p>
+        <div class="pricing-grid">
+
+          <div class="pricing-card">
+            <h3>Launch</h3>
+            <p class="muted" style="font-size:0.85rem;margin:0.3rem 0 0.6rem;">Store build &amp; setup</p>
+            <p class="price"><sup>$</sup>3,500<span style="font-size:1rem;font-weight:600;color:var(--muted)">+</span></p>
+            <p class="price-note">One-time project fee</p>
+            <ul class="pricing-features">
+              <li><span class="chk">✓</span> Secure storefront build</li>
+              <li><span class="chk">✓</span> Checkout &amp; payment setup</li>
+              <li><span class="chk">✓</span> Analytics &amp; event tracking</li>
+              <li><span class="chk">✓</span> PCI &amp; security audit</li>
+              <li><span class="chk">✓</span> 30-day handoff support</li>
+            </ul>
+            <a href="contact.html" class="btn btn-outline">Get Started</a>
+          </div>
+
+          <div class="pricing-card featured">
+            <div class="pricing-badge">Most Popular</div>
+            <h3>Operate</h3>
+            <p class="muted" style="font-size:0.85rem;margin:0.3rem 0 0.6rem;">Retained monthly ops</p>
+            <p class="price"><sup>$</sup>4,500<span style="font-size:1rem;font-weight:600;color:var(--muted)">/mo</span></p>
+            <p class="price-note">Month-to-month, cancel anytime</p>
+            <ul class="pricing-features">
+              <li><span class="chk">✓</span> Everything in Launch</li>
+              <li><span class="chk">✓</span> Inventory sync &amp; management</li>
+              <li><span class="chk">✓</span> Carrier &amp; fulfillment ops</li>
+              <li><span class="chk">✓</span> Monthly A/B experiments</li>
+              <li><span class="chk">✓</span> Dedicated commerce team</li>
+              <li><span class="chk">✓</span> Weekly reporting &amp; SLAs</li>
+            </ul>
+            <a href="contact.html" class="btn btn-primary">Book a Call</a>
+          </div>
+
+          <div class="pricing-card">
+            <h3>Optimize</h3>
+            <p class="muted" style="font-size:0.85rem;margin:0.3rem 0 0.6rem;">Enterprise &amp; multi-brand</p>
+            <p class="price" style="font-size:1.6rem;">Custom</p>
+            <p class="price-note">Volume pricing available</p>
+            <ul class="pricing-features">
+              <li><span class="chk">✓</span> Everything in Operate</li>
+              <li><span class="chk">✓</span> Multi-brand management</li>
+              <li><span class="chk">✓</span> Custom integrations &amp; APIs</li>
+              <li><span class="chk">✓</span> Dedicated squad</li>
+              <li><span class="chk">✓</span> Enterprise SLAs</li>
+              <li><span class="chk">✓</span> Quarterly strategy reviews</li>
+            </ul>
+            <a href="contact.html" class="btn btn-outline">Contact Sales</a>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FAQ ────────────────────────────────── -->
+    <section class="section">
+      <div class="container faq-container">
+        <p class="section-label">FAQ</p>
+        <h2>Questions people actually ask.</h2>
+        <div class="faq-list" style="margin-top:2rem;">
+
+          <div class="faq-item">
+            <button class="faq-toggle" data-faq-toggle aria-expanded="false">
+              How is NexaLab different from just using Shopify?
+            </button>
+            <div class="faq-panel">
+              <p>Shopify is a platform — you build on it yourself, or hire agencies piecemeal. NexaLab is an embedded team that builds, runs, and improves your entire commerce layer. You own all the code and data. We're not a SaaS subscription — we're your operating partner.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-toggle" data-faq-toggle aria-expanded="false">
+              What does the 14-day sprint actually deliver?
+            </button>
+            <div class="faq-panel">
+              <p>A live, working store: secure storefront, integrated checkout, payment processor connected, event tracking set up, and at least one carrier integration. You get something real at the end — not a slide deck or a roadmap. Most brands are transacting within 14 days of kickoff.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-toggle" data-faq-toggle aria-expanded="false">
+              Do I need to rebuild my entire existing store?
+            </button>
+            <div class="faq-panel">
+              <p>Not necessarily. We audit first. Some clients migrate fully, others get surgical upgrades to checkout, tracking, or fulfillment. We recommend what makes commercial sense — not what's easiest to sell. If your store is 80% fine, we'll focus on the 20% that's costing you money.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-toggle" data-faq-toggle aria-expanded="false">
+              Do you physically handle my inventory or warehouse?
+            </button>
+            <div class="faq-panel">
+              <p>No — we're a software and operations layer, not a 3PL. We integrate with your existing warehouse or fulfillment partner (or help you find one), set up sync rules, and manage the data and routing. The physical goods stay with whoever holds them now.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-toggle" data-faq-toggle aria-expanded="false">
+              What tech stacks and platforms do you support?
+            </button>
+            <div class="faq-panel">
+              <p>We're stack-agnostic. We've built on Shopify, WooCommerce, custom headless storefronts, and hybrid setups. We recommend a stack based on your volume, team size, and growth trajectory — not brand loyalty. If you already have a stack, we build on it unless there's a strong commercial reason to migrate.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-toggle" data-faq-toggle aria-expanded="false">
+              Can I cancel the monthly retainer?
+            </button>
+            <div class="faq-panel">
+              <p>Yes. Month-to-month, no lock-in contracts. We earn your business every month by delivering measurable results. That said, compounding returns require time — most clients see the biggest impact in months 3–6 as experiments and infrastructure mature.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Bottom CTA ──────────────────────────── -->
+    <section class="cta-section">
+      <div class="container">
+        <p class="section-label">Ready when you are</p>
+        <h2>Start your 14-day Commerce Sprint.</h2>
+        <p>Tell us about your brand and we'll map your full commerce layer in the first call — no fluff, no pitch deck.</p>
+        <div class="cta-actions">
+          <a href="contact.html" class="btn btn-primary">Book Your Sprint Call</a>
+          <a href="mailto:hello@nexalab.io" class="btn btn-outline">Email Us Directly</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <p style="font-size:0.85rem;color:var(--muted);">© <span id="year"></span> NexaLab. Systems that compound.</p>
+      <nav class="footer-links">
+        <a href="#features">Platform</a>
+        <a href="#pricing">Pricing</a>
+        <a href="contact.html">Contact</a>
+        <a href="mailto:hello@nexalab.io">hello@nexalab.io</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
 </html>

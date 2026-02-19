@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Client Portal — NexaLab</title>
+  <meta name="robots" content="noindex" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-body">
+
+  <!-- ─── Sidebar ──────────────────────────────────────── -->
+  <aside class="dash-sidebar" id="dash-sidebar">
+    <div class="dash-brand">
+      <a href="index.html" class="brand">NexaLab</a>
+      <span class="dash-portal-badge">Client Portal</span>
+    </div>
+
+    <div class="dash-client-card">
+      <div class="dash-avatar" id="dash-avatar">JM</div>
+      <div>
+        <p class="dash-client-name" id="dash-client-name">Jordan Mitchell</p>
+        <p class="dash-client-company" id="dash-client-company">Meridian Apparel</p>
+      </div>
+    </div>
+
+    <nav class="dash-nav">
+      <a href="#overview" class="dash-nav-item is-active" data-section="overview">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
+        Overview
+      </a>
+      <a href="#project" class="dash-nav-item" data-section="project">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" stroke-width="1.7"/><path d="M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Project
+      </a>
+      <a href="#deliverables" class="dash-nav-item" data-section="deliverables">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><polyline points="7 10 12 15 17 10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Deliverables
+      </a>
+      <a href="#analytics" class="dash-nav-item" data-section="analytics">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Analytics
+      </a>
+      <a href="#support" class="dash-nav-item" data-section="support">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Support
+        <span class="dash-badge">2</span>
+      </a>
+    </nav>
+
+    <div class="dash-sidebar-footer">
+      <a href="contact.html" class="dash-sidebar-link">Book a call</a>
+      <a href="index.html" class="dash-sidebar-link">← Back to site</a>
+      <button id="dash-logout" class="dash-sidebar-link dash-logout-btn">Sign out</button>
+    </div>
+  </aside>
+
+  <!-- ─── Main ─────────────────────────────────────────── -->
+  <div class="dash-main">
+
+    <!-- Top bar -->
+    <header class="dash-topbar">
+      <button class="dash-menu-btn" id="dash-menu-btn" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="dash-topbar-left">
+        <h1 class="dash-page-title" id="dash-page-title">Overview</h1>
+        <span class="dash-status-pill">
+          <span class="dash-status-dot"></span>
+          Sprint Active
+        </span>
+      </div>
+      <div class="dash-topbar-right">
+        <span class="dash-date" id="dash-date"></span>
+        <div class="dash-avatar-sm">JM</div>
+      </div>
+    </header>
+
+    <!-- ═══ OVERVIEW section ══════════════════════════════ -->
+    <section class="dash-section" id="section-overview">
+      <div class="dash-welcome">
+        <p class="dash-welcome-text">Welcome back, <strong id="dash-first-name">Jordan</strong>. Your sprint is on track.</p>
+      </div>
+
+      <!-- Stat cards (populated by dashboard.js) -->
+      <div class="dash-stats" id="dash-stats-grid">
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Days active</p>
+          <p class="dash-stat-val">18</p>
+          <p class="dash-stat-sub">of 30-day sprint</p>
+        </div>
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Milestones complete</p>
+          <p class="dash-stat-val">4 <span class="dash-stat-of">/ 7</span></p>
+          <div class="progress-bar"><div class="progress-fill" style="width:57%"></div></div>
+        </div>
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Deliverables ready</p>
+          <p class="dash-stat-val">9 <span class="dash-stat-of">/ 14</span></p>
+          <div class="progress-bar"><div class="progress-fill" style="width:64%"></div></div>
+        </div>
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Open tickets</p>
+          <p class="dash-stat-val">2</p>
+          <p class="dash-stat-sub dash-stat-warn">Awaiting review</p>
+        </div>
+      </div>
+
+      <!-- Recent activity + Next milestone -->
+      <div class="dash-two-col">
+        <div class="dash-card">
+          <p class="dash-card-title">Recent activity</p>
+          <ul class="activity-list" id="activity-list">
+            <li class="activity-item">
+              <span class="activity-dot activity-dot--green"></span>
+              <div>
+                <p class="activity-text">Checkout flow deployed to staging</p>
+                <p class="activity-time">2 hours ago</p>
+              </div>
+            </li>
+            <li class="activity-item">
+              <span class="activity-dot activity-dot--blue"></span>
+              <div>
+                <p class="activity-text">Inventory sync integration tested</p>
+                <p class="activity-time">Yesterday, 4:30 PM</p>
+              </div>
+            </li>
+            <li class="activity-item">
+              <span class="activity-dot activity-dot--purple"></span>
+              <div>
+                <p class="activity-text">Analytics dashboard v1 delivered</p>
+                <p class="activity-time">Feb 14</p>
+              </div>
+            </li>
+            <li class="activity-item">
+              <span class="activity-dot activity-dot--green"></span>
+              <div>
+                <p class="activity-text">SSL &amp; PCI compliance audit passed</p>
+                <p class="activity-time">Feb 12</p>
+              </div>
+            </li>
+            <li class="activity-item">
+              <span class="activity-dot activity-dot--gray"></span>
+              <div>
+                <p class="activity-text">Product catalog migrated (847 SKUs)</p>
+                <p class="activity-time">Feb 10</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="dash-card">
+          <p class="dash-card-title">Next milestone</p>
+          <div id="next-milestone-wrap"><div class="next-milestone-card">
+            <div class="milestone-header">
+              <span class="milestone-tag">Milestone 5</span>
+              <span class="milestone-due">Due Feb 22</span>
+            </div>
+            <p class="milestone-name">Shipping & fulfillment integration</p>
+            <p class="milestone-desc">FedEx + UPS API connected, real-time tracking on order confirmation pages, automated shipping notifications.</p>
+            <div class="milestone-progress">
+              <div class="milestone-progress-bar"><div class="milestone-progress-fill" style="width:40%"></div></div>
+              <span class="milestone-progress-pct">40%</span>
+            </div>
+            <div class="milestone-tasks">
+              <p class="milestone-tasks-label">Sub-tasks</p>
+              <ul class="milestone-task-list">
+                <li class="mtask done">FedEx sandbox credentials configured</li>
+                <li class="mtask done">Rate calculation endpoint built</li>
+                <li class="mtask active">Label generation integration</li>
+                <li class="mtask">Tracking webhook handler</li>
+                <li class="mtask">Customer notification emails</li>
+              </ul>
+            </div>
+          </div></div><!-- /next-milestone-wrap -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ PROJECT section ═══════════════════════════════ -->
+    <section class="dash-section" id="section-project" hidden>
+      <div class="dash-card" style="margin-bottom:1.5rem;">
+        <p class="dash-card-title">Project timeline</p>
+        <p class="dash-card-sub" id="dash-project-plan">Full-Stack Commerce Retainer</p>
+        <div class="timeline-list" id="timeline-list">
+          <div class="tl-item tl-done">
+            <div class="tl-marker"></div>
+            <div class="tl-content">
+              <div class="tl-head"><span class="tl-name">Milestone 1 — Discovery &amp; audit</span><span class="tl-date">Feb 1–3</span></div>
+              <p class="tl-desc">Existing stack audit, platform decision, migration plan.</p>
+              <span class="tl-badge tl-badge--done">Complete</span>
+            </div>
+          </div>
+          <div class="tl-item tl-done">
+            <div class="tl-marker"></div>
+            <div class="tl-content">
+              <div class="tl-head"><span class="tl-name">Milestone 2 — Architecture setup</span><span class="tl-date">Feb 4–7</span></div>
+              <p class="tl-desc">Infrastructure provisioned, CI/CD configured, staging environment live.</p>
+              <span class="tl-badge tl-badge--done">Complete</span>
+            </div>
+          </div>
+          <div class="tl-item tl-done">
+            <div class="tl-marker"></div>
+            <div class="tl-content">
+              <div class="tl-head"><span class="tl-name">Milestone 3 — Catalog migration</span><span class="tl-date">Feb 8–11</span></div>
+              <p class="tl-desc">847 SKUs migrated, images optimized, inventory sync live.</p>
+              <span class="tl-badge tl-badge--done">Complete</span>
+            </div>
+          </div>
+          <div class="tl-item tl-done">
+            <div class="tl-marker"></div>
+            <div class="tl-content">
+              <div class="tl-head"><span class="tl-name">Milestone 4 — Checkout &amp; payments</span><span class="tl-date">Feb 12–17</span></div>
+              <p class="tl-desc">Stripe + PayPal integrated, cart recovery, SSL/PCI passed.</p>
+              <span class="tl-badge tl-badge--done">Complete</span>
+            </div>
+          </div>
+          <div class="tl-item tl-active">
+            <div class="tl-marker"></div>
+            <div class="tl-content">
+              <div class="tl-head"><span class="tl-name">Milestone 5 — Shipping integration</span><span class="tl-date">Feb 18–22</span></div>
+              <p class="tl-desc">FedEx + UPS APIs, real-time tracking, automated notifications.</p>
+              <span class="tl-badge tl-badge--active">In Progress</span>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-marker"></div>
+            <div class="tl-content">
+              <div class="tl-head"><span class="tl-name">Milestone 6 — Analytics &amp; reporting</span><span class="tl-date">Feb 23–26</span></div>
+              <p class="tl-desc">Full dashboard, conversion funnels, email campaign tracking.</p>
+              <span class="tl-badge tl-badge--pending">Upcoming</span>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-marker"></div>
+            <div class="tl-content">
+              <div class="tl-head"><span class="tl-name">Milestone 7 — Launch &amp; handoff</span><span class="tl-date">Feb 27–28</span></div>
+              <p class="tl-desc">Production deployment, runbook, retainer transition.</p>
+              <span class="tl-badge tl-badge--pending">Upcoming</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ DELIVERABLES section ══════════════════════════ -->
+    <section class="dash-section" id="section-deliverables" hidden>
+      <div class="dash-card">
+        <div class="dlv-header">
+          <p class="dash-card-title">All deliverables</p>
+          <span class="dlv-count" id="dlv-count">Loading…</span>
+        </div>
+        <div class="dlv-list" id="dlv-list">
+          <div class="dlv-item dlv-ready">
+            <div class="dlv-icon dlv-icon--doc">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.7"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.7"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Platform audit report</p>
+              <p class="dlv-meta">PDF · Delivered Feb 3</p>
+            </div>
+            <button class="dlv-dl-btn">Download</button>
+          </div>
+          <div class="dlv-item dlv-ready">
+            <div class="dlv-icon dlv-icon--code">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="16 18 22 12 16 6" stroke="currentColor" stroke-width="1.7"/><polyline points="8 6 2 12 8 18" stroke="currentColor" stroke-width="1.7"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Infrastructure codebase (v1)</p>
+              <p class="dlv-meta">GitHub repo · Delivered Feb 7</p>
+            </div>
+            <button class="dlv-dl-btn">View repo</button>
+          </div>
+          <div class="dlv-item dlv-ready">
+            <div class="dlv-icon dlv-icon--doc">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.7"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.7"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Catalog migration report</p>
+              <p class="dlv-meta">PDF · 847 SKUs · Delivered Feb 11</p>
+            </div>
+            <button class="dlv-dl-btn">Download</button>
+          </div>
+          <div class="dlv-item dlv-ready">
+            <div class="dlv-icon dlv-icon--link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Staging storefront</p>
+              <p class="dlv-meta">Live URL · Delivered Feb 11</p>
+            </div>
+            <button class="dlv-dl-btn">Open</button>
+          </div>
+          <div class="dlv-item dlv-ready">
+            <div class="dlv-icon dlv-icon--doc">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.7"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.7"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">PCI/SSL compliance report</p>
+              <p class="dlv-meta">PDF · Delivered Feb 12</p>
+            </div>
+            <button class="dlv-dl-btn">Download</button>
+          </div>
+          <div class="dlv-item dlv-ready">
+            <div class="dlv-icon dlv-icon--code">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="16 18 22 12 16 6" stroke="currentColor" stroke-width="1.7"/><polyline points="8 6 2 12 8 18" stroke="currentColor" stroke-width="1.7"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Checkout integration (Stripe + PayPal)</p>
+              <p class="dlv-meta">GitHub PR merged · Feb 17</p>
+            </div>
+            <button class="dlv-dl-btn">View PR</button>
+          </div>
+          <div class="dlv-item dlv-ready">
+            <div class="dlv-icon dlv-icon--doc">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.7"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.7"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Cart recovery email templates</p>
+              <p class="dlv-meta">ZIP · 3 templates · Feb 16</p>
+            </div>
+            <button class="dlv-dl-btn">Download</button>
+          </div>
+          <div class="dlv-item dlv-ready">
+            <div class="dlv-icon dlv-icon--link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Analytics dashboard (v1)</p>
+              <p class="dlv-meta">Live access · Feb 14</p>
+            </div>
+            <button class="dlv-dl-btn">Open</button>
+          </div>
+          <div class="dlv-item dlv-ready">
+            <div class="dlv-icon dlv-icon--doc">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.7"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.7"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Inventory sync documentation</p>
+              <p class="dlv-meta">PDF · Feb 15</p>
+            </div>
+            <button class="dlv-dl-btn">Download</button>
+          </div>
+
+          <!-- Upcoming -->
+          <div class="dlv-item dlv-upcoming">
+            <div class="dlv-icon dlv-icon--pending">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.7"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Shipping API integration</p>
+              <p class="dlv-meta">In progress · Due Feb 22</p>
+            </div>
+            <span class="dlv-upcoming-badge">Upcoming</span>
+          </div>
+          <div class="dlv-item dlv-upcoming">
+            <div class="dlv-icon dlv-icon--pending">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.7"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Shipping notification emails</p>
+              <p class="dlv-meta">Not started · Due Feb 22</p>
+            </div>
+            <span class="dlv-upcoming-badge">Upcoming</span>
+          </div>
+          <div class="dlv-item dlv-upcoming">
+            <div class="dlv-icon dlv-icon--pending">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.7"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Full analytics suite (v2)</p>
+              <p class="dlv-meta">Not started · Due Feb 26</p>
+            </div>
+            <span class="dlv-upcoming-badge">Upcoming</span>
+          </div>
+          <div class="dlv-item dlv-upcoming">
+            <div class="dlv-icon dlv-icon--pending">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.7"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Production deployment</p>
+              <p class="dlv-meta">Not started · Due Feb 28</p>
+            </div>
+            <span class="dlv-upcoming-badge">Upcoming</span>
+          </div>
+          <div class="dlv-item dlv-upcoming">
+            <div class="dlv-icon dlv-icon--pending">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.7"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </div>
+            <div class="dlv-info">
+              <p class="dlv-name">Technical runbook &amp; handoff docs</p>
+              <p class="dlv-meta">Not started · Due Feb 28</p>
+            </div>
+            <span class="dlv-upcoming-badge">Upcoming</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ ANALYTICS section ══════════════════════════════ -->
+    <section class="dash-section" id="section-analytics" hidden>
+      <div class="dash-stats">
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Page speed score</p>
+          <p class="dash-stat-val">94<span class="dash-stat-of">/100</span></p>
+          <p class="dash-stat-sub dash-stat-green">+31 from baseline</p>
+        </div>
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Checkout conv. rate</p>
+          <p class="dash-stat-val">3.8<span class="dash-stat-of">%</span></p>
+          <p class="dash-stat-sub dash-stat-green">+1.4pp vs old checkout</p>
+        </div>
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Cart abandonment</p>
+          <p class="dash-stat-val">61<span class="dash-stat-of">%</span></p>
+          <p class="dash-stat-sub dash-stat-green">↓ from 83% (baseline)</p>
+        </div>
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Inventory accuracy</p>
+          <p class="dash-stat-val">99.2<span class="dash-stat-of">%</span></p>
+          <p class="dash-stat-sub dash-stat-green">Real-time sync active</p>
+        </div>
+      </div>
+      <div class="dash-card" style="margin-top:1.5rem;">
+        <p class="dash-card-title">Performance notes</p>
+        <p class="dash-card-sub" id="analytics-note">Analytics will be available once your storefront goes live.</p>
+        <ul class="analytics-notes">
+          <li>Core Web Vitals: LCP 1.2 s · FID &lt;10 ms · CLS 0.02</li>
+          <li>Mobile responsiveness: 100% on tested device matrix (12 devices)</li>
+          <li>Stripe webhook latency avg: 140 ms</li>
+          <li>Inventory sync interval: every 5 min (configurable)</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ═══ SUPPORT section ═══════════════════════════════ -->
+    <section class="dash-section" id="section-support" hidden>
+      <div class="dash-two-col">
+        <div class="dash-card">
+          <p class="dash-card-title">Open tickets <span class="dash-badge" id="ticket-open-count" style="position:static;margin-left:0.4rem;"></span></p>
+          <div class="ticket-list" id="ticket-list"></div>
+          <a href="contact.html" class="btn btn-outline" style="margin-top:1.2rem;width:100%;text-align:center;">Open a new ticket</a>
+        </div>
+
+        <div class="dash-card">
+          <p class="dash-card-title">Your account lead</p>
+          <div class="lead-card">
+            <div class="lead-avatar" id="lead-avatar-el">NX</div>
+            <div>
+              <p class="lead-name" id="lead-name">NexaLab Team</p>
+              <p class="lead-role" id="lead-role">Commerce Engineer</p>
+            </div>
+          </div>
+          <div class="lead-details">
+            <div class="lead-detail-row">
+              <span class="lead-detail-label">Response time</span>
+              <span class="lead-detail-val" id="lead-resp">Same day</span>
+            </div>
+            <div class="lead-detail-row">
+              <span class="lead-detail-label">Time zone</span>
+              <span class="lead-detail-val" id="lead-tz">EST (UTC -5)</span>
+            </div>
+            <div class="lead-detail-row">
+              <span class="lead-detail-label">Next check-in</span>
+              <span class="lead-detail-val" id="lead-next">TBD</span>
+            </div>
+          </div>
+          <a href="contact.html" class="btn btn-primary" style="margin-top:1.2rem;width:100%;text-align:center;">Book a call</a>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /dash-main -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

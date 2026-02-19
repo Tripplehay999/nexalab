@@ -1,111 +1,275 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Contact | NexaLab Studios</title>
-    <meta name="description" content="Contact NexaLab to discuss website rebuilds and monthly growth support." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <header class="site-header">
-      <div class="container nav-wrap">
-        <a class="brand" href="index.html">NexaLab Studios</a>
-        <button id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="primary-nav">Menu</button>
-        <nav id="primary-nav" class="nav-links">
-          <a href="index.html">Home</a>
-          <a href="what-we-do.html">What We Do</a>
-          <a href="who-we-serve.html">Who We Serve</a>
-          <a href="philosophy.html">Philosophy</a>
-          <a href="contact.html" class="btn btn-sm btn-primary active">Book a Strategy Call</a>
-        </nav>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Book a Demo — NexaLab</title>
+  <meta name="description" content="Book a demo with NexaLab. Tell us about your brand and we'll map your complete commerce infrastructure." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">NexaLab</a>
+      <button id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="primary-nav">Menu</button>
+      <nav id="primary-nav" class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="platform.html">Platform</a>
+        <a href="index.html#pricing">Pricing</a>
+        <a href="contact.html" class="btn btn-sm btn-primary active">Book Demo</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero contact-hero">
+      <div class="container">
+        <p class="eyebrow">Start your project</p>
+        <h1>Let's build your commerce layer.</h1>
+        <p class="subtitle">Tell us about your brand. We respond same-day and come prepared — no discovery fishing, just a focused conversation about your infrastructure.</p>
       </div>
-    </header>
+    </section>
 
-    <main>
-      <section class="page-hero">
-        <div class="container">
-          <p class="eyebrow">Contact</p>
-          <h1>Tell us what’s broken, what matters, and what timeline you’re targeting.</h1>
-          <p class="subtitle">We’ll reply with the clearest next step for your team.</p>
-          <h1>Let’s map the exact system your business needs next.</h1>
-          <p class="subtitle">
-            Share your context and goals. We will respond with a practical recommendation, scope direction, and best-fit engagement path.
-          </p>
-        </div>
-      </section>
+    <section class="section contact-section">
+      <div class="container">
+        <div class="contact-layout">
 
-      <section class="section">
-        <div class="container tool-card">
-          <h2>Project intake form</h2>
-          <p class="muted">Submit this form and we’ll open a pre-filled email draft to speed up handoff.</p>
-          <form id="intake-form" novalidate>
-            <div class="form-grid">
-              <label class="form-field" for="full-name">Full name *
-                <input id="full-name" name="fullName" type="text" required />
-              </label>
-              <label class="form-field" for="work-email">Work email *
-                <input id="work-email" name="workEmail" type="email" required />
-              </label>
-              <label class="form-field" for="company-name">Company
-                <input id="company-name" name="company" type="text" />
-              </label>
-              <label class="form-field" for="budget-range">Monthly budget range *
-          <p class="muted">Complete the fields below and we’ll open a pre-filled email draft to speed up handoff.</p>
+          <!-- ─── Left sidebar ─────────────────────────── -->
+          <aside class="contact-sidebar">
 
-          <form id="intake-form" novalidate>
-            <div class="form-grid">
-              <label class="form-field" for="full-name">
-                Full name *
-                <input id="full-name" name="fullName" type="text" required />
-              </label>
-              <label class="form-field" for="work-email">
-                Work email *
-                <input id="work-email" name="workEmail" type="email" required />
-              </label>
-              <label class="form-field" for="company-name">
-                Company
-                <input id="company-name" name="company" type="text" />
-              </label>
-              <label class="form-field" for="budget-range">
-                Monthly budget range *
-                <select id="budget-range" name="budget" required>
-                  <option value="">Select budget</option>
-                  <option value="$1k-$3k">$1k-$3k</option>
-                  <option value="$3k-$7k">$3k-$7k</option>
-                  <option value="$7k-$15k">$7k-$15k</option>
-                  <option value="$15k+">$15k+</option>
-                </select>
-              </label>
+            <div class="sidebar-block">
+              <p class="sidebar-label">What happens next</p>
+              <ol class="next-steps">
+                <li class="next-step">
+                  <span class="next-num">01</span>
+                  <div>
+                    <strong>We review your intake</strong>
+                    <p>Our team reads every submission — same day, usually within a few hours.</p>
+                  </div>
+                </li>
+                <li class="next-step">
+                  <span class="next-num">02</span>
+                  <div>
+                    <strong>Strategy call (30 min)</strong>
+                    <p>No pitch deck. We map your stack, identify gaps, and outline the plan.</p>
+                  </div>
+                </li>
+                <li class="next-step">
+                  <span class="next-num">03</span>
+                  <div>
+                    <strong>Proposal + timeline</strong>
+                    <p>Custom scope, deliverables list, and projected milestones — delivered within 48 h.</p>
+                  </div>
+                </li>
+                <li class="next-step">
+                  <span class="next-num">04</span>
+                  <div>
+                    <strong>14-day sprint kickoff</strong>
+                    <p>Once aligned, we start immediately. First deliverable within the first week.</p>
+                  </div>
+                </li>
+              </ol>
             </div>
-            <label class="form-field" for="primary-goal">Primary goal *
-              <textarea id="primary-goal" name="goal" rows="4" required></textarea>
-            </label>
-            <p class="error-text" id="intake-error" aria-live="polite"></p>
-            <button class="btn btn-primary" type="submit">Create inquiry email</button>
 
-            <label class="form-field" for="primary-goal">
-              Primary goal *
-              <textarea id="primary-goal" name="goal" rows="4" required></textarea>
-            </label>
+            <div class="sidebar-block">
+              <p class="sidebar-label">We specialize in</p>
+              <ul class="service-chips">
+                <li>Storefront engineering</li>
+                <li>Checkout optimization</li>
+                <li>Inventory &amp; catalog ops</li>
+                <li>Fulfillment integration</li>
+                <li>Analytics &amp; growth</li>
+                <li>Security &amp; compliance</li>
+              </ul>
+            </div>
 
-            <p class="error-text" id="intake-error" aria-live="polite"></p>
-            <button class="btn" type="submit">Create inquiry email</button>
-          </form>
+            <div class="sidebar-block sidebar-trust">
+              <div class="trust-row-item">
+                <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22d3a8" stroke-width="1.5"/><path d="M6 10l3 3 5-5" stroke="#22d3a8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Same-day response guaranteed</span>
+              </div>
+              <div class="trust-row-item">
+                <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22d3a8" stroke-width="1.5"/><path d="M6 10l3 3 5-5" stroke="#22d3a8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>No lock-in contracts</span>
+              </div>
+              <div class="trust-row-item">
+                <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22d3a8" stroke-width="1.5"/><path d="M6 10l3 3 5-5" stroke="#22d3a8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>NDA on request</span>
+              </div>
+              <div class="trust-row-item">
+                <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22d3a8" stroke-width="1.5"/><path d="M6 10l3 3 5-5" stroke="#22d3a8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Dedicated account lead</span>
+              </div>
+            </div>
+
+          </aside>
+
+          <!-- ─── Form ──────────────────────────────────── -->
+          <div class="contact-form-wrap">
+            <form id="intake-form" novalidate>
+
+              <!-- Success state (hidden until submit) -->
+              <div id="intake-success" class="intake-success" hidden>
+                <div class="success-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" stroke="#22d3a8" stroke-width="1.5"/><path d="M7 12l4 4 6-7" stroke="#22d3a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h3>Submission received</h3>
+                <p>We'll review your project and reach out within a few hours. Check your inbox — we'll include a calendar link for your strategy call.</p>
+                <a href="index.html" class="btn btn-outline" style="margin-top:1rem;">Back to home</a>
+              </div>
+
+              <div id="intake-fields">
+                <h2 class="form-title">Project intake</h2>
+                <p class="form-subtitle">Fields marked * are required.</p>
+
+                <div class="form-section">
+                  <p class="form-section-label">About you</p>
+                  <div class="form-grid">
+                    <label class="form-field">
+                      Full name *
+                      <input id="full-name" name="fullName" type="text" placeholder="Jane Smith" required />
+                    </label>
+                    <label class="form-field">
+                      Work email *
+                      <input id="work-email" name="workEmail" type="email" placeholder="jane@yourbrand.com" required />
+                    </label>
+                    <label class="form-field">
+                      Company / brand name
+                      <input id="company-name" name="company" type="text" placeholder="Acme Inc." />
+                    </label>
+                    <label class="form-field">
+                      Current website
+                      <input id="website-url" name="website" type="url" placeholder="https://yourbrand.com" />
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <p class="form-section-label">Your business</p>
+                  <div class="form-grid">
+                    <label class="form-field">
+                      Current platform
+                      <select id="current-platform" name="platform">
+                        <option value="">Select platform</option>
+                        <option value="shopify">Shopify / Shopify Plus</option>
+                        <option value="woocommerce">WooCommerce</option>
+                        <option value="bigcommerce">BigCommerce</option>
+                        <option value="magento">Magento / Adobe Commerce</option>
+                        <option value="custom">Custom-built</option>
+                        <option value="none">No site yet</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </label>
+                    <label class="form-field">
+                      Monthly revenue *
+                      <select id="revenue-range" name="revenue" required>
+                        <option value="">Select range</option>
+                        <option value="pre-revenue">Pre-revenue / launching</option>
+                        <option value="under-50k">Under $50k / mo</option>
+                        <option value="50k-200k">$50k–$200k / mo</option>
+                        <option value="200k-500k">$200k–$500k / mo</option>
+                        <option value="500k+">$500k+ / mo</option>
+                      </select>
+                    </label>
+                    <label class="form-field">
+                      Monthly budget for NexaLab *
+                      <select id="budget-range" name="budget" required>
+                        <option value="">Select budget</option>
+                        <option value="$1k-$3k">$1k – $3k / mo</option>
+                        <option value="$3k-$7k">$3k – $7k / mo</option>
+                        <option value="$7k-$15k">$7k – $15k / mo</option>
+                        <option value="$15k+">$15k+ / mo</option>
+                      </select>
+                    </label>
+                    <label class="form-field">
+                      Project timeline
+                      <select id="timeline" name="timeline">
+                        <option value="">Select timeline</option>
+                        <option value="asap">ASAP — within 2 weeks</option>
+                        <option value="1-3mo">1 – 3 months</option>
+                        <option value="3-6mo">3 – 6 months</option>
+                        <option value="exploring">Just exploring</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <p class="form-section-label">Services needed <span class="form-label-muted">(select all that apply)</span></p>
+                  <div class="checkbox-grid">
+                    <label class="checkbox-field">
+                      <input type="checkbox" name="services" value="storefront" />
+                      <span class="checkbox-box"></span>
+                      Storefront &amp; checkout
+                    </label>
+                    <label class="checkbox-field">
+                      <input type="checkbox" name="services" value="inventory" />
+                      <span class="checkbox-box"></span>
+                      Inventory &amp; catalog
+                    </label>
+                    <label class="checkbox-field">
+                      <input type="checkbox" name="services" value="fulfillment" />
+                      <span class="checkbox-box"></span>
+                      Fulfillment &amp; shipping
+                    </label>
+                    <label class="checkbox-field">
+                      <input type="checkbox" name="services" value="analytics" />
+                      <span class="checkbox-box"></span>
+                      Analytics &amp; growth ops
+                    </label>
+                    <label class="checkbox-field">
+                      <input type="checkbox" name="services" value="security" />
+                      <span class="checkbox-box"></span>
+                      Security &amp; compliance
+                    </label>
+                    <label class="checkbox-field">
+                      <input type="checkbox" name="services" value="full-stack" />
+                      <span class="checkbox-box"></span>
+                      Full-stack retainer
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <p class="form-section-label">Tell us about your project</p>
+                  <label class="form-field">
+                    Primary goal &amp; current challenge *
+                    <textarea id="primary-goal" name="goal" rows="5" placeholder="Describe what you're building or fixing. What's slowing you down? What does success look like in 6 months?" required></textarea>
+                  </label>
+                </div>
+
+                <p class="error-text" id="intake-error" aria-live="polite"></p>
+                <div class="form-submit-row">
+                  <button class="btn btn-primary btn-lg" type="submit" id="intake-submit">
+                    <span id="submit-label">Submit project intake</span>
+                    <svg id="submit-spinner" class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" hidden><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/><path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+                  </button>
+                  <p class="submit-note">We never share your data. NDA available on request.</p>
+                </div>
+              </div>
+
+            </form>
+          </div>
         </div>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <div class="container footer-wrap">
-        <p>© <span id="year"></span> NexaLab Studios.</p>
-        <a href="index.html">Back to home ↑</a>
       </div>
-    </footer>
+    </section>
+  </main>
 
-    <script src="script.js"></script>
-  </body>
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <p>© <span id="year"></span> NexaLab.</p>
+      <nav class="footer-nav">
+        <a href="index.html">Home</a>
+        <a href="platform.html">Platform</a>
+        <a href="index.html#pricing">Pricing</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="script.js"></script>
+</body>
 </html>
