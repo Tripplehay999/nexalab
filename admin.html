@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — NexaLab</title>
+  <meta name="robots" content="noindex" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-body">
+
+  <!-- ─── Sidebar ──────────────────────────────────────── -->
+  <aside class="dash-sidebar" id="dash-sidebar">
+    <div class="dash-brand">
+      <a href="index.html" class="brand">NexaLab</a>
+      <span class="dash-portal-badge adm-portal-badge">Admin</span>
+    </div>
+
+    <div class="dash-client-card">
+      <div class="dash-avatar" id="adm-avatar">NX</div>
+      <div>
+        <p class="dash-client-name" id="adm-name">Admin</p>
+        <p class="dash-client-company" id="adm-email"></p>
+      </div>
+    </div>
+
+    <nav class="dash-nav">
+      <a href="#overview" class="dash-nav-item is-active" data-section="overview">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
+        Overview
+      </a>
+      <a href="#inquiries" class="dash-nav-item" data-section="inquiries">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="1.7"/><polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="1.7"/></svg>
+        Inquiries
+        <span class="dash-badge" id="adm-inq-badge" hidden></span>
+      </a>
+      <a href="#clients" class="dash-nav-item" data-section="clients">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Clients
+      </a>
+      <a href="#tickets" class="dash-nav-item" data-section="tickets">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Tickets
+        <span class="dash-badge" id="adm-ticket-badge" hidden></span>
+      </a>
+    </nav>
+
+    <div class="dash-sidebar-footer">
+      <a href="dashboard.html" class="dash-sidebar-link">Client portal</a>
+      <a href="index.html" class="dash-sidebar-link">← Back to site</a>
+      <button id="adm-logout" class="dash-sidebar-link dash-logout-btn">Sign out</button>
+    </div>
+  </aside>
+
+  <!-- ─── Main ─────────────────────────────────────────── -->
+  <div class="dash-main">
+
+    <header class="dash-topbar">
+      <button class="dash-menu-btn" id="dash-menu-btn" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="dash-topbar-left">
+        <h1 class="dash-page-title" id="adm-page-title">Overview</h1>
+      </div>
+      <div class="dash-topbar-right">
+        <span class="dash-date" id="adm-date"></span>
+      </div>
+    </header>
+
+    <!-- ═══ OVERVIEW ══════════════════════════════════════ -->
+    <section class="dash-section" id="section-overview">
+      <div class="dash-stats" id="adm-stats-grid">
+        <div class="dash-stat-card"><p class="dash-stat-label">Loading…</p></div>
+      </div>
+      <div class="dash-two-col" style="margin-top:1.5rem;">
+        <div class="dash-card">
+          <p class="dash-card-title">Recent inquiries</p>
+          <div id="adm-recent-inquiries"><p class="adm-empty">Loading…</p></div>
+        </div>
+        <div class="dash-card">
+          <p class="dash-card-title">Open tickets</p>
+          <div id="adm-recent-tickets"><p class="adm-empty">Loading…</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ INQUIRIES ══════════════════════════════════════ -->
+    <section class="dash-section" id="section-inquiries" hidden>
+      <div class="dash-card">
+        <div class="adm-table-header">
+          <p class="dash-card-title">All inquiries</p>
+          <select id="inq-status-filter" class="adm-select">
+            <option value="">All statuses</option>
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="converted">Converted</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+        <div id="inq-table-wrap"><p class="adm-empty">Loading…</p></div>
+      </div>
+    </section>
+
+    <!-- ═══ CLIENTS ════════════════════════════════════════ -->
+    <section class="dash-section" id="section-clients" hidden>
+
+      <!-- Client grid view -->
+      <div id="clients-grid-view">
+        <div class="adm-client-grid" id="adm-client-grid">
+          <p class="adm-empty">Loading…</p>
+        </div>
+      </div>
+
+      <!-- Client detail view (shown when "Manage" is clicked) -->
+      <div id="clients-detail-view" hidden>
+        <div class="adm-detail-topbar">
+          <button class="adm-back-btn" id="adm-back-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            All clients
+          </button>
+          <div>
+            <p class="adm-detail-name" id="adm-detail-name">Client</p>
+            <p class="adm-detail-sub" id="adm-detail-sub"></p>
+          </div>
+        </div>
+
+        <!-- Project tabs -->
+        <div class="adm-tabs">
+          <button class="adm-tab is-active" data-tab="project">Project</button>
+          <button class="adm-tab" data-tab="milestones">Milestones</button>
+          <button class="adm-tab" data-tab="deliverables">Deliverables</button>
+          <button class="adm-tab" data-tab="activity">Activity</button>
+          <button class="adm-tab" data-tab="lead">Lead</button>
+          <button class="adm-tab" data-tab="profile">Client Profile</button>
+        </div>
+
+        <!-- ─ Project tab ─ -->
+        <div class="adm-tab-pane" id="tab-project">
+          <div id="project-tab-content"><p class="adm-empty">Loading…</p></div>
+        </div>
+
+        <!-- ─ Milestones tab ─ -->
+        <div class="adm-tab-pane" id="tab-milestones" hidden>
+          <div id="milestones-list"></div>
+          <div class="dash-card adm-form-card" id="milestone-form-wrap" hidden>
+            <p class="dash-card-title">Add milestone</p>
+            <form id="adm-milestone-form">
+              <div class="form-grid">
+                <label class="form-field">Name * <input name="name" type="text" placeholder="Checkout integration" required /></label>
+                <label class="form-field">Due date <input name="due_date" type="date" /></label>
+              </div>
+              <label class="form-field" style="margin-top:0.75rem;">Description
+                <textarea name="description" rows="2" placeholder="Brief description of this milestone…"></textarea>
+              </label>
+              <label class="form-field" style="margin-top:0.75rem;">Status
+                <select name="status">
+                  <option value="pending">Pending</option>
+                  <option value="active">Active</option>
+                  <option value="complete">Complete</option>
+                </select>
+              </label>
+              <p class="adm-form-error" id="milestone-error"></p>
+              <button class="btn btn-primary btn-sm" type="submit" style="margin-top:1rem;">Add milestone</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ─ Deliverables tab ─ -->
+        <div class="adm-tab-pane" id="tab-deliverables" hidden>
+          <div id="deliverables-list"></div>
+          <div class="dash-card adm-form-card" id="deliverable-form-wrap" hidden>
+            <p class="dash-card-title">Add deliverable</p>
+            <form id="adm-deliverable-form">
+              <div class="form-grid">
+                <label class="form-field">Name *
+                  <input name="name" type="text" placeholder="Platform audit report" required />
+                </label>
+                <label class="form-field">Type
+                  <select name="type">
+                    <option value="doc">Document (PDF, ZIP…)</option>
+                    <option value="code">Code (GitHub, PR…)</option>
+                    <option value="link">Link (URL)</option>
+                  </select>
+                </label>
+                <label class="form-field">URL
+                  <input name="url" type="url" placeholder="https://…" />
+                </label>
+                <label class="form-field">Meta
+                  <input name="meta" type="text" placeholder='e.g. "PDF · 12 pages"' />
+                </label>
+                <label class="form-field">Status
+                  <select name="status">
+                    <option value="upcoming">Upcoming</option>
+                    <option value="ready">Ready</option>
+                  </select>
+                </label>
+                <label class="form-field">Due date <input name="due_date" type="date" /></label>
+                <label class="form-field">Delivered at <input name="delivered_at" type="date" /></label>
+              </div>
+              <p class="adm-form-error" id="deliverable-error"></p>
+              <button class="btn btn-primary btn-sm" type="submit" style="margin-top:1rem;">Add deliverable</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ─ Activity tab ─ -->
+        <div class="adm-tab-pane" id="tab-activity" hidden>
+          <div id="activity-list-admin"></div>
+          <div class="dash-card adm-form-card" id="activity-form-wrap" hidden>
+            <p class="dash-card-title">Log activity</p>
+            <form id="adm-activity-form">
+              <label class="form-field">Activity text *
+                <input name="text" type="text" placeholder="Checkout flow deployed to staging" required />
+              </label>
+              <label class="form-field" style="margin-top:0.75rem;">Color
+                <select name="color">
+                  <option value="green">Green — deployed / completed</option>
+                  <option value="blue">Blue — tested / integrated</option>
+                  <option value="purple">Purple — delivered</option>
+                  <option value="gray">Gray — general / info</option>
+                </select>
+              </label>
+              <p class="adm-form-error" id="activity-error"></p>
+              <button class="btn btn-primary btn-sm" type="submit" style="margin-top:1rem;">Log entry</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ─ Lead tab ─ -->
+        <div class="adm-tab-pane" id="tab-lead" hidden>
+          <div class="dash-card adm-form-card">
+            <p class="dash-card-title">Account lead</p>
+            <p class="dash-card-sub">The NexaLab team member the client sees in their portal.</p>
+            <form id="adm-lead-form" style="margin-top:1rem;">
+              <div class="form-grid">
+                <label class="form-field">Name *
+                  <input name="name" type="text" placeholder="Alex Chen" required />
+                </label>
+                <label class="form-field">Role
+                  <input name="role" type="text" placeholder="Commerce Engineer" />
+                </label>
+                <label class="form-field">Initials (max 2) *
+                  <input name="initials" type="text" placeholder="AC" maxlength="2" required />
+                </label>
+                <label class="form-field">Time zone
+                  <input name="time_zone" type="text" placeholder="EST (UTC -5)" />
+                </label>
+                <label class="form-field">Response time
+                  <input name="response_time" type="text" placeholder="Same day" />
+                </label>
+                <label class="form-field">Next check-in
+                  <input name="next_checkin" type="datetime-local" />
+                </label>
+              </div>
+              <p class="adm-form-error" id="lead-error"></p>
+              <button class="btn btn-primary btn-sm" type="submit" style="margin-top:1rem;">Save lead</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ─ Client Profile tab ─ -->
+        <div class="adm-tab-pane" id="tab-profile" hidden>
+          <div class="dash-card adm-form-card">
+            <p class="dash-card-title">Client profile</p>
+            <p class="dash-card-sub">Edit this client's account details and portal access.</p>
+            <form id="adm-profile-form" style="margin-top:1rem;">
+              <div class="form-grid">
+                <label class="form-field">Full name *
+                  <input name="full_name" type="text" placeholder="Jordan Mitchell" required />
+                </label>
+                <label class="form-field">Company
+                  <input name="company" type="text" placeholder="Meridian Apparel" />
+                </label>
+                <label class="form-field">Email
+                  <input name="email" type="email" placeholder="client@example.com" />
+                </label>
+                <label class="form-field">Avatar initials (max 2)
+                  <input name="avatar_initials" type="text" maxlength="2" placeholder="JM" />
+                </label>
+                <label class="form-field">Portal role
+                  <select name="role">
+                    <option value="client">Client</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </label>
+              </div>
+              <p class="adm-form-error" id="profile-error"></p>
+              <button class="btn btn-primary btn-sm" type="submit" style="margin-top:1rem;">Save profile</button>
+            </form>
+          </div>
+        </div>
+
+      </div><!-- /clients-detail-view -->
+    </section>
+
+    <!-- ═══ TICKETS ════════════════════════════════════════ -->
+    <section class="dash-section" id="section-tickets" hidden>
+      <div class="dash-card">
+        <div class="adm-table-header">
+          <p class="dash-card-title">All support tickets</p>
+          <select id="ticket-status-filter" class="adm-select">
+            <option value="">All statuses</option>
+            <option value="open">Open</option>
+            <option value="in-progress">In progress</option>
+            <option value="resolved">Resolved</option>
+          </select>
+        </div>
+        <div id="adm-ticket-table"><p class="adm-empty">Loading…</p></div>
+      </div>
+    </section>
+
+  </div><!-- /dash-main -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

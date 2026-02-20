@@ -45,7 +45,7 @@
       <a href="#support" class="dash-nav-item" data-section="support">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Support
-        <span class="dash-badge">2</span>
+        <span class="dash-badge" id="dash-support-badge" hidden></span>
       </a>
     </nav>
 
@@ -66,9 +66,9 @@
       </button>
       <div class="dash-topbar-left">
         <h1 class="dash-page-title" id="dash-page-title">Overview</h1>
-        <span class="dash-status-pill">
-          <span class="dash-status-dot"></span>
-          Sprint Active
+        <span class="dash-status-pill" id="dash-status-pill">
+          <span class="dash-status-dot" id="dash-status-dot"></span>
+          <span id="dash-status-text">Active</span>
         </span>
       </div>
       <div class="dash-topbar-right">
@@ -400,37 +400,10 @@
 
     <!-- ═══ ANALYTICS section ══════════════════════════════ -->
     <section class="dash-section" id="section-analytics" hidden>
-      <div class="dash-stats">
-        <div class="dash-stat-card">
-          <p class="dash-stat-label">Page speed score</p>
-          <p class="dash-stat-val">94<span class="dash-stat-of">/100</span></p>
-          <p class="dash-stat-sub dash-stat-green">+31 from baseline</p>
-        </div>
-        <div class="dash-stat-card">
-          <p class="dash-stat-label">Checkout conv. rate</p>
-          <p class="dash-stat-val">3.8<span class="dash-stat-of">%</span></p>
-          <p class="dash-stat-sub dash-stat-green">+1.4pp vs old checkout</p>
-        </div>
-        <div class="dash-stat-card">
-          <p class="dash-stat-label">Cart abandonment</p>
-          <p class="dash-stat-val">61<span class="dash-stat-of">%</span></p>
-          <p class="dash-stat-sub dash-stat-green">↓ from 83% (baseline)</p>
-        </div>
-        <div class="dash-stat-card">
-          <p class="dash-stat-label">Inventory accuracy</p>
-          <p class="dash-stat-val">99.2<span class="dash-stat-of">%</span></p>
-          <p class="dash-stat-sub dash-stat-green">Real-time sync active</p>
-        </div>
-      </div>
+      <div id="analytics-stats-wrap"></div>
       <div class="dash-card" style="margin-top:1.5rem;">
         <p class="dash-card-title">Performance notes</p>
         <p class="dash-card-sub" id="analytics-note">Analytics will be available once your storefront goes live.</p>
-        <ul class="analytics-notes">
-          <li>Core Web Vitals: LCP 1.2 s · FID &lt;10 ms · CLS 0.02</li>
-          <li>Mobile responsiveness: 100% on tested device matrix (12 devices)</li>
-          <li>Stripe webhook latency avg: 140 ms</li>
-          <li>Inventory sync interval: every 5 min (configurable)</li>
-        </ul>
       </div>
     </section>
 
@@ -440,7 +413,34 @@
         <div class="dash-card">
           <p class="dash-card-title">Open tickets <span class="dash-badge" id="ticket-open-count" style="position:static;margin-left:0.4rem;"></span></p>
           <div class="ticket-list" id="ticket-list"></div>
-          <a href="contact.html" class="btn btn-outline" style="margin-top:1.2rem;width:100%;text-align:center;">Open a new ticket</a>
+          <button class="btn btn-outline" id="new-ticket-btn" style="margin-top:1.2rem;width:100%;text-align:center;">+ Open a new ticket</button>
+          <div id="new-ticket-wrap" hidden>
+            <div style="border-top:1px solid rgba(255,255,255,0.07);margin-top:1rem;padding-top:1.25rem;">
+              <p class="dash-card-title" style="margin-bottom:0.75rem;">New support ticket</p>
+              <form id="new-ticket-form">
+                <label class="form-field">Subject *
+                  <input name="title" type="text" placeholder="Describe the issue briefly" required />
+                </label>
+                <label class="form-field" style="margin-top:0.75rem;">Category
+                  <select name="category">
+                    <option value="Bug">Bug / Issue</option>
+                    <option value="Question">Question</option>
+                    <option value="Feature Request">Feature Request</option>
+                    <option value="Billing">Billing</option>
+                    <option value="General">General</option>
+                  </select>
+                </label>
+                <label class="form-field" style="margin-top:0.75rem;">Details
+                  <textarea name="description" rows="4" placeholder="Provide more context about the issue…"></textarea>
+                </label>
+                <p class="error-text" id="ticket-form-error" style="margin-top:0.5rem;font-size:0.82rem;"></p>
+                <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+                  <button class="btn btn-primary btn-sm" type="submit" id="ticket-submit-btn">Submit ticket</button>
+                  <button class="btn btn-outline btn-sm" type="button" id="cancel-ticket-btn">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
 
         <div class="dash-card">

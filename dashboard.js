@@ -66,6 +66,15 @@
   const planEl = document.getElementById('dash-project-plan');
   if (planEl) planEl.textContent = project.plan || project.name;
 
+  // Status pill
+  const statusTextEl = document.getElementById('dash-status-text');
+  const statusDotEl  = document.getElementById('dash-status-dot');
+  const statusPillEl = document.getElementById('dash-status-pill');
+  const statusMap = { active: 'Sprint Active', paused: 'Paused', complete: 'Complete' };
+  if (statusTextEl) statusTextEl.textContent = statusMap[project.status] || project.status;
+  if (statusDotEl)  statusDotEl.className = `dash-status-dot dash-status-dot--${project.status || 'active'}`;
+  if (statusPillEl) statusPillEl.className = `dash-status-pill dash-status-pill--${project.status || 'active'}`;
+
   // Load all data in parallel
   const [milestonesRes, tasksAllRes, deliverablesRes, ticketsRes, activityRes, leadRes] =
     await Promise.all([
@@ -96,8 +105,9 @@
   renderOverview(project, milestones, deliverables, tickets, activity);
   renderProject(project, milestones);
   renderDeliverables(deliverables);
-  renderAnalytics(project);
+  renderAnalytics(project, milestones, deliverables);
   renderSupport(tickets, lead);
+  initTicketForm(userId, project.id);
 
   // ── 7. Static interactions ────────────────────────────
   initStaticInteractions();
@@ -292,12 +302,50 @@ function renderDeliverables(deliverables) {
 
 // ── Render: Analytics ─────────────────────────────────────
 
-function renderAnalytics(project) {
-  // Analytics data comes from real tools in production.
-  // For now show a placeholder message.
-  const analyticsNote = document.getElementById('analytics-note');
-  if (analyticsNote) {
-    analyticsNote.textContent = `Analytics for "${project.name}" will be available once your storefront goes live.`;
+function renderAnalytics(project, milestones, deliverables) {
+  const wrap = document.getElementById('analytics-stats-wrap');
+  const note = document.getElementById('analytics-note');
+
+  const complete    = milestones.filter((m) => m.status === 'complete').length;
+  const total       = milestones.length;
+  const dlvReady    = deliverables.filter((d) => d.status === 'ready').length;
+  const dlvTotal    = deliverables.length;
+  const pct         = total ? Math.round((complete / total) * 100) : 0;
+  const startDate   = project.started_at ? new Date(project.started_at) : null;
+  const daysActive  = startDate ? Math.floor((Date.now() - startDate.getTime()) / 86400000) : '—';
+
+  if (wrap) {
+    wrap.innerHTML = `
+      <div class="dash-stats">
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Overall progress</p>
+          <p class="dash-stat-val">${pct}<span class="dash-stat-of">%</span></p>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Milestones done</p>
+          <p class="dash-stat-val">${complete} <span class="dash-stat-of">/ ${total}</span></p>
+          <p class="dash-stat-sub ${complete === total && total > 0 ? 'dash-stat-green' : ''}">
+            ${complete === total && total > 0 ? 'All complete' : `${total - complete} remaining`}
+          </p>
+        </div>
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Deliverables ready</p>
+          <p class="dash-stat-val">${dlvReady} <span class="dash-stat-of">/ ${dlvTotal}</span></p>
+          <div class="progress-bar"><div class="progress-fill" style="width:${dlvTotal ? Math.round((dlvReady / dlvTotal) * 100) : 0}%"></div></div>
+        </div>
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Days active</p>
+          <p class="dash-stat-val">${daysActive}</p>
+          <p class="dash-stat-sub">${startDate ? 'since ' + startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Start date TBD'}</p>
+        </div>
+      </div>`;
+  }
+
+  if (note) {
+    note.textContent = project.status === 'complete'
+      ? `Project "${project.name}" is complete. Full performance reports available on request.`
+      : `Live performance analytics (page speed, conversion rate, revenue) will be connected once your storefront goes live.`;
   }
 }
 
@@ -309,6 +357,17 @@ function renderSupport(tickets, lead) {
   const openTickets = tickets.filter((t) => t.status !== 'resolved');
 
   if (openCount) openCount.textContent = openTickets.length || '';
+
+  // Sidebar badge
+  const sideBadge = document.getElementById('dash-support-badge');
+  if (sideBadge) {
+    if (openTickets.length > 0) {
+      sideBadge.textContent = openTickets.length;
+      sideBadge.hidden = false;
+    } else {
+      sideBadge.hidden = true;
+    }
+  }
 
   if (ticketList) {
     if (openTickets.length === 0) {
@@ -411,4 +470,91 @@ function timeAgo(iso) {
 }
 function statusLabel(status) {
   return { 'open': 'Awaiting review', 'in-progress': 'In progress', 'resolved': 'Resolved' }[status] || status;
+}
+
+// ── Ticket form ────────────────────────────────────────────
+
+function initTicketForm(userId, projectId) {
+  const openBtn   = document.getElementById('new-ticket-btn');
+  const wrap      = document.getElementById('new-ticket-wrap');
+  const form      = document.getElementById('new-ticket-form');
+  const cancelBtn = document.getElementById('cancel-ticket-btn');
+  const submitBtn = document.getElementById('ticket-submit-btn');
+  const errEl     = document.getElementById('ticket-form-error');
+  if (!openBtn || !wrap || !form) return;
+
+  function showForm() {
+    wrap.hidden = false;
+    openBtn.hidden = true;
+  }
+
+  function hideForm() {
+    wrap.hidden = true;
+    openBtn.hidden = false;
+    form.reset();
+    if (errEl) errEl.textContent = '';
+  }
+
+  openBtn.addEventListener('click', showForm);
+  if (cancelBtn) cancelBtn.addEventListener('click', hideForm);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data  = new FormData(form);
+    const title = (data.get('title') || '').trim();
+    if (!title) return;
+    if (errEl) errEl.textContent = '';
+
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
+
+    const ticketRef = 'NL-' + Date.now().toString(36).toUpperCase().slice(-5);
+
+    const { error } = await nexaSupabase.from('tickets').insert({
+      client_id:   userId,
+      project_id:  projectId,
+      title,
+      category:    data.get('category') || 'General',
+      description: (data.get('description') || '').trim() || null,
+      status:      'open',
+      ticket_ref:  ticketRef,
+    });
+
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit ticket'; }
+
+    if (error) {
+      if (errEl) errEl.textContent = 'Could not submit ticket. Please try again.';
+      return;
+    }
+
+    hideForm();
+
+    // Reload and re-render the ticket list
+    const { data: fresh = [] } = await nexaSupabase
+      .from('tickets').select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+
+    const openTickets = fresh.filter((t) => t.status !== 'resolved');
+
+    const ticketList = document.getElementById('ticket-list');
+    const openCount  = document.getElementById('ticket-open-count');
+    const sideBadge  = document.getElementById('dash-support-badge');
+
+    if (openCount) openCount.textContent = openTickets.length || '';
+    if (sideBadge) {
+      sideBadge.textContent = openTickets.length;
+      sideBadge.hidden = openTickets.length === 0;
+    }
+    if (ticketList) {
+      ticketList.innerHTML = openTickets.map((t) => `
+        <div class="ticket-item ticket-review">
+          <div class="ticket-top">
+            <span class="ticket-id">${escHtml(t.ticket_ref || '#—')}</span>
+            <span class="ticket-status ticket-status--review">${escHtml(statusLabel(t.status))}</span>
+          </div>
+          <p class="ticket-title">${escHtml(t.title)}</p>
+          <p class="ticket-meta">Opened ${timeAgo(t.created_at)}${t.category ? ' · ' + escHtml(t.category) : ''}</p>
+        </div>`).join('') || '<p style="font-size:0.85rem;color:var(--muted);margin-top:0.8rem;">No open tickets — all clear.</p>';
+    }
+  });
 }

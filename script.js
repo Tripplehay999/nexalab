@@ -302,31 +302,16 @@ document.querySelectorAll('[data-faq-toggle]').forEach((toggle) => {
         showSuccess();
         return;
       }
-      // Non-2xx from server — fall through to mailto fallback
-      console.warn('API returned', res.status, '— using mailto fallback');
-    } catch {
-      // Network error or API not yet deployed — fall through to mailto fallback
-      console.warn('API not reachable — using mailto fallback');
-    }
 
-    // ── mailto fallback (until backend is live) ──────────
-    const subject = encodeURIComponent(`NexaLab inquiry — ${fullName}`);
-    const bodyLines = [
-      `Name: ${fullName}`,
-      `Email: ${workEmail}`,
-      `Company: ${company || 'Not provided'}`,
-      `Website: ${website || 'Not provided'}`,
-      `Current platform: ${platform || 'Not specified'}`,
-      `Monthly revenue: ${revenue}`,
-      `Budget: ${budget}`,
-      `Timeline: ${timeline || 'Not specified'}`,
-      `Services: ${services.length ? services.join(', ') : 'Not specified'}`,
-      '',
-      'Primary goal:',
-      goal,
-    ];
-    const body = encodeURIComponent(bodyLines.join('\n'));
-    window.location.href = `mailto:hello@nexalab.io?subject=${subject}&body=${body}`;
-    setLoading(false);
+      // Non-2xx — surface a real error to the user
+      let msg = 'Something went wrong. Please try again.';
+      try {
+        const body = await res.json();
+        if (body?.error) msg = body.error;
+      } catch (_) {}
+      showError(msg);
+    } catch {
+      showError('Could not reach our servers. Please email us directly at hello@nexalab.io');
+    }
   });
 })();
