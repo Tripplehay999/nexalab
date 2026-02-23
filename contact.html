@@ -111,17 +111,25 @@
           <div class="contact-form-wrap">
             <form id="intake-form" novalidate>
 
+              <!-- Hidden plan field (populated from URL ?plan= param by script.js) -->
+              <input type="hidden" name="plan" id="intake-plan-input" />
+
               <!-- Success state (hidden until submit) -->
               <div id="intake-success" class="intake-success" hidden>
                 <div class="success-icon">
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" stroke="#22d3a8" stroke-width="1.5"/><path d="M7 12l4 4 6-7" stroke="#22d3a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
-                <h3>Submission received</h3>
-                <p>We'll review your project and reach out within a few hours. Check your inbox — we'll include a calendar link for your strategy call.</p>
-                <a href="index.html" class="btn btn-outline" style="margin-top:1rem;">Back to home</a>
+                <h3>Submission received!</h3>
+                <p id="intake-success-msg">Redirecting you to your client portal…</p>
               </div>
 
               <div id="intake-fields">
+                <!-- Plan banner (shown when ?plan= is in the URL) -->
+                <div id="intake-plan-banner" class="intake-plan-banner" hidden>
+                  <span id="intake-plan-label"></span>
+                  <a href="index.html#pricing" class="intake-plan-change">Change plan</a>
+                </div>
+
                 <h2 class="form-title">Project intake</h2>
                 <p class="form-subtitle">Fields marked * are required.</p>
 

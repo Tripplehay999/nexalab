@@ -37,21 +37,53 @@
   const navItems  = document.querySelectorAll('.dash-nav-item[data-section]');
   const sections  = document.querySelectorAll('.dash-section');
   const pageTitle = document.getElementById('adm-page-title');
-  const titles    = { overview: 'Overview', inquiries: 'Inquiries', clients: 'Clients', tickets: 'Tickets' };
+  const titles    = { overview: 'Overview', pending: 'Pending Approvals', inquiries: 'Inquiries', clients: 'Clients', tickets: 'Tickets' };
   const loaded    = {};
+  let   _navBusy  = false;
+  const overlay   = document.getElementById('page-overlay');
 
-  function activateSection(key) {
+  function activateSection(key, pushState = true) {
+    if (_navBusy) return;
+    const next = document.getElementById(`section-${key}`);
+    if (!next) return;
+    const current = [...sections].find((s) => !s.hidden);
+    if (current === next) return;
+
+    _navBusy = true;
     navItems.forEach((n) => n.classList.toggle('is-active', n.dataset.section === key));
-    sections.forEach((s) => { s.hidden = s.id !== `section-${key}`; });
-    if (pageTitle) pageTitle.textContent = titles[key] || key;
-    if (!loaded[key]) {
-      loaded[key] = true;
-      if (key === 'overview')  loadOverview();
-      if (key === 'inquiries') loadInquiries();
-      if (key === 'clients')   loadClients();
-      if (key === 'tickets')   loadAllTickets();
-    }
+    const sidebar = document.getElementById('dash-sidebar');
+    if (sidebar) sidebar.classList.remove('is-open');
+
+    // Phase 1 — cover with overlay (feels like leaving a page)
+    overlay.classList.add('covering');
+
+    setTimeout(() => {
+      // Phase 2 — swap content while screen is covered
+      sections.forEach((s) => { s.hidden = true; });
+      next.hidden = false;
+      if (pageTitle) pageTitle.textContent = titles[key] || key;
+      document.title = `${titles[key] || key} — NexaLab Admin`;
+      if (pushState) history.pushState({ section: key }, '', `#${key}`);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      if (!loaded[key]) {
+        loaded[key] = true;
+        if (key === 'overview')  loadOverview();
+        if (key === 'pending')   loadPendingProjects();
+        if (key === 'inquiries') loadInquiries();
+        if (key === 'clients')   loadClients();
+        if (key === 'tickets')   loadAllTickets();
+      }
+      // Phase 3 — reveal new "page"
+      overlay.classList.remove('covering');
+      setTimeout(() => { _navBusy = false; }, 160);
+    }, 150);
   }
+
+  // Browser back / forward
+  window.addEventListener('popstate', (e) => {
+    const key = e.state?.section || location.hash.replace('#', '') || 'overview';
+    activateSection(key, false);
+  });
 
   navItems.forEach((n) => n.addEventListener('click', (e) => {
     e.preventDefault();
@@ -80,8 +112,16 @@
 
   // ── 8. Client detail — back button ───────────────────
   document.getElementById('adm-back-btn').addEventListener('click', () => {
-    document.getElementById('clients-grid-view').hidden  = false;
-    document.getElementById('clients-detail-view').hidden = true;
+    const detail = document.getElementById('clients-detail-view');
+    const grid   = document.getElementById('clients-grid-view');
+    const _ov = document.getElementById('page-overlay');
+    _ov.classList.add('covering');
+    setTimeout(() => {
+      detail.hidden = true;
+      grid.hidden   = false;
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      _ov.classList.remove('covering');
+    }, 150);
     _state.clientId  = null;
     _state.projectId = null;
     _state.leadId    = null;
@@ -148,6 +188,135 @@ function showToast(msg, type = 'success') {
   t._tmr = setTimeout(() => t.classList.remove('adm-toast--visible'), 3000);
 }
 
+// ── Pending Approvals ─────────────────────────────────────
+async function loadPendingProjects() {
+  const { data: projects = [] } = await nexaSupabase
+    .from('projects')
+    .select('id, name, plan, status, created_at, client_id, inquiry_id, description')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  // Update sidebar badge
+  const pb = document.getElementById('adm-pending-badge');
+  if (pb) { pb.textContent = projects.length; pb.hidden = projects.length === 0; }
+
+  const wrap = document.getElementById('adm-pending-list');
+  if (!wrap) return;
+
+  if (projects.length === 0) {
+    wrap.innerHTML = '<div class="dash-card"><p class="adm-empty">No pending projects — all caught up.</p></div>';
+    return;
+  }
+
+  // Fetch client profiles + inquiries
+  const clientIds = [...new Set(projects.map((p) => p.client_id))];
+  const inqIds    = projects.map((p) => p.inquiry_id).filter(Boolean);
+  const [profilesRes, inqRes] = await Promise.all([
+    nexaSupabase.from('profiles').select('id, full_name, company, email').in('id', clientIds),
+    inqIds.length ? nexaSupabase.from('inquiries').select('id, goal, revenue, budget, timeline, services, plan, work_email').in('id', inqIds) : { data: [] },
+  ]);
+  const profileMap = {};
+  const inqMap     = {};
+  (profilesRes.data ?? []).forEach((p) => { profileMap[p.id] = p; });
+  (inqRes.data     ?? []).forEach((i) => { inqMap[i.id]     = i; });
+
+  wrap.innerHTML = projects.map((proj) => {
+    const client = profileMap[proj.client_id] || {};
+    const inq    = inqMap[proj.inquiry_id]    || {};
+    const ini    = client.full_name?.split(' ').map((n) => n[0]).join('').slice(0,2).toUpperCase() || '?';
+    return `
+      <div class="adm-pending-card dash-card" id="pending-card-${proj.id}">
+        <div class="adm-pending-card-header">
+          <div class="adm-client-avatar" style="flex-shrink:0;">${escHtml(ini)}</div>
+          <div style="flex:1;min-width:0;">
+            <p class="adm-client-name">${escHtml(client.full_name || 'Unknown')}</p>
+            <p class="adm-client-meta">${escHtml([client.company, client.email].filter(Boolean).join(' · '))}</p>
+          </div>
+          <div style="flex-shrink:0;display:flex;gap:0.5rem;">
+            <button class="btn btn-sm btn-primary" data-approve-id="${proj.id}" data-client-email="${escHtml(client.email || '')}" data-client-name="${escHtml(client.full_name || '')}">✓ Approve</button>
+            <button class="btn btn-sm btn-outline adm-icon-btn--danger" style="width:auto;padding:0 0.75rem;" data-reject-id="${proj.id}" data-client-email="${escHtml(client.email || '')}" data-client-name="${escHtml(client.full_name || '')}">✕ Reject</button>
+          </div>
+        </div>
+        <div class="adm-pending-details">
+          <div class="adm-pending-row"><span class="adm-pending-label">Plan</span><span>${escHtml(inq.plan || proj.plan || '—')}</span></div>
+          <div class="adm-pending-row"><span class="adm-pending-label">Revenue</span><span>${escHtml(inq.revenue || '—')}</span></div>
+          <div class="adm-pending-row"><span class="adm-pending-label">Budget</span><span>${escHtml(inq.budget || '—')}</span></div>
+          <div class="adm-pending-row"><span class="adm-pending-label">Timeline</span><span>${escHtml(inq.timeline || '—')}</span></div>
+          <div class="adm-pending-row"><span class="adm-pending-label">Services</span><span>${escHtml((inq.services || []).join(', ') || '—')}</span></div>
+          <div class="adm-pending-row"><span class="adm-pending-label">Submitted</span><span>${fmtDate(proj.created_at)}</span></div>
+          ${inq.goal ? `<div class="adm-pending-goal"><p class="adm-pending-label">Goal</p><p>${escHtml(inq.goal)}</p></div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('[data-approve-id]').forEach((btn) => {
+    btn.addEventListener('click', () => approveProject(btn.dataset.approveId, btn.dataset.clientEmail, btn.dataset.clientName));
+  });
+  wrap.querySelectorAll('[data-reject-id]').forEach((btn) => {
+    btn.addEventListener('click', () => rejectProject(btn.dataset.rejectId, btn.dataset.clientEmail, btn.dataset.clientName));
+  });
+}
+
+async function approveProject(projectId, clientEmail, clientName) {
+  if (!confirm(`Approve this project for ${clientName || 'this client'}?`)) return;
+  const { error } = await nexaSupabase.from('projects').update({ status: 'active' }).eq('id', projectId);
+  if (error) { showToast('Failed to approve project', 'error'); return; }
+  showToast('Project approved — client portal is now active');
+
+  // Fetch plan for email
+  const { data: proj } = await nexaSupabase.from('projects').select('plan').eq('id', projectId).single();
+  await sendNotificationAdmin('project_approved', clientEmail, {
+    name:      clientName,
+    plan:      proj?.plan || '',
+    portalUrl: `${location.origin}/dashboard.html`,
+  });
+
+  // Reload pending list
+  const el = document.getElementById(`pending-card-${projectId}`);
+  if (el) el.remove();
+  const pb = document.getElementById('adm-pending-badge');
+  const remaining = document.querySelectorAll('[id^="pending-card-"]').length;
+  if (pb) { pb.textContent = remaining; pb.hidden = remaining === 0; }
+  if (remaining === 0) {
+    const wrap = document.getElementById('adm-pending-list');
+    if (wrap) wrap.innerHTML = '<div class="dash-card"><p class="adm-empty">No pending projects — all caught up.</p></div>';
+  }
+}
+
+async function rejectProject(projectId, clientEmail, clientName) {
+  if (!confirm(`Reject this project for ${clientName || 'this client'}? They will be notified.`)) return;
+  const { error } = await nexaSupabase.from('projects').update({ status: 'rejected' }).eq('id', projectId);
+  if (error) { showToast('Failed to reject project', 'error'); return; }
+  showToast('Project rejected — client notified');
+
+  await sendNotificationAdmin('project_rejected', clientEmail, { name: clientName });
+
+  const el = document.getElementById(`pending-card-${projectId}`);
+  if (el) el.remove();
+  const pb = document.getElementById('adm-pending-badge');
+  const remaining = document.querySelectorAll('[id^="pending-card-"]').length;
+  if (pb) { pb.textContent = remaining; pb.hidden = remaining === 0; }
+  if (remaining === 0) {
+    const wrap = document.getElementById('adm-pending-list');
+    if (wrap) wrap.innerHTML = '<div class="dash-card"><p class="adm-empty">No pending projects — all caught up.</p></div>';
+  }
+}
+
+async function sendNotificationAdmin(type, to, data) {
+  if (!to) return;
+  try {
+    await fetch(`${NEXALAB_SUPABASE_URL}/functions/v1/send-notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${NEXALAB_SUPABASE_KEY}`,
+        'apikey':         NEXALAB_SUPABASE_KEY,
+      },
+      body: JSON.stringify({ type, to, data }),
+    });
+  } catch (_) {}
+}
+
 // ── Overview ──────────────────────────────────────────────
 async function loadOverview() {
   const [clientsRes, projectsRes, inquiriesRes, ticketsRes] = await Promise.all([
@@ -156,6 +325,7 @@ async function loadOverview() {
     nexaSupabase.from('inquiries').select('id, status, full_name, work_email, created_at').order('created_at', { ascending: false }).limit(6),
     nexaSupabase.from('tickets').select('id, status, title, ticket_ref, created_at').neq('status', 'resolved').order('created_at', { ascending: false }).limit(6),
   ]);
+
 
   const clients   = clientsRes.data   ?? [];
   const projects  = projectsRes.data  ?? [];
@@ -242,6 +412,8 @@ async function loadInquiries(status = '') {
     return;
   }
 
+  const isDone = (s) => s === 'converted' || s === 'closed';
+
   wrap.innerHTML = `
     <div class="adm-table-wrap">
       <table class="adm-table">
@@ -262,29 +434,54 @@ async function loadInquiries(status = '') {
             <td class="adm-td adm-td--services">${(r.services || []).join(', ') || '—'}</td>
             <td class="adm-td adm-td--date">${fmtDate(r.created_at)}</td>
             <td class="adm-td">
-              <select class="adm-select adm-inline-select" data-inq-status="${r.id}">
-                <option value="new"       ${r.status==='new'       ?'selected':''}>New</option>
-                <option value="contacted" ${r.status==='contacted' ?'selected':''}>Contacted</option>
-                <option value="converted" ${r.status==='converted' ?'selected':''}>Converted</option>
-                <option value="closed"    ${r.status==='closed'    ?'selected':''}>Closed</option>
-              </select>
+              <span class="adm-inq-status-badge adm-inq-status--${escHtml(r.status)}">${escHtml(r.status)}</span>
             </td>
             <td class="adm-td">
-              <button class="adm-expand-btn" data-inq-id="${r.id}">View goal</button>
+              <button class="adm-expand-btn" data-inq-id="${r.id}">Review ↓</button>
             </td>
           </tr>
           <tr class="adm-goal-row" id="goal-${r.id}" hidden>
-            <td colspan="9" class="adm-goal-cell"><strong>Goal:</strong> ${escHtml(r.goal)}</td>
+            <td colspan="9" class="adm-goal-cell">
+              <div class="adm-inq-detail">
+                ${r.plan     ? `<div class="adm-inq-detail-row"><span class="adm-inq-detail-label">Plan</span>${escHtml(r.plan)}</div>` : ''}
+                ${r.website  ? `<div class="adm-inq-detail-row"><span class="adm-inq-detail-label">Website</span><a href="${escHtml(r.website)}" target="_blank" class="adm-link">${escHtml(r.website)}</a></div>` : ''}
+                ${r.timeline ? `<div class="adm-inq-detail-row"><span class="adm-inq-detail-label">Timeline</span>${escHtml(r.timeline)}</div>` : ''}
+                <div class="adm-inq-detail-row adm-inq-goal"><span class="adm-inq-detail-label">Goal</span>${escHtml(r.goal)}</div>
+                <div class="adm-inq-status-row">
+                  <span class="adm-inq-detail-label">Change status</span>
+                  <select class="adm-select adm-inline-select adm-inq-status-chg" data-inq-id="${escHtml(r.id)}">
+                    <option value="new"       ${r.status==='new'       ?'selected':''}>New</option>
+                    <option value="contacted" ${r.status==='contacted' ?'selected':''}>Contacted</option>
+                    <option value="converted" ${r.status==='converted' ?'selected':''}>Converted</option>
+                    <option value="closed"    ${r.status==='closed'    ?'selected':''}>Closed</option>
+                  </select>
+                </div>
+                ${!isDone(r.status) ? `
+                <div class="adm-inq-actions">
+                  <button class="btn btn-sm adm-approve-inq-btn"
+                    data-approve-inq="${escHtml(r.id)}"
+                    data-inq-name="${escHtml(r.full_name)}"
+                    data-inq-email="${escHtml(r.work_email)}"
+                    data-inq-plan="${escHtml(r.plan || '')}"
+                    data-inq-goal="${escHtml(r.goal || '')}">✓ Approve — activate client portal</button>
+                  <button class="btn btn-sm adm-decline-inq-btn"
+                    data-decline-inq="${escHtml(r.id)}"
+                    data-inq-name="${escHtml(r.full_name)}"
+                    data-inq-email="${escHtml(r.work_email)}">✗ Decline</button>
+                </div>` : ''}
+              </div>
+            </td>
           </tr>`).join('')}
         </tbody>
       </table>
     </div>`;
 
-  wrap.querySelectorAll('[data-inq-status]').forEach((sel) => {
+  wrap.querySelectorAll('.adm-inq-status-chg').forEach((sel) => {
     sel.addEventListener('change', async () => {
-      const { error } = await nexaSupabase.from('inquiries').update({ status: sel.value }).eq('id', sel.dataset.inqStatus);
+      const { error } = await nexaSupabase.from('inquiries')
+        .update({ status: sel.value }).eq('id', sel.dataset.inqId);
       if (error) showToast('Failed to update status', 'error');
-      else showToast('Status updated');
+      else { showToast('Status updated'); loadInquiries(document.getElementById('inq-status-filter')?.value || ''); }
     });
   });
 
@@ -294,10 +491,83 @@ async function loadInquiries(status = '') {
       const goalRow = document.getElementById(`goal-${id}`);
       if (goalRow) {
         goalRow.hidden  = !goalRow.hidden;
-        btn.textContent = goalRow.hidden ? 'View goal' : 'Hide';
+        btn.textContent = goalRow.hidden ? 'Review ↓' : 'Close ↑';
       }
     });
   });
+
+  wrap.querySelectorAll('[data-approve-inq]').forEach((btn) => {
+    btn.addEventListener('click', () =>
+      approveInquiry(btn.dataset.approveInq, btn.dataset.inqName, btn.dataset.inqEmail, btn.dataset.inqPlan, btn.dataset.inqGoal));
+  });
+
+  wrap.querySelectorAll('[data-decline-inq]').forEach((btn) => {
+    btn.addEventListener('click', () =>
+      declineInquiry(btn.dataset.declineInq, btn.dataset.inqName, btn.dataset.inqEmail));
+  });
+}
+
+async function approveInquiry(inquiryId, name, email, plan, goal) {
+  if (!confirm(`Approve ${name}'s inquiry and activate their client portal?`)) return;
+
+  const { error: inqErr } = await nexaSupabase
+    .from('inquiries').update({ status: 'converted' }).eq('id', inquiryId);
+  if (inqErr) { showToast('Failed to update inquiry', 'error'); return; }
+
+  // Find any linked pending project
+  const { data: existingProject } = await nexaSupabase
+    .from('projects').select('id').eq('inquiry_id', inquiryId).eq('status', 'pending').maybeSingle();
+
+  if (existingProject) {
+    // Approve the existing linked project
+    await nexaSupabase.from('projects').update({ status: 'active' }).eq('id', existingProject.id);
+  } else {
+    // No linked project — find the client by email and create one from inquiry data
+    const { data: clientProfile } = await nexaSupabase
+      .from('profiles').select('id').eq('email', email).maybeSingle();
+
+    if (clientProfile) {
+      await nexaSupabase.from('projects').insert({
+        client_id:   clientProfile.id,
+        inquiry_id:  inquiryId,
+        name:        plan ? `${plan} Project` : `${name}'s Project`,
+        plan:        plan  || null,
+        status:      'active',
+        description: goal  || 'Approved via inquiry.',
+      });
+    } else {
+      showToast(`Inquiry marked converted — client hasn't created an account yet`, 'warn');
+      loadInquiries(document.getElementById('inq-status-filter')?.value || '');
+      return;
+    }
+  }
+
+  await sendNotificationAdmin('project_approved', email, {
+    name, plan,
+    portalUrl: `${location.origin}/dashboard.html`,
+  });
+  showToast(`${name} approved — portal is now active`);
+  loadInquiries(document.getElementById('inq-status-filter')?.value || '');
+}
+
+async function declineInquiry(inquiryId, name, email) {
+  if (!confirm(`Decline ${name}'s inquiry? They will be notified.`)) return;
+
+  const { error: inqErr } = await nexaSupabase
+    .from('inquiries').update({ status: 'closed' }).eq('id', inquiryId);
+  if (inqErr) { showToast('Failed to update inquiry', 'error'); return; }
+
+  // Find and reject any linked pending project
+  const { data: project } = await nexaSupabase
+    .from('projects').select('id').eq('inquiry_id', inquiryId).eq('status', 'pending').maybeSingle();
+
+  if (project) {
+    await nexaSupabase.from('projects').update({ status: 'rejected' }).eq('id', project.id);
+    await sendNotificationAdmin('project_rejected', email, { name });
+  }
+
+  showToast(`${name}'s inquiry declined`);
+  loadInquiries(document.getElementById('inq-status-filter')?.value || '');
 }
 
 // ── Clients ───────────────────────────────────────────────
@@ -309,8 +579,16 @@ async function loadClients() {
 
   const clients  = profilesRes.data ?? [];
   const projects = projRes.data     ?? [];
-  const countMap = {};
-  projects.forEach((p) => { countMap[p.client_id] = (countMap[p.client_id] || 0) + 1; });
+
+  // Build a map: client_id → best project status (active > pending > rejected > none)
+  const statusRank = { active: 3, pending: 2, rejected: 1 };
+  const statusMap  = {};
+  projects.forEach((p) => {
+    const cur = statusMap[p.client_id];
+    if (!cur || (statusRank[p.status] || 0) > (statusRank[cur] || 0)) {
+      statusMap[p.client_id] = p.status;
+    }
+  });
 
   const grid = document.getElementById('adm-client-grid');
   if (!grid) return;
@@ -321,15 +599,18 @@ async function loadClients() {
   }
 
   grid.innerHTML = clients.map((c) => {
-    const ini   = c.avatar_initials || c.full_name?.split(' ').map((n) => n[0]).join('').slice(0,2).toUpperCase() || '?';
-    const count = countMap[c.id] || 0;
+    const ini    = c.avatar_initials || c.full_name?.split(' ').map((n) => n[0]).join('').slice(0,2).toUpperCase() || '?';
+    const pStat  = statusMap[c.id] || null;
+    const badge  = pStat
+      ? `<span class="adm-client-status adm-client-status--${escHtml(pStat)}">${escHtml(pStat)}</span>`
+      : `<span class="adm-client-status adm-client-status--none">no project</span>`;
     return `
       <div class="adm-client-card" data-client-id="${c.id}">
         <div class="adm-client-avatar">${escHtml(ini)}</div>
         <div class="adm-client-info">
           <p class="adm-client-name">${escHtml(c.full_name || 'Unnamed')}</p>
           <p class="adm-client-meta">${escHtml([c.company, c.email].filter(Boolean).join(' · '))}</p>
-          <p class="adm-client-proj">${count} project${count !== 1 ? 's' : ''}</p>
+          ${badge}
         </div>
         <button class="btn btn-sm btn-outline adm-manage-btn">Manage →</button>
       </div>`;
@@ -349,14 +630,39 @@ async function openClientDetail(client) {
   _state.projectId = null;
   _state.leadId    = null;
 
-  document.getElementById('clients-grid-view').hidden  = true;
-  document.getElementById('clients-detail-view').hidden = false;
+  const grid   = document.getElementById('clients-grid-view');
+  const detail = document.getElementById('clients-detail-view');
   document.getElementById('adm-detail-name').textContent = client.full_name || 'Unnamed';
   document.getElementById('adm-detail-sub').textContent  = [client.company, client.email].filter(Boolean).join(' · ');
-  document.getElementById('clients-detail-view').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const _ov = document.getElementById('page-overlay');
+  _ov.classList.add('covering');
+  setTimeout(() => {
+    grid.hidden   = true;
+    detail.hidden = false;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    _ov.classList.remove('covering');
+  }, 150);
+
+  // Wire delete button for this client
+  const delBtn = document.getElementById('adm-delete-client-btn');
+  if (delBtn) {
+    delBtn.onclick = () => deleteClient(client.id, client.full_name || 'this client');
+  }
 
   switchProjectTab('project');
   await loadClientProject(client.id);
+}
+
+async function deleteClient(clientId, clientName) {
+  if (!confirm(`Permanently delete ${clientName}'s profile and all their data? This cannot be undone.`)) return;
+
+  const { error } = await nexaSupabase.from('profiles').delete().eq('id', clientId);
+  if (error) { showToast('Failed to delete client: ' + error.message, 'error'); return; }
+
+  showToast(`${clientName} deleted`);
+  document.getElementById('clients-detail-view').hidden = true;
+  document.getElementById('clients-grid-view').hidden   = false;
+  loadClients();
 }
 
 async function loadClientProject(clientId) {
@@ -387,9 +693,11 @@ function renderProjectTab(project, clientId) {
           </label>
           <label class="form-field">Status
             <select name="status">
+              <option value="pending"  ${project?.status==='pending'  ?'selected':''}>Pending (awaiting approval)</option>
               <option value="active"   ${project?.status==='active'   ?'selected':''}>Active</option>
               <option value="paused"   ${project?.status==='paused'   ?'selected':''}>Paused</option>
               <option value="complete" ${project?.status==='complete' ?'selected':''}>Complete</option>
+              <option value="rejected" ${project?.status==='rejected' ?'selected':''}>Rejected</option>
             </select>
           </label>
           <label class="form-field">Start date
@@ -439,16 +747,218 @@ function renderProjectTab(project, clientId) {
   });
 }
 
+let _tabBusy = false;
 function switchProjectTab(tab) {
-  document.querySelectorAll('.adm-tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === tab));
-  document.querySelectorAll('.adm-tab-pane').forEach((p) => { p.hidden = p.id !== `tab-${tab}`; });
+  if (_tabBusy) return;
+  const panes   = [...document.querySelectorAll('.adm-tab-pane')];
+  const next    = document.getElementById(`tab-${tab}`);
+  const current = panes.find((p) => !p.hidden);
 
-  if (tab === 'profile') { if (_state.clientId) loadClientProfile(_state.clientId); return; }
-  if (!_state.projectId) return;
-  if (tab === 'milestones')   loadMilestones(_state.projectId);
-  if (tab === 'deliverables') loadDeliverables(_state.projectId);
-  if (tab === 'activity')     loadActivityAdmin(_state.projectId);
-  if (tab === 'lead')         loadLead(_state.projectId);
+  document.querySelectorAll('.adm-tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === tab));
+
+  const doSwitch = () => {
+    panes.forEach((p) => { p.hidden = true; });
+    if (next) next.hidden = false;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    if (tab === 'profile')      { if (_state.clientId) loadClientProfile(_state.clientId); return; }
+    if (tab === 'integrations') { if (_state.clientId) loadClientIntegrations(_state.clientId); return; }
+    if (!_state.projectId) return;
+    if (tab === 'milestones')   loadMilestones(_state.projectId);
+    if (tab === 'deliverables') loadDeliverables(_state.projectId);
+    if (tab === 'activity')     loadActivityAdmin(_state.projectId);
+    if (tab === 'lead')         loadLead(_state.projectId);
+  };
+
+  if (current && current !== next) {
+    _tabBusy = true;
+    current.classList.add('is-leaving');
+    setTimeout(() => {
+      current.classList.remove('is-leaving');
+      _tabBusy = false;
+      doSwitch();
+    }, 110);
+  } else {
+    doSwitch();
+  }
+}
+
+// ── Store Integrations ────────────────────────────────────
+async function loadClientIntegrations(clientId) {
+  const { data: integration } = await nexaSupabase
+    .from('store_integrations').select('id, platform, store_url, last_synced_at, is_active')
+    .eq('client_id', clientId).eq('is_active', true).limit(1).maybeSingle();
+
+  renderIntegrationTab(integration, clientId);
+}
+
+function renderIntegrationTab(integration, clientId) {
+  const el = document.getElementById('adm-integration-card');
+  if (!el) return;
+
+  if (!integration) {
+    // ── Connect form ────────────────────────────────────────
+    el.innerHTML = `
+      <p class="dash-card-title">Connect Store</p>
+      <p class="dash-card-sub" style="margin-bottom:1.25rem;">
+        Link this client's store to sync live revenue, order count, and customer data into their portal.
+      </p>
+      <form id="adm-integration-form">
+        <div class="form-grid">
+          <label class="form-field">Platform *
+            <select name="platform" id="adm-platform-select">
+              <option value="wordpress">WordPress + WooCommerce</option>
+              <option value="shopify">Shopify</option>
+              <option value="bigcommerce">BigCommerce</option>
+            </select>
+          </label>
+          <label class="form-field">Store URL *
+            <input name="store_url" type="url" placeholder="https://yourstore.com" required />
+          </label>
+          <!-- WooCommerce / BigCommerce -->
+          <label class="form-field" id="fi-api-key">
+            <span id="fi-api-key-label">Consumer Key (ck_…)</span>
+            <input name="api_key" type="text" placeholder="ck_..." />
+          </label>
+          <label class="form-field" id="fi-api-secret">
+            <span id="fi-api-secret-label">Consumer Secret (cs_…)</span>
+            <input name="api_secret" type="password" placeholder="cs_..." />
+          </label>
+          <!-- Shopify / BigCommerce access token -->
+          <label class="form-field" id="fi-token" style="display:none;">
+            <span id="fi-token-label">Access Token</span>
+            <input name="access_token" type="password" placeholder="shppa_..." />
+          </label>
+          <!-- BigCommerce store hash -->
+          <label class="form-field" id="fi-hash" style="display:none;">Store Hash
+            <input name="store_hash" type="text" placeholder="abc123xyz" />
+          </label>
+        </div>
+        <details class="adm-integration-help" style="margin-top:1rem;">
+          <summary style="cursor:pointer;font-size:0.82rem;color:var(--muted);">Where do I find these credentials?</summary>
+          <div class="adm-integration-help-body">
+            <p><strong>WordPress / WooCommerce:</strong> WooCommerce → Settings → Advanced → REST API → Add key. Set permissions to Read.</p>
+            <p><strong>Shopify:</strong> Settings → Apps → Develop apps → Create app → Admin API access token.</p>
+            <p><strong>BigCommerce:</strong> Settings → API accounts → Create V2/V3 API token. Copy Access Token and Store Hash from the URL.</p>
+          </div>
+        </details>
+        <p class="adm-form-error" id="integration-error"></p>
+        <button class="btn btn-primary btn-sm" type="submit" style="margin-top:1rem;">Connect &amp; Sync</button>
+      </form>`;
+
+    // Platform toggle
+    document.getElementById('adm-platform-select').addEventListener('change', (e) => {
+      const p = e.target.value;
+      const isWoo = p === 'wordpress' || p === 'woocommerce';
+      document.getElementById('fi-api-key').style.display    = p === 'shopify'    ? 'none' : '';
+      document.getElementById('fi-api-secret').style.display = p === 'shopify'    ? 'none' : '';
+      document.getElementById('fi-token').style.display      = isWoo              ? 'none' : '';
+      document.getElementById('fi-hash').style.display       = p === 'bigcommerce'? ''     : 'none';
+      const keyLbl = document.getElementById('fi-api-key-label');
+      const secLbl = document.getElementById('fi-api-secret-label');
+      const tokLbl = document.getElementById('fi-token-label');
+      if (p === 'bigcommerce') { keyLbl.textContent = 'Client ID'; secLbl.textContent = 'Client Secret'; tokLbl.textContent = 'Access Token'; }
+      else { keyLbl.textContent = 'Consumer Key (ck_…)'; secLbl.textContent = 'Consumer Secret (cs_…)'; tokLbl.textContent = 'Access Token'; }
+    });
+
+    // Form submit
+    document.getElementById('adm-integration-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const payload = Object.fromEntries(fd);
+      await connectStore(clientId, payload);
+    });
+
+  } else {
+    // ── Connected state ─────────────────────────────────────
+    const platformLabel = { wordpress: 'WordPress', woocommerce: 'WooCommerce', shopify: 'Shopify', bigcommerce: 'BigCommerce' };
+    el.innerHTML = `
+      <div class="adm-integration-header">
+        <div>
+          <p class="dash-card-title" style="margin:0;">Store Connected</p>
+          <p class="dash-card-sub" style="margin:0.2rem 0 0;">${escHtml(platformLabel[integration.platform] || integration.platform)}</p>
+        </div>
+        <span class="adm-integration-status-badge">● Live</span>
+      </div>
+      <div class="adm-integration-details">
+        <div class="adm-inq-detail-row">
+          <span class="adm-inq-detail-label">Store URL</span>
+          <a href="${escHtml(integration.store_url)}" target="_blank" class="adm-link">${escHtml(integration.store_url)}</a>
+        </div>
+        <div class="adm-inq-detail-row">
+          <span class="adm-inq-detail-label">Last synced</span>
+          ${integration.last_synced_at ? fmtDate(integration.last_synced_at) : 'Never'}
+        </div>
+      </div>
+      <div class="adm-integration-actions">
+        <button class="btn btn-sm btn-primary" id="adm-sync-btn">↻ Sync Now</button>
+        <button class="btn btn-sm" style="background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.2);color:#ff7070;" id="adm-disconnect-btn">Disconnect</button>
+      </div>
+      <div id="adm-sync-result" style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"></div>`;
+
+    document.getElementById('adm-sync-btn').addEventListener('click', () => syncStore(integration.id, clientId));
+    document.getElementById('adm-disconnect-btn').addEventListener('click', () => disconnectStore(integration.id, clientId));
+  }
+}
+
+async function connectStore(clientId, formData) {
+  const errEl = document.getElementById('integration-error');
+  errEl.textContent = '';
+
+  const payload = {
+    client_id:    clientId,
+    platform:     formData.platform,
+    store_url:    formData.store_url.trim().replace(/\/$/, ''),
+    api_key:      formData.api_key      || null,
+    api_secret:   formData.api_secret   || null,
+    access_token: formData.access_token || null,
+    store_hash:   formData.store_hash   || null,
+  };
+
+  const { data: integration, error } = await nexaSupabase
+    .from('store_integrations').insert(payload).select('id').single();
+  if (error) { errEl.textContent = error.message; return; }
+
+  showToast('Store connected — syncing now…');
+  await syncStore(integration.id, clientId);
+}
+
+async function syncStore(integrationId, clientId) {
+  const resultEl = document.getElementById('adm-sync-result');
+  const syncBtn  = document.getElementById('adm-sync-btn');
+  if (syncBtn)   { syncBtn.disabled = true; syncBtn.textContent = 'Syncing…'; }
+  if (resultEl)  resultEl.textContent = 'Fetching data from store…';
+
+  try {
+    const { data: { session } } = await nexaSupabase.auth.getSession();
+    const res = await fetch(`${NEXALAB_SUPABASE_URL}/functions/v1/sync-store`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey':         NEXALAB_SUPABASE_KEY,
+      },
+      body: JSON.stringify({ integration_id: integrationId }),
+    });
+
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || `HTTP ${res.status}`);
+
+    showToast(`Synced ${result.synced_orders} orders across ${result.synced_days} days`);
+    if (resultEl) resultEl.textContent = `Last sync: ${result.synced_orders} orders pulled · ${result.synced_days} days of data`;
+    loadClientIntegrations(clientId);
+  } catch (e) {
+    showToast('Sync failed: ' + e.message, 'error');
+    if (resultEl) resultEl.textContent = 'Sync failed: ' + e.message;
+  } finally {
+    if (syncBtn) { syncBtn.disabled = false; syncBtn.textContent = '↻ Sync Now'; }
+  }
+}
+
+async function disconnectStore(integrationId, clientId) {
+  if (!confirm('Disconnect this store? Synced data (orders + metrics) will be deleted.')) return;
+  await nexaSupabase.from('store_integrations').delete().eq('id', integrationId);
+  showToast('Store disconnected');
+  loadClientIntegrations(clientId);
 }
 
 // ── Milestones ────────────────────────────────────────────
@@ -911,7 +1421,7 @@ async function loadClientProfile(clientId) {
   };
 }
 
-// ── All tickets ───────────────────────────────────────────
+// ── All tickets (two-pane) ────────────────────────────────
 async function loadAllTickets(status = '') {
   let q = nexaSupabase
     .from('tickets')
@@ -920,59 +1430,153 @@ async function loadAllTickets(status = '') {
   if (status) q = q.eq('status', status);
   const { data: tickets = [] } = await q;
 
-  // Fetch client names and project names in parallel
-  let profileMap = {}, projectMap = {};
+  // Fetch client names in parallel
+  let profileMap = {};
   if (tickets.length > 0) {
-    const clientIds  = [...new Set(tickets.map((t) => t.client_id))];
-    const projectIds = [...new Set(tickets.map((t) => t.project_id))];
-    const [pRes, prRes] = await Promise.all([
-      nexaSupabase.from('profiles').select('id, full_name, company').in('id', clientIds),
-      nexaSupabase.from('projects').select('id, name').in('id', projectIds),
-    ]);
-    (pRes.data  ?? []).forEach((p) => { profileMap[p.id] = p; });
-    (prRes.data ?? []).forEach((p) => { projectMap[p.id] = p; });
+    const clientIds = [...new Set(tickets.map((t) => t.client_id))];
+    const { data: pData = [] } = await nexaSupabase.from('profiles')
+      .select('id, full_name, email').in('id', clientIds);
+    pData.forEach((p) => { profileMap[p.id] = p; });
   }
 
-  const wrap = document.getElementById('adm-ticket-table');
-  if (!wrap) return;
+  const listWrap = document.getElementById('adm-ticket-list');
+  if (!listWrap) return;
 
   if (tickets.length === 0) {
-    wrap.innerHTML = '<p class="adm-empty" style="padding:1rem 0;">No tickets found.</p>';
+    listWrap.innerHTML = '<p class="adm-empty">No tickets found.</p>';
     return;
   }
 
-  wrap.innerHTML = `
-    <div class="adm-table-wrap">
-      <table class="adm-table">
-        <thead>
-          <tr><th>Ref</th><th>Title</th><th>Client</th><th>Project</th><th>Category</th><th>Opened</th><th>Status</th></tr>
-        </thead>
-        <tbody>
-          ${tickets.map((t) => `
-          <tr class="adm-tr">
-            <td class="adm-td adm-td--ref">${escHtml(t.ticket_ref || '#—')}</td>
-            <td class="adm-td adm-td--name">${escHtml(t.title)}</td>
-            <td class="adm-td">${escHtml(profileMap[t.client_id]?.full_name || '—')}</td>
-            <td class="adm-td">${escHtml(projectMap[t.project_id]?.name || '—')}</td>
-            <td class="adm-td">${escHtml(t.category || '—')}</td>
-            <td class="adm-td adm-td--date">${fmtDate(t.created_at)}</td>
-            <td class="adm-td">
-              <select class="adm-select adm-inline-select" data-tix-id="${t.id}">
-                <option value="open"        ${t.status==='open'        ?'selected':''}>Open</option>
-                <option value="in-progress" ${t.status==='in-progress' ?'selected':''}>In progress</option>
-                <option value="resolved"    ${t.status==='resolved'    ?'selected':''}>Resolved</option>
-              </select>
-            </td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`;
+  listWrap.innerHTML = tickets.map((t) => {
+    const client = profileMap[t.client_id] || {};
+    return `
+      <div class="adm-ticket-list-item" data-tix-idx="${t.id}" style="cursor:pointer;">
+        <div class="adm-ticket-list-top">
+          <span class="adm-td--ref" style="font-size:0.75rem;color:var(--muted);">${escHtml(t.ticket_ref || '#—')}</span>
+          ${badge(t.status, TIX_MAP)}
+        </div>
+        <p class="adm-ticket-list-title">${escHtml(t.title)}</p>
+        <p class="adm-ticket-list-meta">${escHtml(client.full_name || '—')} · ${escHtml(t.category || 'General')} · ${timeAgo(t.created_at)}</p>
+      </div>`;
+  }).join('');
 
-  wrap.querySelectorAll('[data-tix-id]').forEach((sel) => {
-    sel.addEventListener('change', async () => {
-      const { error } = await nexaSupabase.from('tickets').update({ status: sel.value }).eq('id', sel.dataset.tixId);
-      if (error) showToast('Failed to update', 'error');
-      else showToast('Ticket updated');
+  listWrap.querySelectorAll('.adm-ticket-list-item').forEach((item) => {
+    item.addEventListener('click', () => {
+      listWrap.querySelectorAll('.adm-ticket-list-item').forEach((i) => i.classList.remove('is-active'));
+      item.classList.add('is-active');
+      const tkt = tickets.find((t) => t.id === item.dataset.tixIdx);
+      const client = profileMap[tkt?.client_id] || {};
+      if (tkt) openAdminTicketThread(tkt, client);
     });
   });
+}
+
+async function openAdminTicketThread(ticket, client) {
+  const placeholder  = document.getElementById('adm-thread-placeholder');
+  const threadContent = document.getElementById('adm-thread-content');
+  if (placeholder)   placeholder.hidden = true;
+  if (threadContent) threadContent.hidden = false;
+
+  // Header
+  const titleEl  = document.getElementById('adm-thread-title');
+  const metaEl   = document.getElementById('adm-thread-meta');
+  const statusSel = document.getElementById('adm-thread-status');
+  if (titleEl)  titleEl.textContent = `${ticket.ticket_ref || '#—'} · ${ticket.title}`;
+  if (metaEl)   metaEl.textContent  = `${client.full_name || '—'} · ${ticket.category || 'General'} · Opened ${timeAgo(ticket.created_at)}`;
+  if (statusSel) statusSel.value    = ticket.status;
+
+  // Status change
+  if (statusSel) {
+    statusSel.onchange = async () => {
+      const { error } = await nexaSupabase.from('tickets').update({ status: statusSel.value }).eq('id', ticket.id);
+      if (error) showToast('Failed to update', 'error');
+      else { showToast('Status updated'); ticket.status = statusSel.value; }
+    };
+  }
+
+  // Load replies
+  await loadAdminTicketReplies(ticket);
+
+  // Reply form
+  const replyForm = document.getElementById('adm-reply-form');
+  if (replyForm) {
+    replyForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const content = (replyForm.content.value || '').trim();
+      if (!content) return;
+      const replyBtn = document.getElementById('adm-reply-btn');
+      const replyErr = document.getElementById('adm-reply-error');
+      if (replyBtn) { replyBtn.disabled = true; replyBtn.textContent = 'Sending…'; }
+      if (replyErr) replyErr.textContent = '';
+
+      const { data: { session } } = await nexaSupabase.auth.getSession();
+      const { error } = await nexaSupabase.from('ticket_replies').insert({
+        ticket_id:   ticket.id,
+        author_id:   session?.user?.id,
+        author_name: 'NexaLab Team',
+        content,
+        is_admin:    true,
+      });
+
+      if (replyBtn) { replyBtn.disabled = false; replyBtn.textContent = 'Send reply'; }
+      if (error) {
+        if (replyErr) replyErr.textContent = 'Could not send reply.';
+        return;
+      }
+
+      // Auto move to in-progress if still open
+      if (ticket.status === 'open') {
+        await nexaSupabase.from('tickets').update({ status: 'in-progress' }).eq('id', ticket.id);
+        if (statusSel) statusSel.value = 'in-progress';
+        ticket.status = 'in-progress';
+      }
+
+      replyForm.reset();
+      await loadAdminTicketReplies(ticket);
+
+      // Email client
+      await sendNotificationAdmin('ticket_reply_client', client.email, {
+        name:         client.full_name || 'there',
+        ticketRef:    ticket.ticket_ref,
+        ticketTitle:  ticket.title,
+        replyContent: content,
+        portalUrl:    `${location.origin}/dashboard.html`,
+      });
+    };
+  }
+}
+
+async function loadAdminTicketReplies(ticket) {
+  const msgsEl = document.getElementById('adm-thread-messages');
+  if (!msgsEl) return;
+
+  const { data: replies = [] } = await nexaSupabase
+    .from('ticket_replies')
+    .select('*')
+    .eq('ticket_id', ticket.id)
+    .order('created_at', { ascending: true });
+
+  const allMessages = [];
+  if (ticket.description) {
+    allMessages.push({ content: ticket.description, is_admin: false, author_name: 'Client', created_at: ticket.created_at, isOriginal: true });
+  }
+  replies.forEach((r) => allMessages.push(r));
+
+  if (allMessages.length === 0) {
+    msgsEl.innerHTML = '<p style="font-size:0.82rem;color:var(--muted);padding:0.5rem 0;">No messages yet.</p>';
+    return;
+  }
+
+  msgsEl.innerHTML = allMessages.map((m) => {
+    const side  = m.is_admin ? 'admin' : 'client';
+    const name  = m.is_admin ? (m.author_name || 'NexaLab Team') : (m.author_name || 'Client');
+    const label = m.isOriginal ? 'Original message' : name;
+    return `
+      <div class="reply-bubble reply-bubble--${side}">
+        <p class="reply-author">${escHtml(label)} · ${timeAgo(m.created_at)}</p>
+        <p class="reply-content">${escHtml(m.content)}</p>
+      </div>`;
+  }).join('');
+
+  msgsEl.scrollTop = msgsEl.scrollHeight;
 }

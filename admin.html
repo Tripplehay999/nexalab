@@ -30,6 +30,11 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
         Overview
       </a>
+      <a href="#pending" class="dash-nav-item" data-section="pending">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.7"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Pending
+        <span class="dash-badge" id="adm-pending-badge" hidden></span>
+      </a>
       <a href="#inquiries" class="dash-nav-item" data-section="inquiries">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="1.7"/><polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="1.7"/></svg>
         Inquiries
@@ -52,6 +57,9 @@
       <button id="adm-logout" class="dash-sidebar-link dash-logout-btn">Sign out</button>
     </div>
   </aside>
+
+  <!-- Page transition overlay -->
+  <div id="page-overlay" class="page-overlay"></div>
 
   <!-- ─── Main ─────────────────────────────────────────── -->
   <div class="dash-main">
@@ -85,6 +93,11 @@
       </div>
     </section>
 
+    <!-- ═══ PENDING APPROVALS ══════════════════════════════ -->
+    <section class="dash-section" id="section-pending" hidden>
+      <div id="adm-pending-list"><p class="adm-empty">Loading…</p></div>
+    </section>
+
     <!-- ═══ INQUIRIES ══════════════════════════════════════ -->
     <section class="dash-section" id="section-inquiries" hidden>
       <div class="dash-card">
@@ -106,14 +119,14 @@
     <section class="dash-section" id="section-clients" hidden>
 
       <!-- Client grid view -->
-      <div id="clients-grid-view">
+      <div id="clients-grid-view" class="adm-view">
         <div class="adm-client-grid" id="adm-client-grid">
           <p class="adm-empty">Loading…</p>
         </div>
       </div>
 
       <!-- Client detail view (shown when "Manage" is clicked) -->
-      <div id="clients-detail-view" hidden>
+      <div id="clients-detail-view" class="adm-view" hidden>
         <div class="adm-detail-topbar">
           <button class="adm-back-btn" id="adm-back-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -123,6 +136,10 @@
             <p class="adm-detail-name" id="adm-detail-name">Client</p>
             <p class="adm-detail-sub" id="adm-detail-sub"></p>
           </div>
+          <button class="btn btn-sm adm-delete-client-btn" id="adm-delete-client-btn" title="Delete client">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Delete client
+          </button>
         </div>
 
         <!-- Project tabs -->
@@ -133,6 +150,10 @@
           <button class="adm-tab" data-tab="activity">Activity</button>
           <button class="adm-tab" data-tab="lead">Lead</button>
           <button class="adm-tab" data-tab="profile">Client Profile</button>
+          <button class="adm-tab" data-tab="integrations">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="margin-right:0.3rem;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Store Integration
+          </button>
         </div>
 
         <!-- ─ Project tab ─ -->
@@ -291,22 +312,60 @@
           </div>
         </div>
 
+        <!-- ─ Store Integration tab ─ -->
+        <div class="adm-tab-pane" id="tab-integrations" hidden>
+          <div class="dash-card adm-form-card" id="adm-integration-card">
+            <p class="adm-empty">Loading…</p>
+          </div>
+        </div>
+
       </div><!-- /clients-detail-view -->
     </section>
 
     <!-- ═══ TICKETS ════════════════════════════════════════ -->
     <section class="dash-section" id="section-tickets" hidden>
-      <div class="dash-card">
-        <div class="adm-table-header">
-          <p class="dash-card-title">All support tickets</p>
-          <select id="ticket-status-filter" class="adm-select">
-            <option value="">All statuses</option>
-            <option value="open">Open</option>
-            <option value="in-progress">In progress</option>
-            <option value="resolved">Resolved</option>
-          </select>
+      <div class="adm-tickets-layout">
+
+        <!-- Left pane: ticket list -->
+        <div class="adm-tickets-list-pane">
+          <div class="dash-card" style="height:100%;">
+            <div class="adm-table-header">
+              <p class="dash-card-title">Tickets</p>
+              <select id="ticket-status-filter" class="adm-select">
+                <option value="">All</option>
+                <option value="open">Open</option>
+                <option value="in-progress">In progress</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
+            <div id="adm-ticket-list"><p class="adm-empty">Loading…</p></div>
+          </div>
         </div>
-        <div id="adm-ticket-table"><p class="adm-empty">Loading…</p></div>
+
+        <!-- Right pane: conversation thread -->
+        <div class="adm-tickets-thread-pane">
+          <div class="dash-card" style="height:100%;" id="adm-ticket-thread-card">
+            <p class="adm-empty" id="adm-thread-placeholder">Select a ticket to view the conversation.</p>
+            <div id="adm-thread-content" hidden>
+              <div class="adm-thread-header">
+                <p class="adm-thread-title" id="adm-thread-title"></p>
+                <p class="adm-thread-meta"  id="adm-thread-meta"></p>
+                <select class="adm-select" id="adm-thread-status" style="margin-top:0.5rem;">
+                  <option value="open">Open</option>
+                  <option value="in-progress">In progress</option>
+                  <option value="resolved">Resolved</option>
+                </select>
+              </div>
+              <div class="ticket-thread-messages" id="adm-thread-messages"></div>
+              <form id="adm-reply-form" class="ticket-reply-form">
+                <textarea name="content" rows="3" placeholder="Write a reply to the client…" required></textarea>
+                <p class="error-text" id="adm-reply-error"></p>
+                <button class="btn btn-primary btn-sm" type="submit" id="adm-reply-btn">Send reply</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 

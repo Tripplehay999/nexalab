@@ -133,12 +133,37 @@
   <script>
   (async function authPage() {
 
+    // ── Read URL params ───────────────────────────────────
+    const urlParams  = new URLSearchParams(location.search);
+    const urlMode    = urlParams.get('mode') || '';
+    const urlEmail   = urlParams.get('email')   || '';
+    const urlFirst   = urlParams.get('firstName') || '';
+    const urlCompany = urlParams.get('company') || '';
+    const urlPlan    = urlParams.get('plan')    || '';
+
+    // Persist plan to localStorage so it survives the email-confirmation redirect
+    if (urlPlan) localStorage.setItem('nexalab_plan', urlPlan);
+
+    // ── Helper: redirect after email confirmation (new signups only go to contact form) ──
+    function clientRedirect() {
+      const isNewSignup = localStorage.getItem('nexalab_new_signup') === '1';
+      const savedPlan   = urlPlan || localStorage.getItem('nexalab_plan') || '';
+      localStorage.removeItem('nexalab_new_signup');
+      localStorage.removeItem('nexalab_plan');
+      if (isNewSignup && savedPlan) {
+        window.location.href = `contact.html?plan=${encodeURIComponent(savedPlan)}`;
+      } else {
+        window.location.href = 'dashboard.html';
+      }
+    }
+
     // ── Redirect if already logged in (role-aware) ────────
     const { data: { session: existingSession } } = await nexaSupabase.auth.getSession();
     if (existingSession) {
       const { data: p } = await nexaSupabase
         .from('profiles').select('role').eq('id', existingSession.user.id).single();
-      window.location.href = p?.role === 'admin' ? 'admin.html' : 'dashboard.html';
+      if (p?.role === 'admin') { window.location.href = 'admin.html'; return; }
+      clientRedirect();
       return;
     }
 
@@ -150,6 +175,22 @@
 
     function hideSocial() { if (socialSection) socialSection.hidden = true; }
     function showSocial() { if (socialSection) socialSection.hidden = false; }
+
+    // ── Auto-switch to signup tab if mode=signup ──────────
+    if (urlMode === 'signup') {
+      tabs.forEach((t) => {
+        const isSignup = t.dataset.authTab === 'signup';
+        t.classList.toggle('is-active', isSignup);
+        t.setAttribute('aria-selected', String(isSignup));
+      });
+      siForm.hidden = true;
+      suForm.hidden = false;
+
+      // Pre-fill from URL params
+      if (urlEmail)   document.getElementById('su-email').value   = urlEmail;
+      if (urlFirst)   document.getElementById('su-fname').value   = urlFirst;
+      if (urlCompany) document.getElementById('su-company').value = urlCompany;
+    }
 
     // ── Tabs ─────────────────────────────────────────────
     tabs.forEach((tab) => tab.addEventListener('click', () => {
@@ -172,12 +213,16 @@
       setLoading(prefix, false);
     }
 
-    // ── Role-aware redirect helper ────────────────────────
+    // ── Role-aware redirect helper (sign-in: always goes to dashboard) ──────
     async function redirectToDashboard() {
       const { data: { session } } = await nexaSupabase.auth.getSession();
       const { data: p } = await nexaSupabase
         .from('profiles').select('role').eq('id', session.user.id).single();
-      window.location.href = p?.role === 'admin' ? 'admin.html' : 'dashboard.html';
+      if (p?.role === 'admin') { window.location.href = 'admin.html'; return; }
+      // Existing users signing in always go to dashboard — clear any stale flags
+      localStorage.removeItem('nexalab_plan');
+      localStorage.removeItem('nexalab_new_signup');
+      window.location.href = 'dashboard.html';
     }
 
     // ── Social OAuth ──────────────────────────────────────
@@ -225,13 +270,20 @@
       const { error } = await nexaSupabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: `${firstName} ${lastName}`, company: company || null } },
+        options: {
+          data: { full_name: `${firstName} ${lastName}`, company: company || null },
+          emailRedirectTo: window.location.origin + '/auth.html',
+        },
       });
 
       if (error) { setError('su', error.message); return; }
+      // Flag this as a new signup so email-confirmation return goes to contact form
+      localStorage.setItem('nexalab_new_signup', '1');
       suForm.hidden = true;
       hideSocial();
       document.getElementById('check-email-title').textContent = `Check your inbox, ${firstName}`;
+      document.getElementById('check-email-body').textContent  =
+        'We\'ve sent a confirmation link to your email. Click it to activate your account — you\'ll then be taken straight to your client portal.';
       document.getElementById('check-email-panel').hidden = false;
     });
 
