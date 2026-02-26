@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Support — NexaLab</title>
+  <meta name="robots" content="noindex" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-body">
+
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+
+  <div class="dash-main">
+
+    <header class="dash-topbar">
+      <button class="dash-menu-btn" id="dash-menu-btn" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="dash-topbar-left">
+        <h1 class="dash-page-title">Support</h1>
+      </div>
+      <div class="dash-topbar-right">
+        <span class="dash-date" id="dash-date"></span>
+      </div>
+    </header>
+
+    <!-- Ticket stats bar -->
+    <div class="ticket-stats-bar" id="support-stats-bar" style="margin-bottom:1rem;">
+      <span class="adm-empty">Loading…</span>
+    </div>
+
+    <div class="dash-two-col">
+
+      <!-- Tickets column -->
+      <div>
+        <!-- Ticket list -->
+        <div class="dash-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.75rem;">
+            <p class="dash-card-title" style="margin:0;">Your tickets <span id="ticket-open-count" class="dash-badge" style="margin-left:0.35rem;"></span></p>
+            <button class="btn btn-sm btn-primary" id="new-ticket-btn">+ New ticket</button>
+          </div>
+
+          <!-- New ticket form (hidden until opened) -->
+          <div id="new-ticket-wrap" hidden style="margin-bottom:1rem;border-bottom:1px solid var(--line);padding-bottom:1rem;">
+            <p style="font-size:0.85rem;font-weight:600;margin:0 0 0.75rem;">Submit a new ticket</p>
+            <form id="new-ticket-form">
+              <div class="form-grid">
+                <label class="form-field">Title *
+                  <input name="title" type="text" placeholder="Brief description of the issue" required />
+                </label>
+                <label class="form-field">Category
+                  <select name="category">
+                    <option>General</option>
+                    <option>Bug report</option>
+                    <option>Feature request</option>
+                    <option>Billing</option>
+                    <option>Account</option>
+                  </select>
+                </label>
+              </div>
+              <label class="form-field" style="margin-top:0.5rem;">Description
+                <textarea name="description" rows="3" placeholder="Describe the issue in detail…"></textarea>
+              </label>
+              <p class="adm-form-error" id="ticket-form-error"></p>
+              <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+                <button class="btn btn-sm btn-primary" id="ticket-submit-btn" type="submit">Submit ticket</button>
+                <button class="btn btn-sm btn-outline" id="cancel-ticket-btn" type="button">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+          <div id="ticket-list"></div>
+        </div>
+
+        <!-- Thread panel (hidden until ticket clicked) -->
+        <div id="ticket-thread-wrap" hidden class="dash-card" style="margin-top:1rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+            <button class="btn btn-sm btn-outline" id="ticket-thread-back">← Back</button>
+            <div>
+              <p class="dash-card-title" id="ticket-thread-title" style="margin:0;"></p>
+              <p style="font-size:0.78rem;color:var(--muted);margin:0.1rem 0 0;" id="ticket-thread-meta"></p>
+            </div>
+          </div>
+          <div class="ticket-messages" id="ticket-thread-messages"></div>
+          <form id="ticket-reply-form" style="margin-top:0.75rem;">
+            <textarea name="content" rows="2" placeholder="Reply to this ticket…" class="adm-inline-input" style="width:100%;resize:vertical;" required></textarea>
+            <p class="adm-form-error" id="ticket-reply-error"></p>
+            <button class="btn btn-sm btn-primary" id="ticket-reply-btn" style="margin-top:0.5rem;" type="submit">Send reply</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right column: account lead + FAQ -->
+      <div>
+        <!-- Account lead card -->
+        <div class="dash-card support-lead-card">
+          <p class="dash-card-title">Your account lead</p>
+          <div class="lead-header">
+            <div class="lead-avatar" id="lead-avatar-el">NL</div>
+            <div>
+              <p class="lead-name" id="lead-name">NexaLab Team</p>
+              <p class="lead-role" id="lead-role">Commerce Engineer</p>
+            </div>
+          </div>
+          <div class="lead-details">
+            <div class="lead-detail-row">
+              <span class="lead-detail-label">Time zone</span>
+              <span id="lead-tz">—</span>
+            </div>
+            <div class="lead-detail-row">
+              <span class="lead-detail-label">Response time</span>
+              <span id="lead-resp">—</span>
+            </div>
+            <div class="lead-detail-row">
+              <span class="lead-detail-label">Next check-in</span>
+              <span id="lead-next">—</span>
+            </div>
+          </div>
+          <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);">
+            Reach us any time at <a href="mailto:hello@nexalab.io" class="auth-link">hello@nexalab.io</a>
+          </p>
+        </div>
+
+        <!-- FAQ accordion -->
+        <div class="dash-card faq-card" style="margin-top:1rem;">
+          <p class="dash-card-title">Frequently asked questions</p>
+          <div class="faq-list">
+            <details class="faq-item">
+              <summary class="faq-question">How do I access my deliverables?</summary>
+              <p class="faq-answer">Go to the <a href="dash-deliverables.html" class="auth-link">Deliverables</a> page. Click "Download" for documents, "View repo" for code, or "Open" for links. If a deliverable shows as Upcoming, it hasn't been released yet.</p>
+            </details>
+            <details class="faq-item">
+              <summary class="faq-question">What are your response times?</summary>
+              <p class="faq-answer">We typically respond to support tickets within the same business day. For urgent issues, email <a href="mailto:hello@nexalab.io" class="auth-link">hello@nexalab.io</a> directly. Your account lead's specific response window is shown in the card to the left.</p>
+            </details>
+            <details class="faq-item">
+              <summary class="faq-question">How do I report a bug or request a feature?</summary>
+              <p class="faq-answer">Submit a ticket using the "+ New ticket" button and choose "Bug report" or "Feature request" as the category. Include as much detail as possible — screenshots and steps to reproduce are very helpful.</p>
+            </details>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /dash-main -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="portal-utils.js"></script>
+  <script src="client-boot.js"></script>
+  <script src="dash-support.js"></script>
+</body>
+</html>

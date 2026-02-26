@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Clients — NexaLab Admin</title>
+  <meta name="robots" content="noindex" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-body">
+
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+
+  <div class="dash-main">
+
+    <header class="dash-topbar">
+      <button class="dash-menu-btn" id="dash-menu-btn" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="dash-topbar-left">
+        <h1 class="dash-page-title" id="adm-page-title">Clients</h1>
+      </div>
+      <div class="dash-topbar-right">
+        <span class="dash-date" id="adm-date"></span>
+      </div>
+    </header>
+
+    <!-- Client grid view -->
+    <div id="clients-grid-view">
+      <p class="adm-section-hint" id="adm-clients-hint" style="margin-bottom:1rem;font-size:0.83rem;color:var(--muted);"></p>
+      <div id="adm-client-grid"><p class="adm-empty">Loading…</p></div>
+    </div>
+
+    <!-- Client detail view (hidden until a client is opened) -->
+    <div id="clients-detail-view" hidden>
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;">
+        <button class="btn btn-sm btn-outline" id="adm-detail-back">← All clients</button>
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:1rem;font-weight:700;margin:0;" id="adm-detail-name"></p>
+          <p style="font-size:0.8rem;color:var(--muted);margin:0;" id="adm-detail-sub"></p>
+        </div>
+        <button class="btn btn-sm" style="background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.2);color:#ff7070;" id="adm-delete-client-btn">Delete client</button>
+      </div>
+
+      <!-- Tab nav -->
+      <div class="adm-tabs" style="margin-bottom:1rem;">
+        <button class="adm-tab" data-tab="project">Project</button>
+        <button class="adm-tab" data-tab="milestones">Milestones</button>
+        <button class="adm-tab" data-tab="deliverables">Deliverables</button>
+        <button class="adm-tab" data-tab="activity">Activity</button>
+        <button class="adm-tab" data-tab="lead">Account Lead</button>
+        <button class="adm-tab" data-tab="integrations">Store</button>
+        <button class="adm-tab" data-tab="profile">Profile</button>
+      </div>
+
+      <!-- Tab panes -->
+      <div class="adm-tab-pane" id="tab-project">
+        <div id="project-tab-content"></div>
+      </div>
+
+      <div class="adm-tab-pane" id="tab-milestones" hidden>
+        <div id="milestones-list" style="margin-bottom:1rem;"></div>
+        <div id="milestone-form-wrap" hidden class="dash-card adm-form-card">
+          <p class="dash-card-title">Add milestone</p>
+          <form id="adm-milestone-form">
+            <div class="form-grid">
+              <label class="form-field">Name *
+                <input name="name" type="text" placeholder="Discovery & Setup" required />
+              </label>
+              <label class="form-field">Status
+                <select name="status">
+                  <option value="pending">Pending</option>
+                  <option value="active">Active</option>
+                  <option value="complete">Complete</option>
+                </select>
+              </label>
+              <label class="form-field">Due date
+                <input name="due_date" type="date" />
+              </label>
+            </div>
+            <label class="form-field" style="margin-top:0.5rem;">Description
+              <textarea name="description" rows="2" placeholder="Optional notes…"></textarea>
+            </label>
+            <p class="adm-form-error" id="milestone-error"></p>
+            <button class="btn btn-primary btn-sm" type="submit" style="margin-top:0.75rem;">Add milestone</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="adm-tab-pane" id="tab-deliverables" hidden>
+        <div id="deliverables-list" style="margin-bottom:1rem;"></div>
+        <div id="deliverable-form-wrap" hidden class="dash-card adm-form-card">
+          <p class="dash-card-title">Add deliverable</p>
+          <form id="adm-deliverable-form">
+            <div class="form-grid">
+              <label class="form-field">Name *
+                <input name="name" type="text" placeholder="Brand Guidelines PDF" required />
+              </label>
+              <label class="form-field">Type
+                <select name="type">
+                  <option value="doc">Document</option>
+                  <option value="code">Code</option>
+                  <option value="link">Link</option>
+                </select>
+              </label>
+              <label class="form-field">Status
+                <select name="status">
+                  <option value="upcoming">Upcoming</option>
+                  <option value="ready">Ready</option>
+                </select>
+              </label>
+              <label class="form-field">URL
+                <input name="url" type="url" placeholder="https://…" />
+              </label>
+              <label class="form-field">Meta
+                <input name="meta" type="text" placeholder='e.g. "PDF · 12 pages"' />
+              </label>
+              <label class="form-field">Due date
+                <input name="due_date" type="date" />
+              </label>
+              <label class="form-field">Delivered date
+                <input name="delivered_at" type="date" />
+              </label>
+            </div>
+            <p class="adm-form-error" id="deliverable-error"></p>
+            <button class="btn btn-primary btn-sm" type="submit" style="margin-top:0.75rem;">Add deliverable</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="adm-tab-pane" id="tab-activity" hidden>
+        <div id="activity-list-admin" style="margin-bottom:1rem;"></div>
+        <div id="activity-form-wrap" hidden class="dash-card adm-form-card">
+          <p class="dash-card-title">Log activity</p>
+          <form id="adm-activity-form">
+            <div class="form-grid">
+              <label class="form-field">Entry *
+                <input name="text" type="text" placeholder="Completed homepage design mockups" required />
+              </label>
+              <label class="form-field">Color
+                <select name="color">
+                  <option value="green">Green (milestone, completion)</option>
+                  <option value="blue">Blue (update, general)</option>
+                  <option value="purple">Purple (design, UI)</option>
+                  <option value="yellow">Yellow (warning, note)</option>
+                  <option value="gray">Gray (neutral)</option>
+                </select>
+              </label>
+            </div>
+            <p class="adm-form-error" id="activity-error"></p>
+            <button class="btn btn-primary btn-sm" type="submit" style="margin-top:0.75rem;">Log entry</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="adm-tab-pane" id="tab-lead" hidden>
+        <div class="dash-card adm-form-card">
+          <p class="dash-card-title">Account lead</p>
+          <form id="adm-lead-form">
+            <div class="form-grid">
+              <label class="form-field">Full name *
+                <input name="name" type="text" placeholder="Alex Rivera" required />
+              </label>
+              <label class="form-field">Role
+                <input name="role" type="text" placeholder="Commerce Engineer" />
+              </label>
+              <label class="form-field">Initials
+                <input name="initials" type="text" maxlength="2" placeholder="AR" />
+              </label>
+              <label class="form-field">Time zone
+                <input name="time_zone" type="text" placeholder="EST (UTC -5)" />
+              </label>
+              <label class="form-field">Response time
+                <input name="response_time" type="text" placeholder="Same day" />
+              </label>
+              <label class="form-field">Next check-in
+                <input name="next_checkin" type="datetime-local" />
+              </label>
+            </div>
+            <p class="adm-form-error" id="lead-error"></p>
+            <button class="btn btn-primary btn-sm" type="submit" style="margin-top:0.75rem;">Save lead</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="adm-tab-pane" id="tab-integrations" hidden>
+        <div class="dash-card adm-form-card" id="adm-integration-card"></div>
+      </div>
+
+      <div class="adm-tab-pane" id="tab-profile" hidden>
+        <div class="dash-card adm-form-card">
+          <p class="dash-card-title">Client profile</p>
+          <form id="adm-profile-form">
+            <div class="form-grid">
+              <label class="form-field">Full name
+                <input name="full_name" type="text" placeholder="Jane Smith" />
+              </label>
+              <label class="form-field">Company
+                <input name="company" type="text" placeholder="Acme Corp" />
+              </label>
+              <label class="form-field">Email
+                <input name="email" type="email" placeholder="jane@acme.com" />
+              </label>
+              <label class="form-field">Avatar initials
+                <input name="avatar_initials" type="text" maxlength="2" placeholder="JS" />
+              </label>
+              <label class="form-field">Role
+                <select name="role">
+                  <option value="client">Client</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </label>
+            </div>
+            <p class="adm-form-error" id="profile-error"></p>
+            <button class="btn btn-primary btn-sm" type="submit" style="margin-top:0.75rem;">Update profile</button>
+          </form>
+        </div>
+      </div>
+
+    </div><!-- /clients-detail-view -->
+
+  </div><!-- /dash-main -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="portal-utils.js"></script>
+  <script src="admin-boot.js"></script>
+  <script src="admin-clients.js"></script>
+</body>
+</html>

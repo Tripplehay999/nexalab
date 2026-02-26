@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Inquiries — NexaLab Admin</title>
+  <meta name="robots" content="noindex" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-body">
+
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+
+  <div class="dash-main">
+
+    <header class="dash-topbar">
+      <button class="dash-menu-btn" id="dash-menu-btn" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="dash-topbar-left">
+        <h1 class="dash-page-title" id="adm-page-title">Inquiries</h1>
+      </div>
+      <div class="dash-topbar-right">
+        <span class="dash-date" id="adm-date"></span>
+      </div>
+    </header>
+
+    <!-- Stats bar -->
+    <div class="ticket-stats-bar" id="inq-stats-bar" style="margin-bottom:1rem;">
+      <span class="adm-empty">Loading…</span>
+    </div>
+
+    <!-- Filter -->
+    <div style="margin-bottom:1rem;">
+      <select class="adm-select" id="inq-status-filter" style="width:auto;">
+        <option value="">All inquiries</option>
+        <option value="new">New</option>
+        <option value="contacted">Contacted</option>
+        <option value="converted">Converted</option>
+        <option value="closed">Closed</option>
+      </select>
+    </div>
+
+    <div id="inq-table-wrap">
+      <p class="adm-empty">Loading…</p>
+    </div>
+
+  </div><!-- /dash-main -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="portal-utils.js"></script>
+  <script src="admin-boot.js"></script>
+  <script src="admin-inquiries.js"></script>
+</body>
+</html>

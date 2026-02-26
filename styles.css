@@ -2103,18 +2103,6 @@ h3{font-size:1rem;font-weight:700;}
 .store-status-bar{height:100%;border-radius:999px;transition:width .4s ease;}
 .store-status-count{font-size:0.75rem;font-weight:700;text-align:right;color:var(--muted);}
 
-/* ── Full-page transition overlay ───────────────────────── */
-.page-overlay{
-  position:fixed;inset:0;
-  background:var(--bg);
-  opacity:0;pointer-events:none;
-  z-index:999;
-  transition:opacity .14s ease;
-}
-.page-overlay.covering{
-  opacity:1;pointer-events:all;
-}
-
 /* ── Tab/sub-view transitions (within a page) ───────────── */
 @keyframes tabIn{from{opacity:0;transform:translateY(8px);}}
 .adm-tab-pane:not([hidden]),
@@ -2169,3 +2157,250 @@ h3{font-size:1rem;font-weight:700;}
 .analytics-customer-name{font-size:0.82rem;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
 .analytics-customer-meta{font-size:0.68rem;color:var(--muted);margin:0.1rem 0 0;}
 .analytics-customer-total{font-size:0.85rem;font-weight:700;white-space:nowrap;margin:0;}
+
+/* ═══════════════════════════════════════════════════════════
+   MPA — New page-specific components
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Admin overview: Quick-action cards ─────────────────── */
+.adm-quick-actions{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:0.75rem;margin-bottom:1.5rem;
+}
+.adm-quick-action-btn{
+  display:flex;flex-direction:column;gap:0.35rem;
+  padding:1rem 1.1rem;border-radius:12px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.07);
+  color:var(--text);font-size:0.82rem;font-weight:600;
+  transition:background .15s,border-color .15s,transform .15s;
+  position:relative;
+}
+.adm-quick-action-btn:hover{
+  background:rgba(255,255,255,0.05);
+  border-color:rgba(124,92,252,0.28);
+  transform:translateY(-2px);
+}
+.adm-quick-action-btn .dash-badge{
+  position:static;margin:0;width:fit-content;
+}
+.adm-view-all-link{
+  font-size:0.78rem;font-weight:600;color:var(--primary-soft);
+  opacity:0.75;transition:opacity .14s;
+}
+.adm-view-all-link:hover{opacity:1;}
+
+/* ── Client overview: Quick-nav cards ───────────────────── */
+.dash-quicknav{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(155px,1fr));
+  gap:0.75rem;margin:1.25rem 0 1.5rem;
+}
+.dash-quicknav-card{
+  display:flex;align-items:center;gap:0.75rem;
+  padding:0.9rem 1rem;border-radius:12px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.06);
+  color:var(--text);
+  transition:background .15s,border-color .15s,transform .15s;
+}
+.dash-quicknav-card:hover{
+  background:rgba(255,255,255,0.05);
+  border-color:rgba(124,92,252,0.25);
+  transform:translateY(-2px);
+}
+.dash-quicknav-card svg{flex-shrink:0;opacity:0.55;}
+.dash-quicknav-label{font-size:0.82rem;font-weight:700;color:var(--text);margin:0;}
+.dash-quicknav-sub{font-size:0.68rem;color:var(--muted);margin:0.1rem 0 0;}
+
+/* ── Client overview: Project health bar ────────────────── */
+.dash-project-health{margin:0 0 1.25rem;}
+.dash-health-bar{
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:12px;padding:0.9rem 1.1rem;
+}
+.dash-health-labels{
+  display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:0.5rem;
+}
+.dash-health-label{font-size:0.78rem;color:var(--muted);}
+.dash-health-pct{font-size:0.82rem;font-weight:700;color:var(--primary-soft);}
+.dash-health-progress{margin-bottom:0.5rem;}
+.dash-health-phase{font-size:0.78rem;color:var(--muted);margin:0;}
+.dash-health-phase strong{color:var(--text);}
+
+/* ── Stats bar (deliverables, support, tickets pages) ────── */
+.ticket-stats-bar{
+  display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;
+  padding:0.65rem 1rem;border-radius:10px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.06);
+  font-size:0.8rem;
+}
+.ticket-stat strong{color:var(--text);}
+.ticket-stat-sep{color:rgba(255,255,255,0.12);}
+
+/* ── Deliverables: Filter tabs ──────────────────────────── */
+.dlv-filter-tabs{display:flex;gap:0.4rem;flex-wrap:wrap;}
+.dlv-tab{
+  padding:0.35rem 0.9rem;border-radius:999px;
+  font-size:0.78rem;font-weight:600;
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.08);
+  color:var(--muted);cursor:pointer;font-family:inherit;
+  transition:color .13s,background .13s,border-color .13s;
+}
+.dlv-tab:hover{color:var(--text);border-color:rgba(255,255,255,0.18);}
+.dlv-tab.is-active{
+  background:rgba(124,92,252,0.12);
+  border-color:rgba(124,92,252,0.3);
+  color:var(--primary-soft);
+}
+
+/* ── Deliverables: Instruction box ─────────────────────── */
+.dlv-instructions{display:grid;gap:0.9rem;margin-top:0.5rem;}
+.dlv-instruction-row{display:flex;align-items:flex-start;gap:0.85rem;}
+.dlv-instruction-icon{font-size:1.2rem;flex-shrink:0;margin-top:0.05rem;}
+.dlv-instruction-label{font-size:0.82rem;font-weight:700;color:var(--text);margin:0 0 0.2rem;}
+.dlv-instruction-desc{font-size:0.78rem;color:var(--muted);margin:0;line-height:1.55;}
+
+/* ── Analytics: Hero summary ────────────────────────────── */
+.analytics-hero{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:1.1rem 1.3rem;border-radius:14px;
+  background:linear-gradient(135deg,rgba(124,92,252,0.1),rgba(255,79,216,0.06));
+  border:1px solid rgba(124,92,252,0.18);
+  margin-bottom:0.5rem;
+}
+.analytics-hero-label{font-size:0.72rem;color:var(--muted);margin:0;text-transform:uppercase;letter-spacing:0.08em;}
+.analytics-hero-val{font-size:2rem;font-weight:800;margin:0.1rem 0;background:linear-gradient(90deg,#fff,#c4b5fd);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.analytics-hero-sub{font-size:0.75rem;color:var(--muted);margin:0;}
+.analytics-platform-badge{
+  font-size:0.72rem;font-weight:700;padding:0.3rem 0.75rem;border-radius:999px;
+  background:rgba(34,211,168,0.1);color:var(--success);
+  border:1px solid rgba(34,211,168,0.18);white-space:nowrap;
+}
+
+/* ── Project: Brief card ────────────────────────────────── */
+.proj-brief-card{}
+.proj-brief-top{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
+  margin-bottom:0.85rem;
+}
+.proj-brief-desc{font-size:0.82rem;color:var(--muted);margin:0.3rem 0 0;line-height:1.6;}
+.proj-brief-meta{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:0.4rem 1.5rem;margin-top:0.6rem;
+}
+.proj-brief-meta-item{display:flex;flex-direction:column;gap:0.1rem;font-size:0.82rem;}
+.proj-brief-meta-label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;}
+
+/* ── Store page ─────────────────────────────────────────── */
+.store-sync-info{padding:0.25rem 0;}
+.store-sync-desc{font-size:0.82rem;color:var(--muted);margin:0;line-height:1.6;}
+.store-orders-table{display:grid;gap:0;}
+.store-order-row:hover{background:rgba(255,255,255,0.025);}
+
+/* ── Support: Lead card wrapper ─────────────────────────── */
+.support-lead-card{}
+.lead-header{display:flex;align-items:center;gap:0.85rem;margin-bottom:1rem;}
+
+/* ── FAQ ─────────────────────────────────────────────────── */
+.faq-card{}
+.faq-question{
+  font-size:0.84rem;font-weight:600;cursor:pointer;
+  list-style:none;padding:0.6rem 0;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  color:var(--text);
+}
+.faq-question::-webkit-details-marker{display:none;}
+.faq-question::before{content:'+ ';color:var(--primary-soft);}
+details[open] .faq-question::before{content:'− ';color:var(--muted);}
+.faq-answer{font-size:0.82rem;color:var(--muted);line-height:1.65;padding:0.6rem 0;margin:0;}
+.faq-answer a{color:var(--primary-soft);}
+
+/* ── Admin tickets: Two-pane layout ─────────────────────── */
+.adm-tickets-two-pane{
+  display:grid;grid-template-columns:320px 1fr;gap:1.25rem;
+  align-items:start;
+}
+@media(max-width:900px){.adm-tickets-two-pane{grid-template-columns:1fr;}}
+.adm-ticket-list-panel{
+  background:rgba(255,255,255,0.01);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:12px;overflow:hidden;
+}
+.adm-ticket-thread-panel{
+  background:rgba(255,255,255,0.01);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:12px;padding:1.1rem;min-height:300px;
+}
+.adm-thread-placeholder{
+  display:flex;align-items:center;justify-content:center;
+  min-height:220px;
+}
+.adm-thread-placeholder p{font-size:0.82rem;color:var(--muted);}
+
+/* ── Thread header flex (two-pane admin tickets) ────────── */
+.adm-thread-header{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:1rem;margin-bottom:0.75rem;padding-bottom:0.75rem;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+
+/* ── Ticket messages container ──────────────────────────── */
+.ticket-messages{
+  display:flex;flex-direction:column;gap:0.75rem;
+  max-height:340px;overflow-y:auto;
+  margin:0.75rem 0;padding-right:0.25rem;
+}
+
+/* ── Sidebar nav SVG icon visibility ────────────────────── */
+.dash-nav-item svg{flex-shrink:0;display:block;}
+
+/* ── Section hint text (admin pages) ────────────────────── */
+.adm-section-hint{font-size:0.82rem;color:var(--muted);margin-bottom:1rem;}
+
+/* ── Responsive: Quicknav smaller screens ───────────────── */
+@media(max-width:640px){
+  .dash-quicknav{grid-template-columns:repeat(2,1fr);}
+  .adm-quick-actions{grid-template-columns:repeat(2,1fr);}
+  .analytics-hero{flex-direction:column;gap:0.75rem;}
+}
+
+/* ── Status pill: hide when no project ──────────────────── */
+.dash-status-pill:empty{display:none;}
+
+/* ── Admin overview quick-action badge position ─────────── */
+.adm-quick-action-btn .dash-badge{
+  align-self:flex-start;margin-top:0.1rem;
+}
+
+/* ── Client portal: stat card progress bar spacing ─────── */
+.dash-stat-card .progress-bar{margin-top:0.6rem;}
+
+/* ── Admin clients: tab pane fade-in ────────────────────── */
+.adm-tab-pane{animation:tabIn .18s ease-out both;}
+
+/* ── Store: connection card layout ──────────────────────── */
+.adm-integration-header{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:1rem;margin-bottom:1rem;
+}
+.adm-integration-details{margin-bottom:1rem;}
+.adm-integration-actions{display:flex;gap:0.6rem;flex-wrap:wrap;}
+
+/* ── Analytics: Hero main flex item ─────────────────────── */
+.analytics-hero-main{flex:1;min-width:0;}
+
+/* ── Proj phase card ─────────────────────────────────────── */
+.proj-phase-card{margin-bottom:1.25rem;}
+
+/* ── Ticket item hover ───────────────────────────────────── */
+.ticket-item{cursor:pointer;transition:border-color .13s,background .13s;}
+.ticket-item:hover{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.025);}
+
+/* ── Dash badge inside topbar ────────────────────────────── */
+.dash-topbar .dash-badge{margin-left:0.4rem;vertical-align:middle;}

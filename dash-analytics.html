@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Analytics — NexaLab</title>
+  <meta name="robots" content="noindex" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-body">
+
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+
+  <div class="dash-main">
+
+    <header class="dash-topbar">
+      <button class="dash-menu-btn" id="dash-menu-btn" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="dash-topbar-left">
+        <h1 class="dash-page-title">Analytics</h1>
+      </div>
+      <div class="dash-topbar-right">
+        <span class="dash-date" id="dash-date"></span>
+      </div>
+    </header>
+
+    <!-- Hero summary (store revenue) -->
+    <div id="analytics-hero" class="analytics-hero" hidden>
+      <div class="analytics-hero-main">
+        <p class="analytics-hero-label">30-day revenue</p>
+        <p class="analytics-hero-val" id="analytics-hero-revenue">—</p>
+        <p class="analytics-hero-sub" id="analytics-hero-period"></p>
+      </div>
+      <span class="analytics-platform-badge" id="analytics-platform-badge"></span>
+    </div>
+
+    <!-- Project progress stats -->
+    <div id="analytics-stats-wrap" style="margin-top:1rem;"></div>
+
+    <!-- Store analytics (if connected) -->
+    <div id="analytics-store-wrap" hidden style="margin-top:1.5rem;">
+      <div class="dash-two-col">
+        <!-- KPI grid -->
+        <div class="dash-card" style="grid-column:1/-1;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;">
+            <p class="dash-card-title" style="margin:0;">30-day performance</p>
+            <p class="analytics-period-label" id="analytics-period-label" style="font-size:0.78rem;color:var(--muted);"></p>
+          </div>
+          <div class="dash-stats" id="analytics-kpi-grid"></div>
+        </div>
+
+        <!-- Revenue bar chart -->
+        <div class="dash-card">
+          <p class="dash-card-title">Daily revenue (last 30 days)</p>
+          <div class="analytics-chart-wrap">
+            <div class="analytics-chart" id="analytics-chart"></div>
+            <div class="analytics-chart-labels" id="analytics-chart-labels"></div>
+          </div>
+        </div>
+
+        <!-- Highlights -->
+        <div class="dash-card">
+          <p class="dash-card-title">Highlights</p>
+          <div id="analytics-highlights"></div>
+        </div>
+      </div>
+
+      <!-- Top customers -->
+      <div class="dash-card" style="margin-top:1rem;">
+        <p class="dash-card-title">Top customers by spend</p>
+        <div id="analytics-top-customers"></div>
+      </div>
+    </div>
+
+    <!-- No store state -->
+    <div id="analytics-no-store" class="dash-card" style="margin-top:1.5rem;">
+      <p id="analytics-note" class="adm-empty">Store analytics will appear here once your store is connected by the NexaLab team.</p>
+    </div>
+
+  </div><!-- /dash-main -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="portal-utils.js"></script>
+  <script src="client-boot.js"></script>
+  <script src="dash-analytics.js"></script>
+</body>
+</html>

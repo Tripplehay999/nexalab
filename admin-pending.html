@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pending Approvals — NexaLab Admin</title>
+  <meta name="robots" content="noindex" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-body">
+
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+
+  <div class="dash-main">
+
+    <header class="dash-topbar">
+      <button class="dash-menu-btn" id="dash-menu-btn" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="dash-topbar-left">
+        <h1 class="dash-page-title" id="adm-page-title">Pending Approvals</h1>
+      </div>
+      <div class="dash-topbar-right">
+        <span class="dash-date" id="adm-date"></span>
+      </div>
+    </header>
+
+    <p class="adm-section-hint" id="adm-pending-hint" style="margin-bottom:1rem;font-size:0.83rem;color:var(--muted);">
+      Review project intakes submitted by clients. Approve to activate their portal, or reject to notify them.
+    </p>
+
+    <div id="adm-pending-list">
+      <div class="dash-card"><p class="adm-empty">Loading…</p></div>
+    </div>
+
+  </div><!-- /dash-main -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="portal-utils.js"></script>
+  <script src="admin-boot.js"></script>
+  <script src="admin-pending.js"></script>
+</body>
+</html>

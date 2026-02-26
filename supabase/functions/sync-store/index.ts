@@ -4,6 +4,7 @@
 //
 // Deploy:  supabase functions deploy sync-store
 // Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (auto-injected)
+//          CRON_SECRET — set via: supabase secrets set CRON_SECRET=<random>
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -14,7 +15,7 @@ const supabaseAdmin = createClient(
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
 };
 
 // ── DB row shape ──────────────────────────────────────────────────────────────
@@ -223,28 +224,11 @@ function buildMetrics(orders: NxOrder[], integrationId: string, clientId: string
   }));
 }
 
-// ── Handler ───────────────────────────────────────────────────────────────────
-Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
-
-  // Verify caller is an authenticated admin
-  const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-  if (!token) return new Response('Unauthorized', { status: 401, headers: CORS });
-
-  const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
-  if (authErr || !user) return new Response('Unauthorized', { status: 401, headers: CORS });
-
-  const { data: caller } = await supabaseAdmin.from('profiles').select('role').eq('id', user.id).single();
-  if (caller?.role !== 'admin') return new Response('Forbidden', { status: 403, headers: CORS });
-
-  // Parse body
-  const { integration_id } = await req.json();
-  if (!integration_id) return new Response(JSON.stringify({ error: 'integration_id required' }), { status: 400, headers: CORS });
-
-  // Fetch integration record
+// ── Sync one integration (extracted for reuse by cron and manual trigger) ─────
+async function syncIntegration(integrationId: string): Promise<{ synced_orders: number; synced_days: number }> {
   const { data: integration, error: intErr } = await supabaseAdmin
-    .from('store_integrations').select('*').eq('id', integration_id).single<StoreIntegration>();
-  if (intErr || !integration) return new Response(JSON.stringify({ error: 'Integration not found' }), { status: 404, headers: CORS });
+    .from('store_integrations').select('*').eq('id', integrationId).single<StoreIntegration>();
+  if (intErr || !integration) throw new Error('Integration not found');
 
   // Date range: last 90 days
   const since = new Date();
@@ -253,19 +237,14 @@ Deno.serve(async (req: Request) => {
 
   // Fetch orders from platform
   let orders: NxOrder[] = [];
-  try {
-    if (integration.platform === 'woocommerce' || integration.platform === 'wordpress') {
-      orders = await fetchWooCommerce(integration, sinceISO);
-    } else if (integration.platform === 'shopify') {
-      orders = await fetchShopify(integration, sinceISO);
-    } else if (integration.platform === 'bigcommerce') {
-      orders = await fetchBigCommerce(integration, sinceISO);
-    } else {
-      return new Response(JSON.stringify({ error: `Unsupported platform: ${integration.platform}` }), { status: 400, headers: CORS });
-    }
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return new Response(JSON.stringify({ error: msg }), { status: 502, headers: CORS });
+  if (integration.platform === 'woocommerce' || integration.platform === 'wordpress') {
+    orders = await fetchWooCommerce(integration, sinceISO);
+  } else if (integration.platform === 'shopify') {
+    orders = await fetchShopify(integration, sinceISO);
+  } else if (integration.platform === 'bigcommerce') {
+    orders = await fetchBigCommerce(integration, sinceISO);
+  } else {
+    throw new Error(`Unsupported platform: ${integration.platform}`);
   }
 
   // Upsert individual orders
@@ -289,8 +268,68 @@ Deno.serve(async (req: Request) => {
   await supabaseAdmin.from('store_integrations')
     .update({ last_synced_at: new Date().toISOString() }).eq('id', integration.id);
 
-  return new Response(
-    JSON.stringify({ synced_orders: orders.length, synced_days: metrics.length }),
-    { status: 200, headers: { ...CORS, 'Content-Type': 'application/json' } },
-  );
+  return { synced_orders: orders.length, synced_days: metrics.length };
+}
+
+// ── Handler ───────────────────────────────────────────────────────────────────
+Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+
+  // Allow pg_cron calls via a shared secret (no admin JWT required)
+  const cronSecret = req.headers.get('x-cron-secret');
+  const isCronCall = cronSecret !== null && cronSecret === Deno.env.get('CRON_SECRET');
+
+  if (!isCronCall) {
+    // Verify caller is an authenticated admin (manual trigger from admin UI)
+    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
+    if (!token) return new Response('Unauthorized', { status: 401, headers: CORS });
+
+    const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
+    if (authErr || !user) return new Response('Unauthorized', { status: 401, headers: CORS });
+
+    const { data: caller } = await supabaseAdmin.from('profiles').select('role').eq('id', user.id).single();
+    if (caller?.role !== 'admin') return new Response('Forbidden', { status: 403, headers: CORS });
+  }
+
+  // Parse body (may be empty for cron calls)
+  let body: { integration_id?: string } = {};
+  try { body = await req.json(); } catch { /* empty body is fine */ }
+
+  // Cron mode: sync all active integrations
+  if (isCronCall && !body.integration_id) {
+    const { data: integrations } = await supabaseAdmin
+      .from('store_integrations').select('id').eq('is_active', true);
+
+    const results = await Promise.allSettled(
+      (integrations ?? []).map((r: { id: string }) => syncIntegration(r.id))
+    );
+
+    const summary = results.map((r, i) =>
+      r.status === 'fulfilled'
+        ? { id: (integrations ?? [])[i].id, ...r.value }
+        : { id: (integrations ?? [])[i].id, error: String((r as PromiseRejectedResult).reason) }
+    );
+
+    return new Response(
+      JSON.stringify({ synced: summary }),
+      { status: 200, headers: { ...CORS, 'Content-Type': 'application/json' } },
+    );
+  }
+
+  // Single integration mode
+  if (!body.integration_id) {
+    return new Response(JSON.stringify({ error: 'integration_id required' }), { status: 400, headers: CORS });
+  }
+
+  try {
+    const result = await syncIntegration(body.integration_id);
+    return new Response(
+      JSON.stringify(result),
+      { status: 200, headers: { ...CORS, 'Content-Type': 'application/json' } },
+    );
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    const status = msg === 'Integration not found' ? 404 : 502;
+    return new Response(JSON.stringify({ error: msg }), { status, headers: CORS });
+  }
 });

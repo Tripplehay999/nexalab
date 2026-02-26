@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Project — NexaLab</title>
+  <meta name="robots" content="noindex" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-body">
+
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+
+  <div class="dash-main">
+
+    <header class="dash-topbar">
+      <button class="dash-menu-btn" id="dash-menu-btn" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="dash-topbar-left">
+        <h1 class="dash-page-title" id="dash-page-title">Project</h1>
+        <span class="dash-status-pill" id="dash-status-pill">
+          <span class="dash-status-dot" id="dash-status-dot"></span>
+          <span id="dash-status-text">Active</span>
+        </span>
+      </div>
+      <div class="dash-topbar-right">
+        <span class="dash-date" id="dash-date"></span>
+      </div>
+    </header>
+
+    <!-- Project brief -->
+    <div id="proj-brief-wrap"></div>
+
+    <!-- Current phase highlight -->
+    <div id="proj-phase-wrap" style="margin-top:1rem;"></div>
+
+    <!-- Full milestone timeline -->
+    <div class="dash-card" style="margin-top:1rem;">
+      <p class="dash-card-title">All milestones</p>
+      <div id="timeline-list"><p class="adm-empty">Loading…</p></div>
+    </div>
+
+  </div><!-- /dash-main -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="portal-utils.js"></script>
+  <script src="client-boot.js"></script>
+  <script src="dash-project.js"></script>
+</body>
+</html>

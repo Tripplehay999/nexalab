@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Deliverables — NexaLab</title>
+  <meta name="robots" content="noindex" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-body">
+
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+
+  <div class="dash-main">
+
+    <header class="dash-topbar">
+      <button class="dash-menu-btn" id="dash-menu-btn" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="dash-topbar-left">
+        <h1 class="dash-page-title">Deliverables</h1>
+      </div>
+      <div class="dash-topbar-right">
+        <span class="dash-date" id="dash-date"></span>
+      </div>
+    </header>
+
+    <!-- Stats bar -->
+    <div class="ticket-stats-bar" id="dlv-stats-bar" style="margin-bottom:1rem;">
+      <span class="adm-empty">Loading…</span>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="dlv-filter-tabs" id="dlv-filter-tabs" style="margin-bottom:1rem;">
+      <button class="dlv-tab is-active" data-filter="all">All</button>
+      <button class="dlv-tab" data-filter="ready">Ready</button>
+      <button class="dlv-tab" data-filter="upcoming">Upcoming</button>
+    </div>
+
+    <!-- Deliverables grid -->
+    <div class="dash-card">
+      <div id="dlv-list"><p class="adm-empty">Loading…</p></div>
+    </div>
+
+    <!-- Access instructions -->
+    <div class="dash-card" style="margin-top:1rem;">
+      <p class="dash-card-title">How to access your deliverables</p>
+      <div class="dlv-instructions">
+        <div class="dlv-instruction-row">
+          <span class="dlv-instruction-icon">📄</span>
+          <div>
+            <p class="dlv-instruction-label">Documents</p>
+            <p class="dlv-instruction-desc">Click "Download" to open or save the file. Google Docs and PDFs open in a new tab.</p>
+          </div>
+        </div>
+        <div class="dlv-instruction-row">
+          <span class="dlv-instruction-icon">💻</span>
+          <div>
+            <p class="dlv-instruction-label">Code repositories</p>
+            <p class="dlv-instruction-desc">Click "View repo" to open GitHub. If you need access, contact your account lead via Support.</p>
+          </div>
+        </div>
+        <div class="dlv-instruction-row">
+          <span class="dlv-instruction-icon">🔗</span>
+          <div>
+            <p class="dlv-instruction-label">Links</p>
+            <p class="dlv-instruction-desc">Click "Open" to visit the live URL — staging environments, dashboards, or third-party tools.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /dash-main -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="portal-utils.js"></script>
+  <script src="client-boot.js"></script>
+  <script src="dash-deliverables.js"></script>
+</body>
+</html>

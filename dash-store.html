@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Store — NexaLab</title>
+  <meta name="robots" content="noindex" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-body">
+
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+
+  <div class="dash-main">
+
+    <header class="dash-topbar">
+      <button class="dash-menu-btn" id="dash-menu-btn" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="dash-topbar-left">
+        <h1 class="dash-page-title">Store</h1>
+      </div>
+      <div class="dash-topbar-right">
+        <span class="dash-date" id="dash-date"></span>
+      </div>
+    </header>
+
+    <!-- Empty state (no integration) -->
+    <div id="store-empty-state" class="dash-card" style="text-align:center;padding:3rem 2rem;">
+      <div style="font-size:2.5rem;margin-bottom:1rem;">🛍️</div>
+      <h3 style="margin:0 0 0.5rem;font-size:1.05rem;">No store connected yet</h3>
+      <p style="color:var(--muted);font-size:0.88rem;margin:0;">Your NexaLab team will connect your store once it's ready. Live orders and revenue will appear here.</p>
+    </div>
+
+    <!-- Store metrics (shown when connected) -->
+    <div id="store-metrics-wrap" hidden>
+
+      <!-- Connection status + integration details -->
+      <div class="dash-two-col" style="margin-bottom:1rem;">
+        <div class="dash-card">
+          <p class="dash-card-title">Connection</p>
+          <div id="store-summary-bar"></div>
+        </div>
+        <div class="dash-card">
+          <p class="dash-card-title">Sync schedule</p>
+          <div class="store-sync-info">
+            <p class="store-sync-desc">Your store data syncs automatically every <strong>15 minutes</strong>. The dashboard updates live when new data arrives.</p>
+            <p class="store-sync-desc" style="margin-top:0.5rem;">Need an immediate refresh? Contact your account lead via Support.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI snapshot cards -->
+      <div class="dash-stats" style="margin-bottom:1rem;">
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Latest day revenue</p>
+          <p class="dash-stat-val" id="store-today-revenue">—</p>
+          <p class="dash-stat-sub" id="store-today-revenue-sub"></p>
+        </div>
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Latest day orders</p>
+          <p class="dash-stat-val" id="store-today-orders">—</p>
+          <p class="dash-stat-sub" id="store-today-orders-sub"></p>
+        </div>
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Pending orders</p>
+          <p class="dash-stat-val" id="store-pending-orders">—</p>
+          <p class="dash-stat-sub" id="store-pending-sub"></p>
+        </div>
+        <div class="dash-stat-card">
+          <p class="dash-stat-label">Processing orders</p>
+          <p class="dash-stat-val" id="store-processing-orders">—</p>
+          <p class="dash-stat-sub" id="store-processing-sub"></p>
+        </div>
+      </div>
+
+      <!-- Status breakdown + live feed -->
+      <div class="dash-two-col">
+        <div class="dash-card">
+          <p class="dash-card-title">Order status breakdown</p>
+          <div id="store-status-breakdown"></div>
+        </div>
+        <div class="dash-card">
+          <p class="dash-card-title">Live order feed</p>
+          <div id="store-orders-list"></div>
+        </div>
+      </div>
+
+    </div><!-- /store-metrics-wrap -->
+
+  </div><!-- /dash-main -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="portal-utils.js"></script>
+  <script src="client-boot.js"></script>
+  <script src="dash-store.js"></script>
+</body>
+</html>

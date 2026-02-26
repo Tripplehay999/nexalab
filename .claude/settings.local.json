@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/tmp/analyze_functions.sh \"c:\\\\Users\\\\tripp\\\\OneDrive\\\\Documents\\\\GitHub\\\\nexalab\\\\admin.js\")"
+    ]
+  }
+}

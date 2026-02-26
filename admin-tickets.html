@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tickets — NexaLab Admin</title>
+  <meta name="robots" content="noindex" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-body">
+
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+
+  <div class="dash-main">
+
+    <header class="dash-topbar">
+      <button class="dash-menu-btn" id="dash-menu-btn" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="dash-topbar-left">
+        <h1 class="dash-page-title" id="adm-page-title">Tickets</h1>
+      </div>
+      <div class="dash-topbar-right">
+        <span class="dash-date" id="adm-date"></span>
+      </div>
+    </header>
+
+    <!-- Stats bar -->
+    <div class="ticket-stats-bar" id="adm-ticket-stats-bar" style="margin-bottom:1rem;">
+      <span class="adm-empty">Loading…</span>
+    </div>
+
+    <!-- Status filter -->
+    <div style="margin-bottom:1rem;">
+      <select class="adm-select" id="adm-ticket-status-filter" style="width:auto;">
+        <option value="">All tickets</option>
+        <option value="open">Open</option>
+        <option value="in-progress">In progress</option>
+        <option value="resolved">Resolved</option>
+      </select>
+    </div>
+
+    <!-- Two-pane layout -->
+    <div class="adm-tickets-two-pane">
+      <!-- List -->
+      <div class="adm-ticket-list-panel">
+        <div id="adm-ticket-list"><p class="adm-empty">Loading…</p></div>
+      </div>
+
+      <!-- Thread -->
+      <div class="adm-ticket-thread-panel">
+        <div id="adm-thread-placeholder" class="adm-thread-placeholder">
+          <p>Select a ticket to view the conversation.</p>
+        </div>
+        <div id="adm-thread-content" hidden>
+          <div class="adm-thread-header">
+            <div>
+              <p class="adm-thread-title" id="adm-thread-title"></p>
+              <p class="adm-thread-meta"  id="adm-thread-meta"></p>
+            </div>
+            <select class="adm-select adm-inline-select" id="adm-thread-status">
+              <option value="open">Open</option>
+              <option value="in-progress">In progress</option>
+              <option value="resolved">Resolved</option>
+            </select>
+          </div>
+          <div class="ticket-messages" id="adm-thread-messages"></div>
+          <form id="adm-reply-form" style="margin-top:0.75rem;">
+            <textarea name="content" rows="3" placeholder="Reply as NexaLab Team…" class="adm-inline-input" style="width:100%;resize:vertical;" required></textarea>
+            <p class="adm-form-error" id="adm-reply-error"></p>
+            <button class="btn btn-sm btn-primary" id="adm-reply-btn" style="margin-top:0.5rem;" type="submit">Send reply</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /dash-main -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="portal-utils.js"></script>
+  <script src="admin-boot.js"></script>
+  <script src="admin-tickets.js"></script>
+</body>
+</html>
