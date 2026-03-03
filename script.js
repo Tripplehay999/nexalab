@@ -3,20 +3,42 @@
 const menuToggle = document.getElementById('menu-toggle');
 const nav = document.getElementById('primary-nav');
 const yearEl = document.getElementById('year');
+// convert the text button into an accessible hamburger icon
+if (menuToggle) {
+  menuToggle.setAttribute('aria-label', 'Menu');
+  // text is hidden via CSS, so nothing else needed here
+}
 if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
 if (menuToggle && nav) {
+  const closeMenu = () => {
+    nav.classList.remove('open');
+    menuToggle.setAttribute('aria-expanded', 'false');
+  };
+
   menuToggle.addEventListener('click', () => {
     const open = nav.classList.toggle('open');
     menuToggle.setAttribute('aria-expanded', String(open));
+    menuToggle.classList.toggle('is-open', open);
+    menuToggle.setAttribute('aria-label', open ? 'Close menu' : 'Menu');
   });
 
+  // close when any link is tapped
   nav.querySelectorAll('a').forEach((link) =>
-    link.addEventListener('click', () => {
-      nav.classList.remove('open');
-      menuToggle.setAttribute('aria-expanded', 'false');
-    })
+    link.addEventListener('click', closeMenu)
   );
+
+  // close when user clicks outside of the nav area
+  document.addEventListener('click', (e) => {
+    if (!nav.contains(e.target) && e.target !== menuToggle) {
+      closeMenu();
+    }
+  });
+
+  // if the viewport expands past the mobile breakpoint, reset state
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) closeMenu();
+  });
 }
 
 // FAQ toggles (buttons with data-faq-toggle)
