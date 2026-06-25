@@ -1,0 +1,5 @@
+1:"$Sreact.fragment"
+2:I[72100,["/_next/static/chunks/2endfyypatozw.js","/_next/static/chunks/3_5eb-38a-2j2.js","/_next/static/chunks/32a67a72fn3xs.js"],"ViewportBoundary"]
+3:I[72100,["/_next/static/chunks/2endfyypatozw.js","/_next/static/chunks/3_5eb-38a-2j2.js","/_next/static/chunks/32a67a72fn3xs.js"],"MetadataBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","h",{"children":[null,["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"NexaLab — The Commerce OS for Serious Brands"}],["$","meta","1",{"name":"description","content":"NexaLab is your complete commerce OS — storefront engineering, checkout, inventory, and shipping. One team, one system, zero gaps."}]]}]}]}],null]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"bMNNirKRMsJ4sS3sbXS-k"}

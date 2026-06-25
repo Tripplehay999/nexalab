@@ -1,0 +1,10 @@
+{"timestamp":"00:00:18.712","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:31.458","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:00:35.057","source":"Server","level":"LOG","message":"○ Compiling /platform ..."}
+{"timestamp":"00:00:35.269","source":"Browser","level":"LOG","message":"Backpack was unable to override window.ethereum. If you're having issues connecting to a dapp, disable any other wallets and try again."}
+{"timestamp":"00:00:45.281","source":"Server","level":"LOG","message":"○ Compiling /_not-found/page ..."}
+{"timestamp":"00:00:52.671","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:00:52.671","source":"Browser","level":"LOG","message":"Backpack was unable to override window.ethereum. If you're having issues connecting to a dapp, disable any other wallets and try again."}
+{"timestamp":"00:00:57.923","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:00:58.268","source":"Browser","level":"DEBUG","message":"Provider initialization - wallet not connected"}
+{"timestamp":"00:01:03.268","source":"Server","level":"LOG","message":"✓ Finished filesystem cache database compaction in 11.4s"}

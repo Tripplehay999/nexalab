@@ -1,0 +1,13 @@
+var R=require("../../chunks/ssr/[turbopack]_runtime.js")("server/app/philosophy/page.js")
+R.c("server/chunks/ssr/[root-of-the-server]__082aslt._.js")
+R.c("server/chunks/ssr/15ia_next_dist_esm_build_templates_app-page_0kp7hdu.js")
+R.c("server/chunks/ssr/[root-of-the-server]__1p5b_lh._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__0nqrwmy._.js")
+R.c("server/chunks/ssr/nexalab_0i8l37n._.js")
+R.c("server/chunks/ssr/15ia_next_dist_client_components_1m3p478._.js")
+R.c("server/chunks/ssr/15ia_next_dist_client_components_builtin_forbidden_0mt8w1w.js")
+R.c("server/chunks/ssr/15ia_next_dist_client_components_builtin_unauthorized_0hg8s9_.js")
+R.c("server/chunks/ssr/15ia_next_dist_client_components_builtin_global-error_0-q_ev8.js")
+R.c("server/chunks/ssr/nexalab__next-internal_server_app_philosophy_page_actions_13ahvvj.js")
+R.m(39632)
+module.exports=R.m(39632).exports

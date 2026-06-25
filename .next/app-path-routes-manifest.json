@@ -1,0 +1,22 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/admin/clients/page": "/admin/clients",
+  "/admin/inquiries/page": "/admin/inquiries",
+  "/admin/page": "/admin",
+  "/admin/pending/page": "/admin/pending",
+  "/admin/tickets/page": "/admin/tickets",
+  "/auth/page": "/auth",
+  "/contact/page": "/contact",
+  "/dashboard/analytics/page": "/dashboard/analytics",
+  "/dashboard/deliverables/page": "/dashboard/deliverables",
+  "/dashboard/page": "/dashboard",
+  "/dashboard/project/page": "/dashboard/project",
+  "/dashboard/store/page": "/dashboard/store",
+  "/dashboard/support/page": "/dashboard/support",
+  "/page": "/",
+  "/philosophy/page": "/philosophy",
+  "/platform/page": "/platform",
+  "/what-we-do/page": "/what-we-do",
+  "/who-we-serve/page": "/who-we-serve"
+}

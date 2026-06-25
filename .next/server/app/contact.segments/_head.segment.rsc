@@ -1,0 +1,5 @@
+1:"$Sreact.fragment"
+2:I[72100,["/_next/static/chunks/2endfyypatozw.js","/_next/static/chunks/3_5eb-38a-2j2.js","/_next/static/chunks/32a67a72fn3xs.js"],"ViewportBoundary"]
+3:I[72100,["/_next/static/chunks/2endfyypatozw.js","/_next/static/chunks/3_5eb-38a-2j2.js","/_next/static/chunks/32a67a72fn3xs.js"],"MetadataBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","h",{"children":[null,["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Book a Demo — NexaLab"}],["$","meta","1",{"name":"description","content":"Book a demo with NexaLab. Tell us about your brand and we'll map your complete commerce infrastructure."}]]}]}]}],null]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"bMNNirKRMsJ4sS3sbXS-k"}

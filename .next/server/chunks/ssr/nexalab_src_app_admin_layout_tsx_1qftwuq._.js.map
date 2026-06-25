@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../../../nexalab/src/app/admin/layout.tsx"],"sourcesContent":["export default function AdminLayout({ children }: { children: React.ReactNode }) {\n  return <>{children}</>;\n}\n"],"names":["AdminLayout","children"],"mappings":"wEAAe,SAASA,AAAY,UAAEC,CAAQ,CAAiC,EAC7E,MAAO,CAAA,EAAA,EAAA,GAAA,EAAA,EAAA,QAAA,CAAA,UAAGA,GACZ"}

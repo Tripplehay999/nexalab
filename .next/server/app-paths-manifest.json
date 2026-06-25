@@ -1,0 +1,22 @@
+{
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/admin/clients/page": "app/admin/clients/page.js",
+  "/admin/inquiries/page": "app/admin/inquiries/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/pending/page": "app/admin/pending/page.js",
+  "/admin/tickets/page": "app/admin/tickets/page.js",
+  "/auth/page": "app/auth/page.js",
+  "/contact/page": "app/contact/page.js",
+  "/dashboard/analytics/page": "app/dashboard/analytics/page.js",
+  "/dashboard/deliverables/page": "app/dashboard/deliverables/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/project/page": "app/dashboard/project/page.js",
+  "/dashboard/store/page": "app/dashboard/store/page.js",
+  "/dashboard/support/page": "app/dashboard/support/page.js",
+  "/page": "app/page.js",
+  "/philosophy/page": "app/philosophy/page.js",
+  "/platform/page": "app/platform/page.js",
+  "/what-we-do/page": "app/what-we-do/page.js",
+  "/who-we-serve/page": "app/who-we-serve/page.js"
+}

@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../../../nexalab/src/app/dashboard/layout.tsx"],"sourcesContent":["export default function DashboardLayout({ children }: { children: React.ReactNode }) {\n  return <>{children}</>;\n}\n"],"names":["DashboardLayout","children"],"mappings":"yEAAe,SAASA,AAAgB,UAAEC,CAAQ,CAAiC,EACjF,MAAO,CAAA,EAAA,EAAA,GAAA,EAAA,EAAA,QAAA,CAAA,UAAGA,GACZ"}
