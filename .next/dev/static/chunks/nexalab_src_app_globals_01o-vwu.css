@@ -5650,4 +5650,197 @@ details[open] .faq-question:before {
   margin-left: .4rem;
 }
 
+.careers-hero-actions {
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.8rem;
+  display: flex;
+}
+
+.perk-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+  display: grid;
+}
+
+.perk-grid h3 {
+  margin: 0 0 .4rem;
+  font-size: 1rem;
+}
+
+.perk-grid p {
+  color: var(--muted);
+  margin: 0;
+  font-size: .88rem;
+}
+
+.job-dept {
+  margin-top: 2.5rem;
+}
+
+.job-dept-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  margin: 0 0 .8rem;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.job-list {
+  gap: .6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+}
+
+.job-row {
+  border-radius: var(--radius);
+  background: linear-gradient(#ffffff05, #ffffff01);
+  border: 1px solid #ffffff0e;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.2rem 1.4rem;
+  transition: border-color .15s, background .15s, transform .15s;
+  display: flex;
+}
+
+.job-row:hover {
+  background: #7c5cfc0a;
+  border-color: #7c5cfc52;
+  transform: translateY(-1px);
+}
+
+.job-row-title {
+  font-size: 1rem;
+}
+
+.job-row-summary {
+  color: var(--muted);
+  max-width: 60ch;
+  margin: .25rem 0 0;
+  font-size: .84rem;
+}
+
+.job-row-meta {
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  align-items: center;
+  gap: .5rem;
+  display: flex;
+}
+
+.job-row-meta span, .job-meta span {
+  color: var(--muted);
+  white-space: nowrap;
+  background: #ffffff06;
+  border: 1px solid #ffffff0d;
+  border-radius: 999px;
+  padding: .28rem .75rem;
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.job-row-meta .job-row-cta {
+  color: var(--primary-soft);
+  border-color: #7c5cfc40;
+}
+
+.careers-general {
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+  display: flex;
+}
+
+.careers-general h3 {
+  margin: 0 0 .3rem;
+}
+
+.careers-general p {
+  color: var(--muted);
+  margin: 0;
+  font-size: .9rem;
+}
+
+.job-back {
+  color: var(--muted);
+  margin-bottom: 1.4rem;
+  font-size: .82rem;
+  display: inline-block;
+}
+
+.job-back:hover {
+  color: var(--text);
+}
+
+.job-meta {
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: 1rem;
+  display: flex;
+}
+
+.job-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+}
+
+.job-layout:has( > :only-child) {
+  grid-template-columns: minmax(0, 760px);
+}
+
+.job-details {
+  gap: 1.2rem;
+  display: grid;
+}
+
+.job-summary {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+.file-field input[type="file"] {
+  cursor: pointer;
+  padding: .5rem .6rem;
+}
+
+.file-field input[type="file"]::file-selector-button {
+  color: var(--text);
+  cursor: pointer;
+  background: #7c5cfc24;
+  border: 1px solid #7c5cfc47;
+  border-radius: 6px;
+  margin-right: .7rem;
+  padding: .3rem .7rem;
+  font-family: inherit;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.consent-field {
+  margin: .2rem 0 1rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .job-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .job-row, .careers-general {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .job-row-meta {
+    justify-content: flex-start;
+  }
+}
+
 /*# sourceMappingURL=nexalab_src_app_globals_01o-vwu.css.map*/

@@ -1,11 +1,1 @@
-{
-  "version": 4,
-  "routes": {},
-  "dynamicRoutes": {},
-  "notFoundRoutes": [],
-  "preview": {
-    "previewModeId": "e2f2e169663f91e910d32655f0711d15",
-    "previewModeSigningKey": "b12a3907b38b90457f08d65099b10b2625e45a42456ea6ab104a38ae8d5dcb63",
-    "previewModeEncryptionKey": "04b0f01bb6fb1e786468ebb1df08434865daaf10cd35a7e200193fb8ed685c82"
-  }
-}
+{"version":4,"routes":{"/careers/senior-full-stack-engineer":{},"/careers/frontend-engineer":{},"/careers/devops-platform-engineer":{},"/careers/product-designer":{},"/careers/growth-marketing-manager":{},"/careers/client-success-manager":{},"/careers/general-application":{}},"dynamicRoutes":{"/careers/[slug]":{"dataRoute":null,"dataRouteRegex":null,"fallback":null,"fallbackRevalidate":false,"fallbackSourceRoute":"/careers/[slug]","routeRegex":"^\\/careers\\/([^/]+?)(?:\\/)?$","allowHeader":[]}},"notFoundRoutes":[],"preview":{"previewModeId":"6414b3bf780e755f134cab1957439c4c","previewModeSigningKey":"2e7989e8c3a92f534def64ed1d14f6ee50f196d8c0043c0a7dc30d75ecb363fc","previewModeEncryptionKey":"e53d97329be07de89c46c188584ce8bfa33115eb680c8fd8ac0f2de54e359821"}}

@@ -81,6 +81,7 @@ export default function Header() {
           <Link href="/" className={isActive('/') ? 'active' : ''} onClick={() => setMenuOpen(false)}>Home</Link>
           <Link href="/platform" className={isActive('/platform') ? 'active' : ''} onClick={() => setMenuOpen(false)}>Platform</Link>
           <Link href="/#pricing" onClick={() => setMenuOpen(false)}>Pricing</Link>
+          <Link href="/careers" className={pathname.startsWith('/careers') ? 'active' : ''} onClick={() => setMenuOpen(false)}>Careers</Link>
           <Link
             href={authHref}
             className={`btn btn-sm ${authPrimary ? 'btn-primary' : 'btn-outline'}`}

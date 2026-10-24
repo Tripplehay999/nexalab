@@ -60,6 +60,22 @@ serve(async (req) => {
 <p><a href="https://nexalab.io/admin.html#pending">Review in Admin Portal →</a></p>`,
       },
 
+      // ── Admin alert when a job application is submitted ───────────────────
+      application_admin_alert: {
+        subject: `New application: ${data.name ?? 'Unknown'} — ${data.role ?? 'General'}`,
+        html: `<p><strong>New job application received.</strong></p>
+<table cellpadding="6" style="border-collapse:collapse;width:100%">
+  <tr><td><strong>Role</strong></td><td>${data.role ?? '—'}</td></tr>
+  <tr><td><strong>Name</strong></td><td>${data.name ?? '—'}</td></tr>
+  <tr><td><strong>Email</strong></td><td>${data.email ?? '—'}</td></tr>
+  <tr><td><strong>Location</strong></td><td>${data.location || '—'}</td></tr>
+  <tr><td><strong>Experience</strong></td><td>${data.experience || '—'}</td></tr>
+  <tr><td><strong>LinkedIn</strong></td><td>${data.linkedin || '—'}</td></tr>
+  <tr><td><strong>Portfolio</strong></td><td>${data.portfolio || '—'}</td></tr>
+  <tr><td><strong>Resume</strong></td><td>${data.hasResume ? 'Attached (Supabase Storage → resumes)' : 'Not attached'}</td></tr>
+</table>`,
+      },
+
       // ── Client notification: project approved ─────────────────────────────
       project_approved: {
         subject: 'Your NexaLab project has been approved!',

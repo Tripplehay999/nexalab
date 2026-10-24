@@ -10,6 +10,7 @@ export default function Footer() {
         <nav className="footer-links">
           <Link href="/#features">Platform</Link>
           <Link href="/#pricing">Pricing</Link>
+          <Link href="/careers">Careers</Link>
           <Link href="/contact">Contact</Link>
           <a href="mailto:hello@nexalab.io">hello@nexalab.io</a>
         </nav>
