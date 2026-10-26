@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
       { source: "/what-we-do", destination: "/services", permanent: true },
       { source: "/philosophy", destination: "/about", permanent: true },
       { source: "/who-we-serve", destination: "/about", permanent: true },
+      // "Start a project" now begins with account signup; query (e.g. ?plan=) is passed through.
+      { source: "/contact", destination: "/auth?mode=signup", permanent: false },
     ];
   },
 };

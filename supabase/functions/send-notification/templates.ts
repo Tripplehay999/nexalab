@@ -36,43 +36,64 @@ export const esc = (v: unknown, fallback = '—') =>
 const first = (name: unknown) => String(name ?? '').trim().split(/\s+/)[0] || '';
 
 // ── Building blocks ──────────────────────────────────────────────────────────
+// Mobile-first: layouts wrap on their own (fluid inline-block "hybrid" columns,
+// stacked label/value rows, moderate padding), so they hold up even in apps that
+// strip <style> media queries (e.g. Gmail app with non-Gmail accounts). The media
+// queries below only refine spacing on clients that support them.
+
+const X = 28; // horizontal padding inside the card (px)
 
 function layout({ preheader, label, body, footerNote }: { preheader: string; label: string; body: string; footerNote: string }) {
   return `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="format-detection" content="telephone=no,address=no,email=no,date=no">
 <meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Instrument+Serif:ital@1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  @media (max-width:620px){ .px{padding-left:22px!important;padding-right:22px!important} .stack{display:block!important;width:100%!important} .h1{font-size:34px!important} .hide-sm{display:none!important} }
-  a{color:${C.ink}}
+  body{margin:0!important;padding:0!important;width:100%!important;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
+  img{border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;}
+  a{color:${C.ink};}
+  @media (max-width:520px){
+    .outer{padding:16px 8px 28px!important}
+    .px{padding-left:20px!important;padding-right:20px!important}
+    .h1{font-size:32px!important}
+    .h2{font-size:22px!important}
+    .lead{font-size:16px!important}
+    .hide-sm{display:none!important}
+    .btn a{display:block!important;text-align:center!important}
+    .btn{width:100%!important}
+    .tile{max-width:100%!important;margin-right:0!important}
+  }
 </style>
 </head>
-<body style="margin:0;padding:0;background:${C.paper};-webkit-font-smoothing:antialiased;">
+<body style="margin:0;padding:0;background:${C.paper};-webkit-font-smoothing:antialiased;word-break:break-word;">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${C.paper};">${preheader}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${C.paper}" style="background:${C.paper};">
-<tr><td align="center" style="padding:28px 12px 40px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
+<tr><td align="center" class="outer" style="padding:24px 10px 36px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
 <!-- Header -->
-<tr><td style="padding:0 4px 16px;">
+<tr><td style="padding:0 4px 14px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td style="font-family:${F.display};font-size:22px;font-weight:800;letter-spacing:-0.03em;color:${C.ink};">
-      <span style="display:inline-block;width:26px;height:26px;border-radius:8px;background:${C.ink};vertical-align:-6px;margin-right:8px;text-align:center;line-height:26px;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${C.tomato};vertical-align:1px;"></span></span>NexaLab
+    <td style="font-family:${F.display};font-size:21px;font-weight:800;letter-spacing:-0.03em;color:${C.ink};white-space:nowrap;">
+      <span style="display:inline-block;width:24px;height:24px;border-radius:7px;background:${C.ink};vertical-align:-5px;margin-right:7px;text-align:center;line-height:24px;"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${C.tomato};vertical-align:1px;"></span></span>NexaLab
     </td>
-    <td align="right" style="font-family:${F.sans};font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${C.ink3};">${label}</td>
+    <td align="right" class="hide-sm" style="font-family:${F.sans};font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${C.ink3};">${label}</td>
   </tr></table>
 </td></tr>
 
 <!-- Card -->
-<tr><td bgcolor="${C.card}" style="background:${C.card};border-radius:24px;border:1px solid ${C.line};overflow:hidden;">
+<tr><td bgcolor="${C.card}" style="background:${C.card};border-radius:22px;border:1px solid ${C.line};overflow:hidden;">
 ${body}
 </td></tr>
 
 <!-- Footer -->
-<tr><td style="padding:26px 8px 0;font-family:${F.sans};font-size:13px;line-height:1.6;color:${C.ink3};text-align:center;">
+<tr><td class="px" style="padding:24px 16px 0;font-family:${F.sans};font-size:13px;line-height:1.7;color:${C.ink3};text-align:center;">
   <p style="margin:0 0 6px;font-family:${F.display};font-size:15px;font-weight:700;color:${C.ink};">NexaLab — we build and run online stores.</p>
-  <p style="margin:0 0 6px;">Brooklyn · Toronto · <a href="tel:+14162061469" style="color:${C.ink3};">416-206-1469</a> · <a href="mailto:hello@nexalab.studio" style="color:${C.ink3};">hello@nexalab.studio</a></p>
+  <p style="margin:0 0 4px;">Brooklyn · Toronto</p>
+  <p style="margin:0 0 4px;"><a href="tel:+14162061469" style="color:${C.ink3};">416-206-1469</a> · <a href="mailto:hello@nexalab.studio" style="color:${C.ink3};">hello@nexalab.studio</a></p>
   <p style="margin:0 0 12px;"><a href="${SITE}" style="color:${C.ink3};">Website</a> &nbsp;·&nbsp; <a href="${SITE}/support" style="color:${C.ink3};">Support</a> &nbsp;·&nbsp; <a href="${SITE}/dashboard" style="color:${C.ink3};">Client portal</a></p>
   <p style="margin:0;font-size:12px;color:#A39A8C;">${footerNote}</p>
 </td></tr>
@@ -81,38 +102,39 @@ ${body}
 </body></html>`;
 }
 
-const pad = (inner: string, top = 0, bottom = 32) =>
-  `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td class="px" style="padding:${top}px 40px ${bottom}px;">${inner}</td></tr></table>`;
+const pad = (inner: string, top = 0, bottom = 28) =>
+  `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td class="px" style="padding:${top}px ${X}px ${bottom}px;">${inner}</td></tr></table>`;
 
 function hero({ kicker, title, accent, lead, bg = C.forest }: { kicker: string; title: string; accent: string; lead: string; bg?: string }) {
   const dark = bg === C.forest;
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="${bg}" class="px" style="background:${bg};padding:40px 40px 36px;border-radius:24px 24px 0 0;">
-  <p style="margin:0 0 14px;font-family:${F.sans};font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${dark ? C.lime : C.ink};">— ${kicker}</p>
-  <h1 class="h1" style="margin:0 0 16px;font-family:${F.display};font-size:44px;line-height:1;font-weight:700;letter-spacing:-0.035em;color:${dark ? C.paper : C.ink};">${title} <span style="font-family:${F.serif};font-style:italic;font-weight:400;color:${dark ? C.lime : C.tomato};">${accent}</span></h1>
-  <p style="margin:0;font-family:${F.sans};font-size:17px;line-height:1.6;color:${dark ? 'rgba(245,239,228,0.86)' : C.ink2};">${lead}</p>
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="${bg}" class="px" style="background:${bg};padding:34px ${X}px 30px;border-radius:22px 22px 0 0;">
+  <p style="margin:0 0 12px;font-family:${F.sans};font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${dark ? C.lime : C.ink};">— ${kicker}</p>
+  <h1 class="h1" style="margin:0 0 14px;font-family:${F.display};font-size:38px;line-height:1.05;font-weight:700;letter-spacing:-0.03em;color:${dark ? C.paper : C.ink};">${title} <span style="font-family:${F.serif};font-style:italic;font-weight:400;color:${dark ? C.lime : C.tomato};">${accent}</span></h1>
+  <p class="lead" style="margin:0;font-family:${F.sans};font-size:17px;line-height:1.6;color:${dark ? 'rgba(245,239,228,0.86)' : C.ink2};">${lead}</p>
 </td></tr></table>`;
 }
 
 const button = (href: string, label: string, color = C.tomato) =>
-  `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td bgcolor="${color}" style="border-radius:999px;background:${color};">
-  <a href="${href}" style="display:inline-block;padding:16px 28px;font-family:${F.sans};font-size:16px;font-weight:700;color:${color === C.ink || color === C.tomato ? '#ffffff' : C.ink};text-decoration:none;border-radius:999px;">${label}</a>
+  `<table role="presentation" cellpadding="0" cellspacing="0" class="btn"><tr><td bgcolor="${color}" align="center" style="border-radius:999px;background:${color};">
+  <a href="${href}" style="display:inline-block;padding:15px 26px;font-family:${F.sans};font-size:16px;line-height:1.2;font-weight:700;color:${color === C.ink || color === C.tomato ? '#ffffff' : C.ink};text-decoration:none;border-radius:999px;">${label}</a>
 </td></tr></table>`;
 
 const h2 = (kicker: string, title: string) =>
   `<p style="margin:0 0 6px;font-family:${F.sans};font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${C.ink3};"><span style="color:${C.tomato};">—</span> ${kicker}</p>
-<h2 style="margin:0 0 18px;font-family:${F.display};font-size:26px;line-height:1.1;font-weight:700;letter-spacing:-0.025em;color:${C.ink};">${title}</h2>`;
+<h2 class="h2" style="margin:0 0 16px;font-family:${F.display};font-size:24px;line-height:1.15;font-weight:700;letter-spacing:-0.025em;color:${C.ink};">${title}</h2>`;
 
 const p = (html: string, size = 16) =>
   `<p style="margin:0 0 14px;font-family:${F.sans};font-size:${size}px;line-height:1.65;color:${C.ink2};">${html}</p>`;
 
-const divider = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td class="px" style="padding:0 40px;"><div style="height:1px;background:${C.line};line-height:1px;font-size:1px;">&nbsp;</div></td></tr></table>`;
+const divider = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td class="px" style="padding:0 ${X}px;"><div style="height:1px;background:${C.line};line-height:1px;font-size:1px;">&nbsp;</div></td></tr></table>`;
 
+// Photo + text side by side; the photo column is narrow enough to fit any phone.
 function personCard(person: { name: string; role: string; city: string; photo: string }, note: string, bg = C.lime) {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${bg}" style="background:${bg};border-radius:20px;"><tr>
-  <td width="88" valign="top" style="padding:22px 0 22px 22px;"><img src="${face(person.photo, 176)}" width="72" height="72" alt="${person.name}" style="display:block;width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid ${C.card};"></td>
-  <td valign="top" style="padding:22px 22px 22px 14px;font-family:${F.sans};color:${C.ink};">
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${bg}" style="background:${bg};border-radius:18px;"><tr>
+  <td width="72" valign="top" style="padding:20px 0 20px 18px;"><img src="${face(person.photo, 160)}" width="58" height="58" alt="${person.name}" style="display:block;width:58px;height:58px;border-radius:50%;object-fit:cover;border:3px solid ${C.card};"></td>
+  <td valign="top" style="padding:20px 18px 20px 12px;font-family:${F.sans};color:${C.ink};">
     <p style="margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.7;">Your account lead</p>
-    <p style="margin:0;font-family:${F.display};font-size:20px;font-weight:700;letter-spacing:-0.02em;">${person.name}</p>
+    <p style="margin:0;font-family:${F.display};font-size:19px;font-weight:700;letter-spacing:-0.02em;">${person.name}</p>
     <p style="margin:0 0 10px;font-size:14px;opacity:0.8;">${person.role} · ${person.city}</p>
     <p style="margin:0;font-family:${F.serif};font-style:italic;font-size:18px;line-height:1.35;">${note}</p>
   </td></tr></table>`;
@@ -121,74 +143,76 @@ function personCard(person: { name: string; role: string; city: string; photo: s
 function timeline(steps: { when: string; title: string; body: string }[]) {
   const dot = [C.tomato, C.sun, C.lime, C.sky, C.lilac];
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${steps.map((s, i) => `<tr>
-  <td width="44" valign="top" style="padding:0 0 ${i === steps.length - 1 ? 0 : 18}px;">
-    <div style="width:32px;height:32px;border-radius:50%;background:${dot[i % dot.length]};text-align:center;line-height:32px;font-family:${F.display};font-size:14px;font-weight:800;color:${i === 0 ? '#fff' : C.ink};">${i + 1}</div>
+  <td width="38" valign="top" style="padding:0 0 ${i === steps.length - 1 ? 0 : 18}px;">
+    <div style="width:30px;height:30px;border-radius:50%;background:${dot[i % dot.length]};text-align:center;line-height:30px;font-family:${F.display};font-size:14px;font-weight:800;color:${i === 0 ? '#fff' : C.ink};">${i + 1}</div>
   </td>
-  <td valign="top" style="padding:2px 0 ${i === steps.length - 1 ? 0 : 18}px 6px;font-family:${F.sans};">
+  <td valign="top" style="padding:2px 0 ${i === steps.length - 1 ? 0 : 18}px 4px;font-family:${F.sans};">
     <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${C.ink3};">${s.when}</p>
-    <p style="margin:2px 0 3px;font-family:${F.display};font-size:18px;font-weight:700;letter-spacing:-0.015em;color:${C.ink};">${s.title}</p>
+    <p style="margin:2px 0 3px;font-family:${F.display};font-size:17px;font-weight:700;letter-spacing:-0.015em;color:${C.ink};">${s.title}</p>
     <p style="margin:0;font-size:15px;line-height:1.55;color:${C.ink2};">${s.body}</p>
   </td></tr>`).join('')}</table>`;
 }
 
 function checklist(items: string[]) {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${C.paper}" style="background:${C.paper};border-radius:18px;"><tr><td style="padding:20px 22px;">
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${C.paper}" style="background:${C.paper};border-radius:16px;"><tr><td style="padding:18px 18px 8px;">
   ${items.map((it) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td width="30" valign="top" style="padding:3px 0 10px;"><div style="width:20px;height:20px;border-radius:6px;border:2px solid ${C.ink};"></div></td>
-    <td valign="top" style="padding:0 0 10px;font-family:${F.sans};font-size:15px;line-height:1.55;color:${C.ink};">${it}</td>
+    <td width="28" valign="top" style="padding:3px 0 12px;"><div style="width:18px;height:18px;border-radius:5px;border:2px solid ${C.ink};"></div></td>
+    <td valign="top" style="padding:0 0 12px;font-family:${F.sans};font-size:15px;line-height:1.55;color:${C.ink};">${it}</td>
   </tr></table>`).join('')}
 </td></tr></table>`;
 }
 
+// Fluid two-up tiles: inline-blocks up to 258px wide sit side by side on desktop and
+// drop to one per row on phones without a media query (.tile widens them where supported).
 function tiles(items: { emoji: string; title: string; body: string; bg: string }[]) {
-  const cell = (t: typeof items[number]) => `<td class="stack" width="50%" valign="top" style="padding:6px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${t.bg}" style="background:${t.bg};border-radius:18px;"><tr><td style="padding:18px 18px 16px;font-family:${F.sans};color:${C.ink};">
-      <p style="margin:0 0 8px;font-size:24px;line-height:1;">${t.emoji}</p>
-      <p style="margin:0 0 4px;font-family:${F.display};font-size:17px;font-weight:700;letter-spacing:-0.015em;">${t.title}</p>
+  return `<div style="font-size:0;line-height:0;text-align:left;">${items.map((t, i) => `<div class="tile" style="display:inline-block;width:100%;max-width:258px;vertical-align:top;margin:0 ${i % 2 === 0 ? 10 : 0}px 10px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${t.bg}" style="background:${t.bg};border-radius:16px;"><tr><td style="padding:16px 16px 14px;font-family:${F.sans};font-size:14px;line-height:1.5;color:${C.ink};">
+      <p style="margin:0 0 8px;font-size:22px;line-height:1;">${t.emoji}</p>
+      <p style="margin:0 0 4px;font-family:${F.display};font-size:16px;line-height:1.3;font-weight:700;letter-spacing:-0.015em;">${t.title}</p>
       <p style="margin:0;font-size:14px;line-height:1.5;opacity:0.85;">${t.body}</p>
-    </td></tr></table></td>`;
-  const rows: string[] = [];
-  for (let i = 0; i < items.length; i += 2) rows.push(`<tr>${cell(items[i])}${items[i + 1] ? cell(items[i + 1]) : '<td class="stack" width="50%"></td>'}</tr>`);
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 -6px;">${rows.join('')}</table>`;
+    </td></tr></table>
+  </div>`).join('')}</div>`;
 }
 
+// Fluid team grid: fixed-width cards that wrap 4 → 2 per row on phones.
 function teamRow(people: { name: string; role: string; photo: string }[]) {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>${people.map((m) => `<td class="stack" width="${Math.floor(100 / people.length)}%" valign="top" align="center" style="padding:6px 4px 12px;font-family:${F.sans};">
-    <img src="${face(m.photo, 200)}" width="76" height="76" alt="${m.name}" style="display:block;margin:0 auto 10px;width:76px;height:76px;border-radius:50%;object-fit:cover;">
-    <p style="margin:0;font-family:${F.display};font-size:15px;font-weight:700;color:${C.ink};">${m.name}</p>
-    <p style="margin:2px 0 0;font-size:13px;line-height:1.35;color:${C.ink3};">${m.role}</p>
-  </td>`).join('')}</tr></table>`;
+  return `<div style="font-size:0;line-height:0;text-align:center;">${people.map((m) => `<div style="display:inline-block;width:126px;vertical-align:top;padding:4px 2px 14px;text-align:center;">
+    <img src="${face(m.photo, 180)}" width="68" height="68" alt="${m.name}" style="display:block;margin:0 auto 9px;width:68px;height:68px;border-radius:50%;object-fit:cover;">
+    <p style="margin:0;font-family:${F.display};font-size:15px;line-height:1.25;font-weight:700;color:${C.ink};">${m.name}</p>
+    <p style="margin:3px 0 0;font-family:${F.sans};font-size:13px;line-height:1.35;color:${C.ink3};">${m.role}</p>
+  </div>`).join('')}</div>`;
 }
 
+// Label stacked above value: reads well at any width.
 function infoTable(rows: [string, string][]) {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${C.line};border-radius:18px;border-collapse:separate;overflow:hidden;">${rows.map(([k, v], i) => `<tr>
-    <td valign="top" style="padding:14px 18px;${i ? `border-top:1px solid ${C.line};` : ''}font-family:${F.sans};font-size:13px;font-weight:700;letter-spacing:0.04em;color:${C.ink3};width:34%;">${k}</td>
-    <td valign="top" style="padding:14px 18px;${i ? `border-top:1px solid ${C.line};` : ''}font-family:${F.sans};font-size:15px;line-height:1.5;color:${C.ink};">${v}</td>
-  </tr>`).join('')}</table>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${C.line};border-radius:16px;border-collapse:separate;">${rows.map(([k, v], i) => `<tr><td style="padding:13px 16px;${i ? `border-top:1px solid ${C.line};` : ''}font-family:${F.sans};">
+    <p style="margin:0 0 3px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${C.ink3};">${k}</p>
+    <p style="margin:0;font-size:15px;line-height:1.5;color:${C.ink};">${v}</p>
+  </td></tr>`).join('')}</table>`;
 }
 
 function signoff(person: { name: string; role: string; photo: string }, line: string) {
   return `<table role="presentation" cellpadding="0" cellspacing="0"><tr>
-  <td valign="middle" style="padding-right:14px;"><img src="${face(person.photo, 120)}" width="52" height="52" alt="${person.name}" style="display:block;width:52px;height:52px;border-radius:50%;object-fit:cover;"></td>
+  <td width="62" valign="top" style="padding-right:12px;"><img src="${face(person.photo, 120)}" width="50" height="50" alt="${person.name}" style="display:block;width:50px;height:50px;border-radius:50%;object-fit:cover;"></td>
   <td valign="middle" style="font-family:${F.sans};font-size:15px;line-height:1.4;color:${C.ink2};">
     <span style="font-family:${F.serif};font-style:italic;font-size:19px;color:${C.ink};">${line}</span><br>
-    <strong style="color:${C.ink};">${person.name}</strong> · ${person.role}
+    <strong style="color:${C.ink};">${person.name}</strong><br>${person.role}
   </td></tr></table>`;
 }
 
 // Compact branded layout for internal (admin) alerts.
 function adminAlert(title: string, rows: [string, unknown][], link: { href: string; label: string }, accent = C.tomato) {
-  return `<!doctype html><html><body style="margin:0;background:${C.paper};font-family:${F.sans};">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.paper};"><tr><td align="center" style="padding:24px 12px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:${C.card};border-radius:18px;border:1px solid ${C.line};overflow:hidden;">
-<tr><td style="background:${C.ink};padding:16px 24px;font-family:${F.display};font-size:16px;font-weight:700;color:${C.paper};">
+  return `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:${C.paper};font-family:${F.sans};word-break:break-word;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.paper};"><tr><td align="center" style="padding:20px 10px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:${C.card};border-radius:18px;border:1px solid ${C.line};overflow:hidden;">
+<tr><td style="background:${C.ink};padding:15px 20px;font-family:${F.display};font-size:16px;font-weight:700;color:${C.paper};">
   <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${accent};margin-right:8px;"></span>${esc(title)}</td></tr>
-<tr><td style="padding:18px 24px 6px;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows.map(([k, v], i) => `<tr>
-    <td valign="top" style="padding:9px 0;${i ? `border-top:1px solid ${C.line};` : ''}font-size:13px;font-weight:700;color:${C.ink3};width:32%;">${k}</td>
-    <td valign="top" style="padding:9px 0;${i ? `border-top:1px solid ${C.line};` : ''}font-size:14px;line-height:1.5;color:${C.ink};white-space:pre-wrap;">${esc(v)}</td></tr>`).join('')}</table>
+<tr><td style="padding:8px 20px 4px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows.map(([k, v], i) => `<tr><td style="padding:10px 0;${i ? `border-top:1px solid ${C.line};` : ''}">
+    <p style="margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${C.ink3};">${k}</p>
+    <p style="margin:0;font-size:14px;line-height:1.5;color:${C.ink};white-space:pre-wrap;">${esc(v)}</p></td></tr>`).join('')}</table>
 </td></tr>
-<tr><td style="padding:12px 24px 24px;">${button(link.href, link.label, C.ink)}</td></tr>
+<tr><td style="padding:12px 20px 22px;">${button(link.href, link.label, C.ink)}</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
@@ -327,8 +351,8 @@ export function buildTemplate(type: string, data: Data): Template | null {
           accent: `${name}.`,
           lead: 'From today, a team of designers, engineers, and support folks is working for your store. This email has everything you need for the next two weeks — who to talk to, what happens when, and what to have ready.',
         }),
-        pad(`${button(`${SITE}/onboarding`, 'Finish onboarding — 3 minutes →')}
-          <p style="margin:14px 0 0;font-family:${F.sans};font-size:14px;color:${C.ink3};">It tells us about your business and goals, so your kickoff call starts with answers instead of questions.</p>`, 32, 32),
+        pad(`${button(`${SITE}/onboarding`, 'Finish onboarding →')}
+          <p style="margin:14px 0 0;font-family:${F.sans};font-size:14px;color:${C.ink3};">Takes about 3 minutes. It tells us about your business and goals, so your kickoff call starts with answers instead of questions.</p>`, 32, 32),
         pad(personCard(TEAM.sofia, '“I’ll be your main point of contact from kickoff to launch — and long after. I’ll email you within one business day to book your kickoff.”'), 0, 36),
         divider,
         pad(`${h2('Your first 14 days', 'Here’s exactly what happens next.')}

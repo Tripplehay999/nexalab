@@ -34,8 +34,8 @@ export default function SupportBubble() {
           </p>
         </div>
         <div className="bubble-links">
-          <Link href="/contact" onClick={() => setOpen(false)}>
-            <strong>Start a new project</strong><span>Tell us what you’re building</span>
+          <Link href="/auth?mode=signup" onClick={() => setOpen(false)}>
+            <strong>Start a new project</strong><span>Create your account — takes 2 minutes</span>
           </Link>
           <Link href="/support" onClick={() => setOpen(false)}>
             <strong>Get help with my store</strong><span>Support for current clients</span>

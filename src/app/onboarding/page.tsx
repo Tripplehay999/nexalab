@@ -49,6 +49,7 @@ export default function OnboardingPage() {
   const [userId, setUserId] = useState('');
   const [email, setEmail] = useState('');
   const [project, setProject] = useState<Project | null>(null);
+  const [plan, setPlan] = useState('');
   const [step, setStep] = useState(0);
   const [a, setA] = useState<Answers>(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -80,6 +81,10 @@ export default function OnboardingPage() {
       });
       setStep(Math.min(saved.step ?? 0, 3));
       setUserId(session.user.id);
+      // Plan picked on the pricing page: saved on the account at signup, or in this browser.
+      let pickedPlan = (session.user.user_metadata?.plan as string | undefined) ?? '';
+      try { pickedPlan ||= localStorage.getItem('nexalab_plan') ?? ''; } catch { /* storage blocked */ }
+      setPlan(pickedPlan);
       setEmail(session.user.email ?? '');
       setProject(proj as Project | null);
       setReady(true);
@@ -136,15 +141,16 @@ export default function OnboardingPage() {
       const { error: inqErr } = await supabase.from('inquiries').insert({
         id: inquiryId, full_name: a.fullName.trim(), work_email: email, company: a.company.trim() || null,
         website: a.website.trim() || null, platform: a.platform || null, revenue: a.revenue, budget: a.budget,
-        timeline: a.timeline || null, services: a.services, goal: a.goal.trim(),
+        timeline: a.timeline || null, services: a.services, goal: a.goal.trim(), plan: plan || null,
       });
       if (!inqErr) {
         const { data: proj } = await supabase.from('projects').insert({
-          client_id: userId, inquiry_id: inquiryId, name: `${a.company.trim() || 'New'} project`,
+          client_id: userId, inquiry_id: inquiryId, name: `${a.company.trim() || 'New'} project`, plan: plan || null,
           status: 'pending', description: 'Created during onboarding — awaiting review by the NexaLab team.',
         }).select().single();
         if (proj) setProject(proj as Project);
         extra = { projectCreated: true };
+        try { localStorage.removeItem('nexalab_plan'); } catch { /* storage blocked */ }
       } else {
         setSaving(false);
         setError(`We couldn’t save your project details. Please try again or email ${CONTACT.email}.`);
@@ -266,6 +272,9 @@ export default function OnboardingPage() {
                 </>
               ) : (
                 <>
+                  {plan && (
+                    <p className="ob-plan">Plan: <strong>{plan}</strong> <Link href="/services#pricing" className="lg-link">compare plans</Link></p>
+                  )}
                   <div className="form-section">
                     <p className="form-section-label">What can we help with? *</p>
                     <div className="checkbox-grid">
@@ -345,6 +354,7 @@ export default function OnboardingPage() {
                 <li><span>Platform</span><strong>{a.platform ? label(PLATFORMS, a.platform) : '—'}</strong></li>
                 <li><span>Kickoff</span><strong>{a.days.join(', ')} · {a.times.join(', ').toLowerCase()} · {label(CHANNELS, a.channel)}</strong></li>
                 <li><span>Project</span><strong>{project?.name ?? 'Submitted for review'}</strong></li>
+                {(plan || project?.plan) && <li><span>Plan</span><strong>{project?.plan || plan}</strong></li>}
               </ul>
               <div className="btn-row">
                 <Link href="/dashboard" className="s-btn s-btn-tomato s-btn-lg">Go to my dashboard →</Link>

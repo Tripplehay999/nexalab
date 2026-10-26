@@ -31,7 +31,7 @@ const PLANS = [
     unit: 'one-time, from',
     features: ['Store design & build', 'Checkout & payments setup', 'Analytics & tracking', 'Shipping carrier setup', '30 days of launch support'],
     cta: 'Get started',
-    href: '/contact?plan=Launch',
+    href: '/auth?mode=signup&plan=Launch',
   },
   {
     name: 'Operate',
@@ -41,7 +41,7 @@ const PLANS = [
     featured: true,
     features: ['Everything in Launch', 'Inventory & shipping operations', 'Monthly growth experiments', 'Named account manager', 'Priority support, 24/7 checkout monitoring', 'Weekly reports'],
     cta: 'Book a call',
-    href: '/contact?plan=Operate',
+    href: '/auth?mode=signup&plan=Operate',
   },
   {
     name: 'Scale',
@@ -50,7 +50,7 @@ const PLANS = [
     unit: 'tailored to you',
     features: ['Everything in Operate', 'Multiple brands & regions', 'Custom integrations & APIs', 'Dedicated squad', 'Enterprise SLAs', 'Quarterly strategy sessions'],
     cta: 'Talk to us',
-    href: '/contact?plan=Scale',
+    href: '/auth?mode=signup&plan=Scale',
   },
 ];
 

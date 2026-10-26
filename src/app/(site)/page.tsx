@@ -43,7 +43,7 @@ export default function HomePage() {
               NexaLab is a commerce agency. Our designers, engineers, and support team build your store, connect your inventory and shipping, and keep growing your sales — with a real person always a message away.
             </p>
             <div className="btn-row">
-              <Link href="/contact" className="s-btn s-btn-tomato s-btn-lg">Start a project <span aria-hidden="true">→</span></Link>
+              <Link href="/auth?mode=signup" className="s-btn s-btn-tomato s-btn-lg">Start a project <span aria-hidden="true">→</span></Link>
               <Link href="/work" className="s-btn s-btn-line s-btn-lg">See our work</Link>
             </div>
             <div className="hero-proof">

@@ -608,7 +608,7 @@ a.chip:hover { transform: translateY(-2px); }
 
 .form-card { padding: clamp(1.4rem, 3vw, 2.4rem); border-radius: var(--r-lg); background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
 
-/* Shared form components (IntakeForm / ApplyForm) re-skinned */
+/* Shared form components (ApplyForm, TicketForm, onboarding) re-skinned */
 .site .form-title { font-family: var(--f-display); font-size: 1.7rem; letter-spacing: -0.025em; }
 .site .form-subtitle { color: var(--ink-3); font-size: 0.9rem; }
 .site .form-section-label { color: var(--ink); font-size: 0.74rem; }
@@ -969,3 +969,16 @@ a.chip:hover { transform: translateY(-2px); }
   .ob-summary li { flex-direction: column; gap: 0.1rem; }
   .ob-summary strong { text-align: left; }
 }
+
+
+/* Login: "Start a project" side */
+.lg-intro { margin: -0.6rem 0 1.4rem; color: var(--ink-2); }
+.lg-fine { margin: 0; text-align: center; font-size: 0.8rem; color: var(--ink-3); line-height: 1.5; }
+.lg-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; counter-reset: lgs; }
+.lg-steps li { position: relative; display: grid; gap: 0.05rem; padding-left: 2.6rem; counter-increment: lgs; }
+.lg-steps li::before { content: counter(lgs); position: absolute; left: 0; top: 0.05rem; display: grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 50%; background: var(--lime); color: var(--ink); font-weight: 800; font-size: 0.85rem; }
+.lg-steps li:first-child::before { background: var(--tomato); color: #fff; }
+.lg-steps strong { color: var(--paper); }
+.lg-steps span { color: rgba(245, 239, 228, 0.72); font-size: 0.92rem; }
+
+.ob-plan { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: -0.4rem 0 1.4rem; padding: 0.5rem 0.9rem; border-radius: 999px; background: var(--sun); font-size: 0.92rem; }

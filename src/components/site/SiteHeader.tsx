@@ -65,7 +65,7 @@ export default function SiteHeader() {
             ))}
             <div className="s-nav-cta">
               <Link href={auth.href} className="s-btn s-btn-ghost" onClick={() => setOpen(false)}>{auth.label}</Link>
-              <Link href="/contact" className="s-btn s-btn-ink" onClick={() => setOpen(false)}>Start a project</Link>
+              <Link href="/auth?mode=signup" className="s-btn s-btn-ink" onClick={() => setOpen(false)}>Start a project</Link>
             </div>
           </nav>
 

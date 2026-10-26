@@ -3,8 +3,8 @@ import { CONTACT } from '@/lib/site-data';
 
 export default function BigCta({
   title = 'Let’s build something people love buying from.',
-  sub = 'Tell us about your brand. A real strategist will reply today — usually within a few hours.',
-  primary = { href: '/contact', label: 'Start a project →' },
+  sub = 'Create your account in two minutes, tell us about your brand, and a real strategist will reach out within one business day.',
+  primary = { href: '/auth?mode=signup', label: 'Start a project →' },
 }: {
   title?: string;
   sub?: string;

@@ -72,12 +72,15 @@ function AuthCard() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
-    localStorage.removeItem('nexalab_plan');
     localStorage.removeItem('nexalab_new_signup');
     router.replace(p?.role === 'admin' ? '/admin' : '/dashboard');
   }
 
   function switchTo(next: 'signin' | 'signup') {
+    const params = new URLSearchParams(window.location.search);
+    if (next === 'signup') params.set('mode', 'signup'); else params.delete('mode');
+    const qs = params.toString();
+    window.history.replaceState(null, '', qs ? `/auth?${qs}` : '/auth');
     setPanel(next);
     setSiError('');
     setSuError('');
@@ -111,7 +114,7 @@ function AuthCard() {
       email: suEmail,
       password: suPassword,
       options: {
-        data: { full_name: `${suFname} ${suLname}`, company: suCompany || null },
+        data: { full_name: `${suFname} ${suLname}`, company: suCompany || null, plan: urlPlan || null },
         emailRedirectTo: `${window.location.origin}/auth`,
       },
     });
@@ -159,13 +162,27 @@ function AuthCard() {
         </Link>
         <div className="lg-brand-body">
           <LiveStatus className="on-dark" openText="Your team is online" closedText="Team offline — emergency line open 24/7" />
-          <h2 className="lg-brand-title">Your store, your team, <em>one place.</em></h2>
-          <ul className="lg-perks">
-            <li>Track milestones and launch progress</li>
-            <li>Download deliverables, repos, and files</li>
-            <li>See live orders and revenue</li>
-            <li>Open tickets and chat with your team</li>
-          </ul>
+          {panel === 'signup' ? (
+            <>
+              <h2 className="lg-brand-title">Start your project in <em>four steps.</em></h2>
+              <ol className="lg-steps">
+                <li><strong>Create your account</strong><span>Takes about two minutes.</span></li>
+                <li><strong>Tell us about your store</strong><span>A 3-minute onboarding: goals, platform, budget.</span></li>
+                <li><strong>Kickoff call</strong><span>Your account lead reaches out within one business day.</span></li>
+                <li><strong>Plan &amp; fixed price</strong><span>In writing, within 48 hours of the call.</span></li>
+              </ol>
+            </>
+          ) : (
+            <>
+              <h2 className="lg-brand-title">Your store, your team, <em>one place.</em></h2>
+              <ul className="lg-perks">
+                <li>Track milestones and launch progress</li>
+                <li>Download deliverables, repos, and files</li>
+                <li>See live orders and revenue</li>
+                <li>Open tickets and chat with your team</li>
+              </ul>
+            </>
+          )}
         </div>
         <figure className="lg-quote">
           <blockquote>“Whenever something comes up, open a ticket here and one of us picks it up — usually within minutes.”</blockquote>
@@ -188,13 +205,19 @@ function AuthCard() {
         <div className="lg-card">
           {isTabbed && (
             <>
-              <p className="kicker">Client portal</p>
-              <h1 className="lg-title">{panel === 'signin' ? <>Welcome <em>back.</em></> : <>Create your <em>account.</em></>}</h1>
+              <p className="kicker">{panel === 'signin' ? 'Client portal' : 'Start a project'}</p>
+              <h1 className="lg-title">{panel === 'signin' ? <>Welcome <em>back.</em></> : <>Let’s start your <em>project.</em></>}</h1>
+              {panel === 'signup' && (
+                <p className="lg-intro">
+                  Create your account, then a quick onboarding tells us about your store.
+                  {urlPlan && <> You picked the <strong>{urlPlan}</strong> plan — <Link href="/services#pricing" className="lg-link">change</Link>.</>}
+                </p>
+              )}
 
-              <div className="lg-tabs" role="tablist" aria-label="Sign in or create account">
+              <div className="lg-tabs" role="tablist" aria-label="Sign in or start a project">
                 {(['signin', 'signup'] as const).map((t) => (
                   <button key={t} role="tab" aria-selected={panel === t} className={panel === t ? 'is-active' : ''} onClick={() => switchTo(t)}>
-                    {t === 'signin' ? 'Sign in' : 'Create account'}
+                    {t === 'signin' ? 'Sign in' : 'Start a project'}
                   </button>
                 ))}
               </div>
@@ -237,7 +260,7 @@ function AuthCard() {
               <button className="s-btn s-btn-tomato s-btn-lg lg-submit" type="submit" disabled={siLoading}>
                 {siLoading ? <Spinner /> : 'Sign in'}
               </button>
-              <p className="lg-note">New to NexaLab? <Link href="/contact" className="lg-link">Start a project</Link> and we’ll set up your portal.</p>
+              <p className="lg-note">New to NexaLab? <button type="button" className="lg-link" onClick={() => switchTo('signup')}>Start a project</button> — it begins with a free account.</p>
             </form>
           )}
 
@@ -256,9 +279,10 @@ function AuthCard() {
               <label className="lg-check"><input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} /> Show passwords</label>
               {suError && <p className="lg-error" aria-live="polite">{suError}</p>}
               <button className="s-btn s-btn-tomato s-btn-lg lg-submit" type="submit" disabled={suLoading}>
-                {suLoading ? <Spinner /> : 'Create account'}
+                {suLoading ? <Spinner /> : 'Create account & continue →'}
               </button>
-              <p className="lg-note">By creating an account you agree to NexaLab’s terms of service.</p>
+              <p className="lg-note">Already a client? <button type="button" className="lg-link" onClick={() => switchTo('signin')}>Sign in</button></p>
+              <p className="lg-fine">By creating an account you agree to NexaLab’s terms of service. No payment needed — you’ll get a fixed quote before any work starts.</p>
             </form>
           )}
 
@@ -266,7 +290,7 @@ function AuthCard() {
             <div className="lg-done">
               <span className="lg-done-icon" aria-hidden="true">✉️</span>
               <h1 className="lg-title">Check your inbox, <em>{checkEmailName}.</em></h1>
-              <p>We’ve sent a confirmation link to <strong>{suEmail}</strong>. Click it to activate your account and you’ll land straight in your client portal.</p>
+              <p>We’ve sent a confirmation link to <strong>{suEmail}</strong>. Click it to activate your account — you’ll go straight to a 3-minute onboarding where you tell us about your project.</p>
               <button className="s-btn s-btn-line lg-submit" onClick={() => switchTo('signin')}>Back to sign in</button>
             </div>
           )}

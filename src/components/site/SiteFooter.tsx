@@ -4,8 +4,8 @@ import { LiveClock, LiveStatus } from './live';
 
 const COLUMNS = [
   { title: 'What we do', links: [['Store design & build', '/services#design-build'], ['Operations', '/services#operations'], ['Growth', '/services#growth'], ['Ongoing support', '/services#support'], ['Pricing', '/services#pricing']] },
-  { title: 'Company', links: [['About us', '/about'], ['Our work', '/work'], ['Careers', '/careers'], ['Contact', '/contact']] },
-  { title: 'Help', links: [['Customer support', '/support'], ['Client login', '/auth'], ['Open a ticket', '/dashboard/support'], ['Email support', `mailto:${CONTACT.support}`]] },
+  { title: 'Company', links: [['About us', '/about'], ['Our work', '/work'], ['Careers', '/careers'], ['Start a project', '/auth?mode=signup'], ['Contact us', '/support']] },
+  { title: 'Help', links: [['Customer support', '/support'], ['Client login', '/auth'], ['Open a ticket', '/support#ticket'], ['Email support', `mailto:${CONTACT.support}`]] },
 ];
 
 export default function SiteFooter() {

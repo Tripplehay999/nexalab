@@ -72,7 +72,7 @@ export default function DashSidebar({ clientName, company, initials, isOpen, onC
         })}
       </nav>
       <div className="dash-sidebar-footer">
-        <Link href="/contact" className="dash-sidebar-link" onClick={onClose}>Book a call</Link>
+        <a href="mailto:hello@nexalab.studio?subject=Book%20a%20call" className="dash-sidebar-link" onClick={onClose}>Book a call</a>
         <Link href="/" className="dash-sidebar-link" onClick={onClose}>← Back to site</Link>
         <button className="dash-sidebar-link dash-logout-btn" onClick={handleLogout}>Sign out</button>
       </div>
