@@ -44,3 +44,6 @@ Thumbs.db
 
 # testing
 coverage/
+
+# Deno lockfile (from running Supabase function scripts locally)
+deno.lock
