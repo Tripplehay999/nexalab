@@ -1,176 +1,95 @@
 // NexaLab — send-notification Edge Function
 // Sends transactional emails via Resend.
 //
-// Required secrets (set in Supabase Dashboard → Edge Functions → Secrets):
+// Required secrets (Supabase Dashboard → Edge Functions → Secrets):
 //   RESEND_API_KEY  — your Resend API key (re_...)
 //   FROM_EMAIL      — verified sender, e.g. "NexaLab <hello@nexalab.studio>"
-//   ADMIN_EMAIL     — email address that receives admin notifications
+//   ADMIN_EMAIL     — inbox that receives admin notifications
+// Provided automatically by Supabase: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+//
+// Recipients are decided here, never by the caller:
+//   SELF_TEMPLATES      → the signed-in caller's own email (e.g. the welcome email)
+//   CLIENT_TEMPLATES    → a client's email; only an admin caller may send these
+//   everything else     → ADMIN_EMAIL
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { buildTemplate, type Data } from './templates.ts';
 
-const RESEND_KEY  = Deno.env.get('RESEND_API_KEY') ?? '';
-const FROM        = Deno.env.get('FROM_EMAIL')     ?? 'NexaLab <hello@nexalab.studio>';
-const ADMIN_EMAIL = Deno.env.get('ADMIN_EMAIL')    ?? 'hello@nexalab.studio';
+// Trim (and drop wrapping quotes) so a stray newline or quotes pasted into the
+// Secrets UI can't produce an invalid sender/recipient.
+const env = (key: string, fallback: string) =>
+  (Deno.env.get(key) ?? '').trim().replace(/^(['"])(.*)\1$/, '$2') || fallback;
 
-const esc = (v: unknown) =>
-  String(v ?? '—').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const RESEND_KEY  = env('RESEND_API_KEY', '');
+const FROM        = env('FROM_EMAIL', 'NexaLab <hello@nexalab.studio>');
+const ADMIN_EMAIL = env('ADMIN_EMAIL', 'hello@nexalab.studio');
+const REPLY_TO    = 'hello@nexalab.studio';
+
+const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
+  auth: { persistSession: false },
+});
+
+const SELF_TEMPLATES   = new Set(['welcome']);
+const CLIENT_TEMPLATES = new Set(['intake_confirm', 'project_approved', 'project_rejected', 'ticket_reply_client']);
 
 const cors = {
   'Access-Control-Allow-Origin':  '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
+
+async function getCaller(req: Request) {
+  const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+  if (!token) return null;
+  const { data } = await admin.auth.getUser(token);
+  if (!data.user) return null; // e.g. the public anon key
+  const { data: profile } = await admin.from('profiles')
+    .select('id, full_name, role, welcome_sent_at').eq('id', data.user.id).single();
+  return { user: data.user, profile };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
 
   try {
     const { type, to, data = {} } = await req.json();
+    const tmpl = buildTemplate(type, data as Data);
+    if (!tmpl) return json({ error: 'Unknown notification type' }, 400);
 
-    type EmailTemplate = { subject: string; html: string };
-    const templates: Record<string, EmailTemplate> = {
+    let recipient = ADMIN_EMAIL;
 
-      // ── Client confirmation after contact form ────────────────────────────
-      intake_confirm: {
-        subject: 'We received your project intake — NexaLab',
-        html: `<p>Hi ${data.name ?? 'there'},</p>
-<p>Thanks for submitting your project intake to NexaLab! We've received all your details and our team will review them within a few hours.</p>
-<p><strong>Plan selected:</strong> ${data.plan ?? 'Not specified'}</p>
-<p><strong>Next steps:</strong></p>
-<ol>
-  <li>We review your intake — same day, usually within a few hours.</li>
-  <li>Strategy call (30 min) — no pitch deck, just a focused conversation.</li>
-  <li>Proposal + timeline — delivered within 48 hours.</li>
-</ol>
-<p>Once your project is approved you'll be able to log into your client portal at <a href="${data.portalUrl ?? 'https://nexalab.studio/dashboard.html'}">nexalab.studio/dashboard.html</a>.</p>
-<p>— The NexaLab Team</p>`,
-      },
-
-      // ── Admin alert when new intake is submitted ──────────────────────────
-      intake_admin_alert: {
-        subject: `New intake: ${data.name ?? 'Unknown'} — ${data.company ?? 'No company'}`,
-        html: `<p><strong>New project intake received.</strong></p>
-<table cellpadding="6" style="border-collapse:collapse;width:100%">
-  <tr><td><strong>Name</strong></td><td>${data.name ?? '—'}</td></tr>
-  <tr><td><strong>Email</strong></td><td>${data.email ?? '—'}</td></tr>
-  <tr><td><strong>Company</strong></td><td>${data.company ?? '—'}</td></tr>
-  <tr><td><strong>Plan</strong></td><td>${data.plan ?? '—'}</td></tr>
-  <tr><td><strong>Revenue</strong></td><td>${data.revenue ?? '—'}</td></tr>
-  <tr><td><strong>Budget</strong></td><td>${data.budget ?? '—'}</td></tr>
-  <tr><td><strong>Timeline</strong></td><td>${data.timeline ?? '—'}</td></tr>
-  <tr><td><strong>Services</strong></td><td>${(data.services ?? []).join(', ') || '—'}</td></tr>
-  <tr><td><strong>Goal</strong></td><td>${data.goal ?? '—'}</td></tr>
-</table>
-<p><a href="https://nexalab.studio/admin.html#pending">Review in Admin Portal →</a></p>`,
-      },
-
-      // ── Admin alert when a job application is submitted ───────────────────
-      application_admin_alert: {
-        subject: `New application: ${data.name ?? 'Unknown'} — ${data.role ?? 'General'}`,
-        html: `<p><strong>New job application received.</strong></p>
-<table cellpadding="6" style="border-collapse:collapse;width:100%">
-  <tr><td><strong>Role</strong></td><td>${data.role ?? '—'}</td></tr>
-  <tr><td><strong>Name</strong></td><td>${data.name ?? '—'}</td></tr>
-  <tr><td><strong>Email</strong></td><td>${data.email ?? '—'}</td></tr>
-  <tr><td><strong>Location</strong></td><td>${data.location || '—'}</td></tr>
-  <tr><td><strong>Experience</strong></td><td>${data.experience || '—'}</td></tr>
-  <tr><td><strong>LinkedIn</strong></td><td>${data.linkedin || '—'}</td></tr>
-  <tr><td><strong>Portfolio</strong></td><td>${data.portfolio || '—'}</td></tr>
-  <tr><td><strong>Resume</strong></td><td>${data.hasResume ? 'Attached (Supabase Storage → resumes)' : 'Not attached'}</td></tr>
-</table>`,
-      },
-
-      // ── Admin alert: new support ticket or public support request ────────
-      support_request_admin_alert: {
-        subject: `${data.priority === 'urgent' ? '[URGENT] ' : ''}Support ${data.ref ?? ''}: ${String(data.subject ?? 'New request').slice(0, 120)}`,
-        html: `<p><strong>New support ${data.isClient ? 'ticket from a client' : 'request'}.</strong></p>
-<table cellpadding="6" style="border-collapse:collapse;width:100%">
-  <tr><td><strong>Ref</strong></td><td>${esc(data.ref)}</td></tr>
-  <tr><td><strong>Priority</strong></td><td>${esc(data.priority)}</td></tr>
-  <tr><td><strong>Topic</strong></td><td>${esc(data.topic)}</td></tr>
-  <tr><td><strong>Name</strong></td><td>${esc(data.name)}</td></tr>
-  <tr><td><strong>Email</strong></td><td>${esc(data.email)}</td></tr>
-  <tr><td><strong>Store</strong></td><td>${esc(data.storeUrl)}</td></tr>
-  <tr><td><strong>Subject</strong></td><td>${esc(data.subject)}</td></tr>
-  <tr><td><strong>Details</strong></td><td>${esc(data.description)}</td></tr>
-</table>
-<p><a href="https://nexalab.studio/admin/tickets">Open in Admin Portal →</a></p>`,
-      },
-
-      // ── Client notification: project approved ─────────────────────────────
-      project_approved: {
-        subject: 'Your NexaLab project has been approved!',
-        html: `<p>Hi ${data.name ?? 'there'},</p>
-<p>Great news — your project has been approved and your client portal is now active.</p>
-<p><strong>Plan:</strong> ${data.plan ?? 'NexaLab Retainer'}</p>
-<p>Log in to your portal to track milestones, review deliverables, and get in touch with your team.</p>
-<p><a href="${data.portalUrl ?? 'https://nexalab.studio/dashboard.html'}">Access your client portal →</a></p>
-<p>— The NexaLab Team</p>`,
-      },
-
-      // ── Client notification: project rejected ─────────────────────────────
-      project_rejected: {
-        subject: 'Update on your NexaLab project intake',
-        html: `<p>Hi ${data.name ?? 'there'},</p>
-<p>Thank you for your interest in NexaLab. After reviewing your project intake, we weren't able to move forward at this time.</p>
-<p>This often comes down to a fit or timing issue rather than the quality of the project. If you'd like to discuss further, we're happy to chat.</p>
-<p>Reply to this email or reach us at <a href="mailto:hello@nexalab.studio">hello@nexalab.studio</a>.</p>
-<p>— The NexaLab Team</p>`,
-      },
-
-      // ── Client notification: admin replied to their ticket ────────────────
-      ticket_reply_client: {
-        subject: `Re: [${data.ticketRef ?? '#—'}] ${data.ticketTitle ?? 'Support ticket'}`,
-        html: `<p>Hi ${data.name ?? 'there'},</p>
-<p>Your NexaLab team has replied to your support ticket <strong>${data.ticketRef ?? ''}</strong>: <em>${data.ticketTitle ?? ''}</em></p>
-<blockquote style="border-left:3px solid #7c5cfc;padding:0.5rem 1rem;margin:1rem 0;color:#555;">
-  ${data.replyContent ?? ''}
-</blockquote>
-<p><a href="${data.portalUrl ?? 'https://nexalab.studio/dashboard.html'}#support">View ticket &amp; reply →</a></p>
-<p>— The NexaLab Team</p>`,
-      },
-
-      // ── Admin notification: client replied to a ticket ────────────────────
-      ticket_reply_admin: {
-        subject: `Client reply: [${data.ticketRef ?? '#—'}] ${data.ticketTitle ?? 'Support ticket'}`,
-        html: `<p><strong>${data.clientName ?? 'A client'}</strong> replied to ticket <strong>${data.ticketRef ?? ''}</strong>.</p>
-<blockquote style="border-left:3px solid #22d3a8;padding:0.5rem 1rem;margin:1rem 0;color:#555;">
-  ${data.replyContent ?? ''}
-</blockquote>
-<p><a href="https://nexalab.studio/admin.html#tickets">View in Admin Portal →</a></p>`,
-      },
-    };
-
-    const tmpl = templates[type];
-    if (!tmpl) {
-      return new Response(JSON.stringify({ error: 'Unknown notification type' }), {
-        status: 400, headers: { ...cors, 'Content-Type': 'application/json' },
-      });
+    if (SELF_TEMPLATES.has(type)) {
+      const caller = await getCaller(req);
+      if (!caller?.user.email) return json({ error: 'Sign in required' }, 401);
+      // Welcome is sent once per account; the timestamp is only writable server-side.
+      if (type === 'welcome') {
+        if (caller.profile?.welcome_sent_at) return json({ ok: true, skipped: 'already sent' });
+        await admin.from('profiles').update({ welcome_sent_at: new Date().toISOString() }).eq('id', caller.user.id);
+      }
+      recipient = caller.user.email;
+    } else if (CLIENT_TEMPLATES.has(type)) {
+      const caller = await getCaller(req);
+      if (caller?.profile?.role !== 'admin') return json({ error: 'Admin only' }, 403);
+      if (typeof data.client_id === 'string') {
+        const { data: client } = await admin.from('profiles').select('email').eq('id', data.client_id).single();
+        if (client?.email) recipient = client.email;
+      } else if (typeof to === 'string') {
+        recipient = to;
+      }
+      if (recipient === ADMIN_EMAIL) return json({ error: 'Client email not found' }, 404);
     }
 
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_KEY}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({
-        from:    FROM,
-        to:      to ?? ADMIN_EMAIL,
-        subject: tmpl.subject,
-        html:    tmpl.html,
-      }),
+      headers: { Authorization: `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: FROM, to: recipient, reply_to: REPLY_TO, subject: tmpl.subject, html: tmpl.html }),
     });
-
     const emailBody = await emailRes.json();
-
-    return new Response(JSON.stringify({ ok: emailRes.ok, resend: emailBody }), {
-      status: emailRes.ok ? 200 : 502,
-      headers: { ...cors, 'Content-Type': 'application/json' },
-    });
-
+    return json({ ok: emailRes.ok, resend: emailBody }, emailRes.ok ? 200 : 502);
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
-    });
+    return json({ error: String(err) }, 500);
   }
 });

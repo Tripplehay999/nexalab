@@ -59,12 +59,17 @@ export async function sendNotification(
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return;
+    // Send the user's session token when signed in: the function uses it to
+    // decide recipients (e.g. the welcome email goes to the caller only).
+    const { createClient } = await import('@/lib/supabase/client');
+    const { data: { session } } = await createClient().auth.getSession();
     await fetch(`${url}/functions/v1/send-notification`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${key}`,
-        apikey: key!,
+        Authorization: `Bearer ${session?.access_token ?? key}`,
+        apikey: key,
       },
       body: JSON.stringify({ type, data }),
     });

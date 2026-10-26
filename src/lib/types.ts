@@ -8,6 +8,11 @@ export interface Profile {
   role: string;
   email: string | null;
   avatar_initials: string | null;
+  phone: string | null;
+  job_title: string | null;
+  onboarding: Record<string, unknown> | null;
+  onboarded_at: string | null;
+  welcome_sent_at: string | null;
   created_at: string;
 }
 

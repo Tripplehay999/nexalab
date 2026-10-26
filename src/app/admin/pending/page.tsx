@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAdmin } from '@/lib/useAdmin';
 import AdminSidebar from '@/components/AdminSidebar';
 import { createClient } from '@/lib/supabase/client';
@@ -22,6 +22,7 @@ async function fetchPending() {
 export default function AdminPendingPage() {
   const { boot, loading } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
   const [projects, setProjects] = useState<PendingProject[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
 
@@ -34,13 +35,17 @@ export default function AdminPendingPage() {
 
   const loadPending = () => fetchPending().then(setProjects);
 
-  async function setStatus(projectId: string, clientId: string, status: 'active' | 'rejected') {
+  async function setStatus(project: PendingProject, status: 'active' | 'rejected') {
+    const { id: projectId, client_id: clientId } = project;
     setSaving(projectId);
     const supabase = createClient();
     await supabase.from('projects').update({ status }).eq('id', projectId);
+    const emailData = { client_id: clientId, name: project.profiles?.full_name ?? '', plan: project.plan ?? '' };
     if (status === 'active') {
       await supabase.from('activity').insert({ project_id: projectId, text: 'Project approved and activated.', color: 'green' });
-      await sendNotification('project_approved', { client_id: clientId, message: 'Your project has been approved! Welcome to your client portal.' });
+      await sendNotification('project_approved', emailData);
+    } else {
+      await sendNotification('project_rejected', emailData);
     }
     setSaving(null);
     loadPending();
@@ -50,7 +55,7 @@ export default function AdminPendingPage() {
 
   return (
     <div className="dashboard-body">
-      <AdminSidebar initials={boot.initials} adminName={boot.firstName} isOpen={menuOpen} />
+      <AdminSidebar initials={boot.initials} adminName={boot.firstName} isOpen={menuOpen} onClose={closeMenu} />
       <div className="dash-main">
         <header className="dash-topbar">
           <button className="dash-menu-btn" onClick={() => setMenuOpen((o) => !o)} aria-label="Toggle menu">
@@ -81,8 +86,8 @@ export default function AdminPendingPage() {
                       {p.description && <p style={{ fontSize:'0.83rem', color:'var(--text)', margin:'0.5rem 0 0', lineHeight:1.5 }}>{p.description}</p>}
                     </div>
                     <div style={{ display:'flex', gap:'0.5rem', flexShrink:0 }}>
-                      <button className="btn btn-sm btn-primary" onClick={() => setStatus(p.id, p.client_id, 'active')} disabled={saving === p.id}>{saving === p.id ? 'Saving…' : 'Approve'}</button>
-                      <button className="btn btn-sm btn-outline" style={{ color:'#ff4fd8', borderColor:'rgba(255,79,216,0.3)' }} onClick={() => setStatus(p.id, p.client_id, 'rejected')} disabled={saving === p.id}>Reject</button>
+                      <button className="btn btn-sm btn-primary" onClick={() => setStatus(p, 'active')} disabled={saving === p.id}>{saving === p.id ? 'Saving…' : 'Approve'}</button>
+                      <button className="btn btn-sm btn-outline" style={{ color:'#FF9A7F', borderColor:'rgba(255,90,54,0.35)' }} onClick={() => setStatus(p, 'rejected')} disabled={saving === p.id}>Reject</button>
                     </div>
                   </div>
                 </div>

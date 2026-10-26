@@ -174,6 +174,6 @@ export const CONTACT = {
   email: 'hello@nexalab.studio',
   support: 'support@nexalab.studio',
   careers: 'careers@nexalab.studio',
-  phone: '+1 (555) 014-2290',
-  phoneHref: 'tel:+15550142290',
+  phone: '416-206-1469',
+  phoneHref: 'tel:+14162061469',
 };

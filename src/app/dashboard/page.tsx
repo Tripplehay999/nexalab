@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useDashboard } from '@/lib/useDashboard';
 import DashSidebar from '@/components/DashSidebar';
 import { createClient } from '@/lib/supabase/client';
@@ -10,6 +10,7 @@ import type { Activity, Deliverable, Milestone, MilestoneTask, Ticket } from '@/
 export default function DashboardPage() {
   const { boot, loading } = useDashboard();
   const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
   const [data, setData] = useState<{
     milestones: Milestone[];
     deliverables: Deliverable[];
@@ -57,7 +58,7 @@ export default function DashboardPage() {
         clientName={boot.profile.full_name || boot.email}
         company={boot.profile.company || ''}
         initials={boot.initials}
-        isOpen={menuOpen}
+        isOpen={menuOpen} onClose={closeMenu}
         openTickets={openTickets}
       />
       <div className="dash-main">

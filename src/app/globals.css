@@ -1278,7 +1278,7 @@ h3{font-size:1rem;font-weight:700;}
 /* Sidebar */
 .dash-sidebar{
   position:fixed;top:0;left:0;bottom:0;width:240px;
-  background:rgba(8,10,20,0.88);
+  background:rgba(22,18,14,0.97);
   border-right:1px solid rgba(255,255,255,0.045);
   backdrop-filter:blur(16px);
   display:flex;flex-direction:column;
@@ -2641,3 +2641,15 @@ details[open] .faq-question::before{content:'− ';color:var(--muted);}
   .adm-seg{align-self:flex-start;}
   .dash-card{overflow-x:auto;}
 }
+
+
+/* Mobile sidebar: close button + tap-outside backdrop */
+.dash-close-btn{display:none;position:absolute;top:0.9rem;right:0.9rem;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer;align-items:center;justify-content:center;z-index:2;}
+.dash-backdrop{display:none;}
+@media(max-width:1024px){
+  .dash-close-btn{display:flex;}
+  .dash-brand{padding-right:3.6rem;}
+  .dash-sidebar{position:fixed;top:0;left:0;bottom:0;z-index:60;transition:transform .3s cubic-bezier(.22,1,.36,1);box-shadow:20px 0 40px -20px rgba(0,0,0,0.6);}
+  .dash-backdrop{display:block;position:fixed;inset:0;z-index:55;border:0;padding:0;background:rgba(17,14,10,0.6);backdrop-filter:blur(2px);cursor:pointer;animation:dashFade .2s ease;}
+}
+@keyframes dashFade{from{opacity:0;}}

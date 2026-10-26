@@ -18,9 +18,13 @@ CREATE TABLE IF NOT EXISTS public.support_requests (
 
 ALTER TABLE public.support_requests ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public can submit support request" ON public.support_requests;
 CREATE POLICY "Public can submit support request" ON public.support_requests FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Admins view support requests" ON public.support_requests;
 CREATE POLICY "Admins view support requests"      ON public.support_requests FOR SELECT USING (public.is_admin());
+DROP POLICY IF EXISTS "Admins update support requests" ON public.support_requests;
 CREATE POLICY "Admins update support requests"    ON public.support_requests FOR UPDATE USING (public.is_admin());
+DROP POLICY IF EXISTS "Admins delete support requests" ON public.support_requests;
 CREATE POLICY "Admins delete support requests"    ON public.support_requests FOR DELETE USING (public.is_admin());
 
 -- ── Inquiries: internal admin note (used by /admin/inquiries) ──

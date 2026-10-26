@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useDashboard } from '@/lib/useDashboard';
 import DashSidebar from '@/components/DashSidebar';
 import { createClient } from '@/lib/supabase/client';
@@ -9,6 +9,7 @@ import type { Deliverable } from '@/lib/types';
 export default function DeliverablesPage() {
   const { boot, loading } = useDashboard();
   const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function DeliverablesPage() {
 
   return (
     <div className="dashboard-body">
-      <DashSidebar clientName={boot.profile.full_name || boot.email} company={boot.profile.company || ''} initials={boot.initials} isOpen={menuOpen} />
+      <DashSidebar clientName={boot.profile.full_name || boot.email} company={boot.profile.company || ''} initials={boot.initials} isOpen={menuOpen} onClose={closeMenu} />
       <div className="dash-main">
         <header className="dash-topbar">
           <button className="dash-menu-btn" onClick={() => setMenuOpen((o) => !o)} aria-label="Toggle menu">

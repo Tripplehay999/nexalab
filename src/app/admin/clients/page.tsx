@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAdmin } from '@/lib/useAdmin';
 import AdminSidebar from '@/components/AdminSidebar';
 import { createClient } from '@/lib/supabase/client';
@@ -12,6 +12,7 @@ type ClientRow = Profile & { projects: Pick<Project, 'id' | 'name' | 'status' | 
 export default function AdminClientsPage() {
   const { boot, loading } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [search, setSearch] = useState('');
 
@@ -35,7 +36,7 @@ export default function AdminClientsPage() {
 
   return (
     <div className="dashboard-body">
-      <AdminSidebar initials={boot.initials} adminName={boot.firstName} isOpen={menuOpen} />
+      <AdminSidebar initials={boot.initials} adminName={boot.firstName} isOpen={menuOpen} onClose={closeMenu} />
       <div className="dash-main">
         <header className="dash-topbar">
           <button className="dash-menu-btn" onClick={() => setMenuOpen((o) => !o)} aria-label="Toggle menu">

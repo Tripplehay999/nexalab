@@ -10,6 +10,7 @@ export interface DashProfile {
   company?: string;
   role?: string;
   email?: string;
+  onboarded_at?: string | null;
 }
 
 export interface DashProject {
@@ -47,6 +48,9 @@ export function useDashboard() {
 
       const { data: profile } = await supabase
         .from('profiles').select('*').eq('id', userId).single();
+
+      // New clients finish onboarding before seeing the portal.
+      if (profile && profile.role !== 'admin' && !profile.onboarded_at) { router.replace('/onboarding'); return; }
 
       const { data: project } = await supabase
         .from('projects').select('*').eq('client_id', userId)

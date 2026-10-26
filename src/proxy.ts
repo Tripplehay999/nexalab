@@ -38,7 +38,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Unauthenticated user hitting protected routes → /auth
-  if (!user && (pathname.startsWith('/dashboard') || pathname.startsWith('/admin'))) {
+  if (!user && (pathname.startsWith('/dashboard') || pathname.startsWith('/admin') || pathname.startsWith('/onboarding'))) {
     return NextResponse.redirect(new URL('/auth', request.url));
   }
 
@@ -65,5 +65,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/auth'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/onboarding', '/auth'],
 };

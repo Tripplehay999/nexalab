@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAdmin } from '@/lib/useAdmin';
 import AdminSidebar from '@/components/AdminSidebar';
 import { createClient } from '@/lib/supabase/client';
-import { fmtDate, timeAgo } from '@/lib/utils';
+import { fmtDate, sendNotification, timeAgo } from '@/lib/utils';
 import type { SupportRequest, Ticket, TicketReply } from '@/lib/types';
 
 type TicketRow = Ticket & { profiles: { full_name: string | null; company: string | null } | null };
@@ -33,6 +33,7 @@ async function fetchRequests(filter: Filter) {
 export default function AdminTicketsPage() {
   const { boot, loading } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
   const [view, setView] = useState<'clients' | 'public'>('clients');
   const [filter, setFilter] = useState<Filter>('open');
   const [tickets, setTickets] = useState<TicketRow[]>([]);
@@ -88,6 +89,14 @@ export default function AdminTicketsPage() {
       content: replyContent,
       is_admin: true,
     });
+    sendNotification('ticket_reply_client', {
+      client_id: active.client_id,
+      name: active.profiles?.full_name ?? '',
+      ticketRef: active.ticket_ref ?? '',
+      ticketTitle: active.title,
+      replyContent,
+      authorName: `${boot.firstName}, NexaLab`,
+    });
     setSaving(false);
     setReplyContent('');
     openThread(active);
@@ -99,7 +108,7 @@ export default function AdminTicketsPage() {
 
   return (
     <div className="dashboard-body">
-      <AdminSidebar initials={boot.initials} adminName={boot.firstName} isOpen={menuOpen} />
+      <AdminSidebar initials={boot.initials} adminName={boot.firstName} isOpen={menuOpen} onClose={closeMenu} />
       <div className="dash-main">
         <header className="dash-topbar">
           <button className="dash-menu-btn" onClick={() => setMenuOpen((o) => !o)} aria-label="Toggle menu">

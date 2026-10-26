@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
@@ -18,12 +19,20 @@ interface Props {
   company: string;
   initials: string;
   isOpen: boolean;
+  onClose?: () => void;
   openTickets?: number;
 }
 
-export default function DashSidebar({ clientName, company, initials, isOpen, openTickets = 0 }: Props) {
+export default function DashSidebar({ clientName, company, initials, isOpen, onClose, openTickets = 0 }: Props) {
   const pathname = usePathname();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -32,7 +41,12 @@ export default function DashSidebar({ clientName, company, initials, isOpen, ope
   }
 
   return (
+    <>
+    {isOpen && <button className="dash-backdrop" onClick={onClose} aria-label="Close menu" />}
     <aside className={`dash-sidebar${isOpen ? ' is-open' : ''}`} id="dash-sidebar">
+      <button className="dash-close-btn" onClick={onClose} aria-label="Close menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
       <div className="dash-brand">
         <Link href="/" className="brand">NexaLab</Link>
         <span className="dash-portal-badge">Client Portal</span>
@@ -48,7 +62,7 @@ export default function DashSidebar({ clientName, company, initials, isOpen, ope
         {NAV.map((item) => {
           const active = pathname === item.href;
           return (
-            <Link key={item.href} href={item.href} className={`dash-nav-item${active ? ' is-active' : ''}`}>
+            <Link key={item.href} href={item.href} onClick={onClose} className={`dash-nav-item${active ? ' is-active' : ''}`}>
               {item.label}
               {item.key === 'support' && openTickets > 0 && (
                 <span className="dash-badge">{openTickets}</span>
@@ -58,10 +72,11 @@ export default function DashSidebar({ clientName, company, initials, isOpen, ope
         })}
       </nav>
       <div className="dash-sidebar-footer">
-        <Link href="/contact" className="dash-sidebar-link">Book a call</Link>
-        <Link href="/" className="dash-sidebar-link">← Back to site</Link>
+        <Link href="/contact" className="dash-sidebar-link" onClick={onClose}>Book a call</Link>
+        <Link href="/" className="dash-sidebar-link" onClick={onClose}>← Back to site</Link>
         <button className="dash-sidebar-link dash-logout-btn" onClick={handleLogout}>Sign out</button>
       </div>
     </aside>
+    </>
   );
 }
