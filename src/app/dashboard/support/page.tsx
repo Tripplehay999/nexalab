@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useDashboard } from '@/lib/useDashboard';
-import DashSidebar from '@/components/DashSidebar';
+import ClientShell, { PortalLoading } from '@/components/portal/ClientShell';
+import Avatar from '@/components/portal/Avatar';
+import Icon from '@/components/portal/Icon';
+import { fetchTeam } from '@/lib/portal';
 import { createClient } from '@/lib/supabase/client';
 import { timeAgo, fmtDate, sendNotification } from '@/lib/utils';
-import type { Ticket, TicketReply } from '@/lib/types';
+import type { Assignment, Ticket, TicketReply } from '@/lib/types';
 
 async function fetchTickets(projectId: string) {
   const supabase = createClient();
@@ -19,8 +22,6 @@ async function fetchTickets(projectId: string) {
 
 export default function SupportPage() {
   const { boot, loading } = useDashboard();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<TicketReply[]>([]);
@@ -30,6 +31,7 @@ export default function SupportPage() {
   const [formError, setFormError] = useState('');
   const [replyError, setReplyError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [team, setTeam] = useState<Assignment[]>([]);
 
   const projectId = boot?.project?.id;
 
@@ -39,6 +41,14 @@ export default function SupportPage() {
     fetchTickets(projectId).then((rows) => { if (!cancelled) setTickets(rows); });
     return () => { cancelled = true; };
   }, [projectId]);
+
+  const userId = boot?.userId;
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    fetchTeam(userId).then((t) => { if (!cancelled) setTeam(t); });
+    return () => { cancelled = true; };
+  }, [userId]);
 
   function loadTickets() {
     if (projectId) fetchTickets(projectId).then(setTickets);
@@ -106,154 +116,134 @@ export default function SupportPage() {
     openTicket(activeTicket);
   }
 
-  if (loading || !boot) return <div className="dashboard-body"><div className="dash-main" style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'100vh' }}><p style={{ color:'var(--muted)' }}>Loading…</p></div></div>;
+  if (loading || !boot) return <PortalLoading />;
 
   const openCount = tickets.filter((t) => t.status !== 'resolved').length;
-
-  const statusBadge = (s: string) => {
-    if (s === 'open') return 'badge-open';
-    if (s === 'in_progress' || s === 'in-progress') return 'badge-inprogress';
-    if (s === 'resolved') return 'badge-resolved';
-    return '';
-  };
+  const tone = (s: string) => (s === 'open' ? 'rose' : s === 'resolved' ? 'lime' : 'sun');
+  const label = (s: string) => (s === 'open' ? 'Open' : s === 'resolved' ? 'Resolved' : 'In progress');
+  const lead = team.find((a) => a.is_primary) ?? team[0];
 
   return (
-    <div className="dashboard-body">
-      <DashSidebar clientName={boot.profile.full_name || boot.email} company={boot.profile.company || ''} initials={boot.initials} isOpen={menuOpen} onClose={closeMenu} openTickets={openCount} />
-      <div className="dash-main">
-        <header className="dash-topbar">
-          <button className="dash-menu-btn" onClick={() => setMenuOpen((o) => !o)} aria-label="Toggle menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-          </button>
-          <div className="dash-topbar-left"><h1 className="dash-page-title">Support</h1></div>
-          <div className="dash-topbar-right"><span className="dash-date">{new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span></div>
-        </header>
+    <ClientShell
+      boot={boot}
+      openTickets={openCount}
+      kicker="Support"
+      title={<>How can we <em>help?</em></>}
+      subtitle="Ask anything — bugs, changes, ideas. A real person replies, usually within minutes during support hours (Mon–Fri 8am–8pm ET)."
+      actions={boot.project ? <button className="pt-btn pt-btn-primary" onClick={() => { setShowNewForm(true); setActiveTicket(null); }}><Icon name="plus" size={16} /> New ticket</button> : null}
+    >
+      <div className="pt-grid pt-grid-main">
+        <div className="pt-stack">
+          {showNewForm && boot.project && (
+            <section className="pt-card">
+              <div className="pt-card-head"><h2 className="pt-card-title">New ticket</h2><button className="pt-link" onClick={() => setShowNewForm(false)}>Cancel</button></div>
+              <form className="pt-form" onSubmit={submitTicket}>
+                <label className="pt-field">What’s it about?<input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Discount code isn’t applying at checkout" maxLength={140} /></label>
+                <label className="pt-field">Type
+                  <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                    {['General', 'Bug report', 'Change request', 'Feature idea', 'Billing', 'Account'].map((c) => <option key={c}>{c}</option>)}
+                  </select>
+                </label>
+                <label className="pt-field">Details<textarea rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What happened, where, and anything that helps us find it (order numbers, links, screenshots)." /></label>
+                {formError && <p className="pt-error">{formError}</p>}
+                <button className="pt-btn pt-btn-primary" disabled={submitting}>{submitting ? 'Sending…' : 'Send to the team'}</button>
+              </form>
+            </section>
+          )}
 
-        <div className="ticket-stats-bar" style={{ marginBottom:'1rem' }}>
-          <span>Total: <strong>{tickets.length}</strong></span>
-          <span>Open: <strong>{openCount}</strong></span>
-          <span>Resolved: <strong>{tickets.filter((t) => t.status === 'resolved').length}</strong></span>
-        </div>
-
-        <div className="dash-two-col">
-          {/* Left column: tickets */}
-          <div>
-            <div className="dash-card">
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'1rem', marginBottom:'0.75rem' }}>
-                <p className="dash-card-title" style={{ margin:0 }}>
-                  Your tickets
-                  {openCount > 0 && <span className="dash-badge" style={{ marginLeft:'0.35rem' }}>{openCount}</span>}
-                </p>
-                <button className="btn btn-sm btn-primary" onClick={() => setShowNewForm((v) => !v)}>
-                  {showNewForm ? 'Cancel' : '+ New ticket'}
-                </button>
+          {activeTicket ? (
+            <section className="pt-card">
+              <div className="pt-card-head" style={{ alignItems: 'flex-start' }}>
+                <div>
+                  <button className="pt-link pt-small" onClick={() => setActiveTicket(null)}>← All tickets</button>
+                  <h2 className="pt-card-title" style={{ marginTop: 6 }}>{activeTicket.title}</h2>
+                  <p className="pt-card-sub">{activeTicket.ticket_ref ? `${activeTicket.ticket_ref} · ` : ''}{activeTicket.category} · opened {fmtDate(activeTicket.created_at)}</p>
+                </div>
+                <span className={`pt-pill tone-${tone(activeTicket.status)}`}>{label(activeTicket.status)}</span>
               </div>
-
-              {showNewForm && (
-                <form onSubmit={submitTicket} style={{ marginBottom:'1rem', borderBottom:'1px solid var(--line)', paddingBottom:'1rem' }}>
-                  <p style={{ fontSize:'0.85rem', fontWeight:600, margin:'0 0 0.75rem' }}>Submit a new ticket</p>
-                  <div className="form-grid">
-                    <label className="form-field">Title * <input type="text" placeholder="Brief description" required value={form.title} onChange={(e) => setForm({...form, title:e.target.value})} /></label>
-                    <label className="form-field">Category <select value={form.category} onChange={(e) => setForm({...form, category:e.target.value})}>
-                      {['General','Bug report','Feature request','Billing','Account'].map((c) => <option key={c}>{c}</option>)}
-                    </select></label>
+              <div className="ticket-messages">
+                {activeTicket.description && (
+                  <div className="ticket-msg ticket-msg--client">
+                    <p className="pt-small pt-muted" style={{ margin: '0 0 0.2rem', fontWeight: 600 }}>You · {timeAgo(activeTicket.created_at)}</p>
+                    <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{activeTicket.description}</p>
                   </div>
-                  <label className="form-field" style={{ marginTop:'0.5rem' }}>Description <textarea rows={3} placeholder="Describe the issue…" value={form.description} onChange={(e) => setForm({...form, description:e.target.value})} /></label>
-                  {formError && <p className="auth-error">{formError}</p>}
-                  <button className="btn btn-sm btn-primary" type="submit" disabled={submitting} style={{ marginTop:'0.75rem' }}>{submitting ? 'Submitting…' : 'Submit ticket'}</button>
+                )}
+                {messages.map((msg) => (
+                  <div key={msg.id} className={`ticket-msg ticket-msg--${msg.is_admin ? 'admin' : 'client'}`}>
+                    <p className="pt-small" style={{ margin: '0 0 0.2rem', fontWeight: 600, opacity: 0.75 }}>{msg.is_admin ? `${msg.author_name || 'NexaLab'} · NexaLab` : 'You'} · {timeAgo(msg.created_at)}</p>
+                    <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{msg.content}</p>
+                  </div>
+                ))}
+                {messages.length === 0 && <p className="pt-muted pt-small">No replies yet — we’ll email you as soon as someone responds.</p>}
+              </div>
+              {activeTicket.status !== 'resolved' && (
+                <form className="pt-form" onSubmit={sendReply} style={{ marginTop: '0.8rem' }}>
+                  <textarea className="pt-input" rows={3} placeholder="Write a reply…" required value={replyContent} onChange={(e) => setReplyContent(e.target.value)} style={{ minHeight: 90 }} />
+                  {replyError && <p className="pt-error">{replyError}</p>}
+                  <button className="pt-btn pt-btn-primary" disabled={submitting} style={{ justifySelf: 'start' }}>{submitting ? 'Sending…' : 'Send reply'}</button>
                 </form>
               )}
-
-              {tickets.length === 0
-                ? <p style={{ color:'var(--muted)', fontSize:'0.85rem' }}>No tickets yet. Submit one if you need help.</p>
-                : (
-                  <ul className="ticket-list" style={{ listStyle:'none', margin:0, padding:0 }}>
-                    {tickets.map((t) => (
-                      <li key={t.id} className={`ticket-item${activeTicket?.id === t.id ? ' is-active' : ''}`} onClick={() => openTicket(t)} style={{ cursor:'pointer', padding:'0.6rem 0.5rem', borderBottom:'1px solid var(--line)', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'0.75rem' }}>
-                        <div>
-                          <p style={{ fontSize:'0.85rem', fontWeight:600, margin:0 }}>{t.title}</p>
-                          <p style={{ fontSize:'0.75rem', color:'var(--muted)', margin:'0.15rem 0 0' }}>{t.category} · {timeAgo(t.created_at)}</p>
-                        </div>
-                        <span className={`deliverable-badge ${statusBadge(t.status)}`}>{t.status.replace(/[-_]/,' ')}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )
-              }
-            </div>
-
-            {/* Thread panel */}
-            {activeTicket && (
-              <div className="dash-card" style={{ marginTop:'1rem' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'0.75rem' }}>
-                  <button className="btn btn-sm btn-outline" onClick={() => setActiveTicket(null)}>← Back</button>
-                  <div>
-                    <p className="dash-card-title" style={{ margin:0 }}>{activeTicket.title}</p>
-                    <p style={{ fontSize:'0.78rem', color:'var(--muted)', margin:'0.1rem 0 0' }}>{activeTicket.category} · opened {fmtDate(activeTicket.created_at)}</p>
-                  </div>
+            </section>
+          ) : (
+            <section className="pt-card">
+              <div className="pt-card-head">
+                <div><h2 className="pt-card-title">Your tickets</h2><p className="pt-card-sub">{openCount ? `${openCount} open` : 'Nothing open right now'}</p></div>
+              </div>
+              {!boot.project ? (
+                <p className="pt-muted" style={{ margin: 0 }}>Tickets open once your project is set up. Until then, email <a href="mailto:hello@nexalab.studio" className="pt-link">hello@nexalab.studio</a> or call 416-206-1469.</p>
+              ) : tickets.length === 0 ? (
+                <div className="pt-empty">
+                  <span className="pt-empty-icon">💬</span>
+                  <h3>No tickets yet</h3>
+                  <p>Need a change, spotted a bug, or have an idea? Open a ticket and we’ll take it from there.</p>
+                  <button className="pt-btn pt-btn-primary pt-btn-sm" onClick={() => setShowNewForm(true)}><Icon name="plus" size={15} /> New ticket</button>
                 </div>
-                <div className="ticket-messages">
-                  {activeTicket.description && (
-                    <div className="ticket-msg ticket-msg--client" style={{ marginBottom:'0.5rem' }}>
-                      <p style={{ fontSize:'0.82rem', color:'var(--muted)', margin:'0 0 0.2rem', fontWeight:600 }}>You</p>
-                      <p style={{ fontSize:'0.85rem', margin:0, lineHeight:1.5 }}>{activeTicket.description}</p>
-                    </div>
-                  )}
-                  {messages.map((msg) => (
-                    <div key={msg.id} className={`ticket-msg ticket-msg--${msg.is_admin ? 'admin' : 'client'}`}>
-                      <p style={{ fontSize:'0.78rem', color:'var(--muted)', margin:'0 0 0.2rem', fontWeight:600 }}>{msg.is_admin ? `${msg.author_name || 'NexaLab'} · NexaLab` : 'You'} · {timeAgo(msg.created_at)}</p>
-                      <p style={{ fontSize:'0.85rem', margin:0, lineHeight:1.5 }}>{msg.content}</p>
-                    </div>
+              ) : (
+                <ul className="pt-list">
+                  {tickets.map((t) => (
+                    <li key={t.id}>
+                      <button className="pt-row pt-row-link pt-row-btn" onClick={() => { setShowNewForm(false); openTicket(t); }}>
+                        <span className="pt-row-icon">🎫</span>
+                        <div className="pt-row-main"><p className="pt-row-title">{t.title}</p><p className="pt-row-sub">{t.ticket_ref ? `${t.ticket_ref} · ` : ''}{t.category} · {timeAgo(t.created_at)}</p></div>
+                        <span className={`pt-pill tone-${tone(t.status)}`}>{label(t.status)}</span>
+                      </button>
+                    </li>
                   ))}
-                </div>
-                <form onSubmit={sendReply} style={{ marginTop:'0.75rem' }}>
-                  <textarea rows={2} placeholder="Reply to this ticket…" style={{ width:'100%', resize:'vertical' }} required value={replyContent} onChange={(e) => setReplyContent(e.target.value)} className="adm-inline-input" />
-                  {replyError && <p className="auth-error">{replyError}</p>}
-                  <button className="btn btn-sm btn-primary" type="submit" disabled={submitting} style={{ marginTop:'0.5rem' }}>{submitting ? 'Sending…' : 'Send reply'}</button>
-                </form>
-              </div>
-            )}
-          </div>
-
-          {/* Right column */}
-          <div>
-            <div className="dash-card support-lead-card">
-              <p className="dash-card-title">Your account lead</p>
-              <div className="lead-header">
-                <div className="lead-avatar">NL</div>
-                <div>
-                  <p className="lead-name">NexaLab Team</p>
-                  <p className="lead-role">Commerce Engineer</p>
-                </div>
-              </div>
-              <div className="lead-details">
-                <div className="lead-detail-row"><span className="lead-detail-label">Time zone</span><span>EST (UTC-5)</span></div>
-                <div className="lead-detail-row"><span className="lead-detail-label">Response time</span><span>Same business day</span></div>
-                <div className="lead-detail-row"><span className="lead-detail-label">Next check-in</span><span>Weekly</span></div>
-              </div>
-              <p style={{ marginTop:'0.75rem', fontSize:'0.82rem', color:'var(--muted)' }}>
-                Reach us any time at <a href="mailto:hello@nexalab.studio" className="auth-link">hello@nexalab.studio</a>
-              </p>
-            </div>
-
-            <div className="dash-card faq-card" style={{ marginTop:'1rem' }}>
-              <p className="dash-card-title">Frequently asked questions</p>
-              <div className="faq-list">
-                {[
-                  { q:'How do I access my deliverables?', a:'Go to the Deliverables page. Click "Download" for documents, "View repo" for code, or "Open" for links. Upcoming deliverables haven\'t been released yet.' },
-                  { q:'What are your response times?', a:'We typically respond to support tickets within the same business day. For urgent issues, email hello@nexalab.studio directly.' },
-                  { q:'How do I report a bug or request a feature?', a:'Submit a ticket using "+ New ticket" and choose "Bug report" or "Feature request". Include screenshots and steps to reproduce.' },
-                ].map((faq, i) => (
-                  <details key={i} className="faq-item">
-                    <summary className="faq-question">{faq.q}</summary>
-                    <p className="faq-answer">{faq.a}</p>
-                  </details>
-                ))}
-              </div>
-            </div>
-          </div>
+                </ul>
+              )}
+            </section>
+          )}
         </div>
+
+        <aside className="pt-stack">
+          <section className="pt-card">
+            <h2 className="pt-card-title">Your go-to person</h2>
+            {lead?.staff ? (
+              <div className="pt-person" style={{ marginTop: '0.9rem' }}>
+                <Avatar name={lead.staff.full_name} src={lead.staff.photo_url} size={52} />
+                <div><strong>{lead.staff.full_name}</strong><span>{lead.role}{lead.staff.city ? ` · ${lead.staff.city}` : ''}</span></div>
+              </div>
+            ) : (
+              <p className="pt-muted" style={{ margin: '0.5rem 0 0' }}>Your account lead will appear here once assigned.</p>
+            )}
+            <ul className="pt-list" style={{ marginTop: '1rem' }}>
+              <li className="pt-row"><span className="pt-row-icon"><Icon name="mail" size={18} /></span><div className="pt-row-main"><p className="pt-row-title">Email</p><p className="pt-row-sub"><a href={`mailto:${lead?.staff?.email || 'hello@nexalab.studio'}`}>{lead?.staff?.email || 'hello@nexalab.studio'}</a></p></div></li>
+              <li className="pt-row"><span className="pt-row-icon"><Icon name="phone" size={18} /></span><div className="pt-row-main"><p className="pt-row-title">Phone</p><p className="pt-row-sub"><a href="tel:+14162061469">416-206-1469</a></p></div></li>
+              <li className="pt-row"><span className="pt-row-icon">🚨</span><div className="pt-row-main"><p className="pt-row-title">Store down?</p><p className="pt-row-sub">Call now — our on-call developer answers 24/7 on Operate &amp; Scale plans.</p></div></li>
+            </ul>
+          </section>
+          <section className="pt-card">
+            <h2 className="pt-card-title">Quick answers</h2>
+            {[
+              ['How fast do you reply?', 'Usually within minutes during support hours. Urgent issues like checkout outages are picked up within 15 minutes, any time.'],
+              ['Where are my files?', 'Everything we deliver lives in Deliverables — designs, documents, code, and links.'],
+              ['Can I request a change?', 'Of course. Open a ticket with the “Change request” type and describe what you’d like.'],
+            ].map(([q, a]) => (
+              <details key={q} className="faq-item"><summary>{q}</summary><p className="faq-answer">{a}</p></details>
+            ))}
+          </section>
+        </aside>
       </div>
-    </div>
+    </ClientShell>
   );
 }

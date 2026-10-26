@@ -6,6 +6,8 @@ export type Data = Record<string, unknown>;
 export type Template = { subject: string; html: string };
 
 const SITE = 'https://nexalab.studio';
+// PNG logo mark served by src/app/brand/mark.png (email clients don't render SVG).
+const LOGO = `${SITE}/brand/mark.png`;
 const C = {
   paper: '#F5EFE4', paper2: '#ECE4D4', card: '#FFFCF6', ink: '#17130E', ink2: '#4A4339', ink3: '#7B7266',
   line: '#E4DCCB', tomato: '#FF5A36', lime: '#C9F266', sky: '#A3CDFF', lilac: '#CDBFFF', sun: '#FFD25E', forest: '#103B2F',
@@ -77,8 +79,11 @@ function layout({ preheader, label, body, footerNote }: { preheader: string; lab
 <!-- Header -->
 <tr><td style="padding:0 4px 14px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td style="font-family:${F.display};font-size:21px;font-weight:800;letter-spacing:-0.03em;color:${C.ink};white-space:nowrap;">
-      <span style="display:inline-block;width:24px;height:24px;border-radius:7px;background:${C.ink};vertical-align:-5px;margin-right:7px;text-align:center;line-height:24px;"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${C.tomato};vertical-align:1px;"></span></span>NexaLab
+    <td style="white-space:nowrap;">
+      <a href="${SITE}" style="text-decoration:none;color:${C.ink};">
+        <img src="${LOGO}" width="32" height="32" alt="NexaLab" style="display:inline-block;width:32px;height:32px;border:0;vertical-align:middle;margin-right:9px;">
+        <span style="font-family:${F.display};font-size:22px;font-weight:800;letter-spacing:-0.03em;color:${C.ink};vertical-align:middle;">NexaLab</span>
+      </a>
     </td>
     <td align="right" class="hide-sm" style="font-family:${F.sans};font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${C.ink3};">${label}</td>
   </tr></table>
@@ -91,6 +96,7 @@ ${body}
 
 <!-- Footer -->
 <tr><td class="px" style="padding:24px 16px 0;font-family:${F.sans};font-size:13px;line-height:1.7;color:${C.ink3};text-align:center;">
+  <img src="${LOGO}" width="36" height="36" alt="" style="display:block;margin:0 auto 10px;width:36px;height:36px;border:0;">
   <p style="margin:0 0 6px;font-family:${F.display};font-size:15px;font-weight:700;color:${C.ink};">NexaLab — we build and run online stores.</p>
   <p style="margin:0 0 4px;">Brooklyn · Toronto</p>
   <p style="margin:0 0 4px;"><a href="tel:+14162061469" style="color:${C.ink3};">416-206-1469</a> · <a href="mailto:hello@nexalab.studio" style="color:${C.ink3};">hello@nexalab.studio</a></p>
@@ -205,8 +211,9 @@ function adminAlert(title: string, rows: [string, unknown][], link: { href: stri
   return `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:${C.paper};font-family:${F.sans};word-break:break-word;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.paper};"><tr><td align="center" style="padding:20px 10px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:${C.card};border-radius:18px;border:1px solid ${C.line};overflow:hidden;">
-<tr><td style="background:${C.ink};padding:15px 20px;font-family:${F.display};font-size:16px;font-weight:700;color:${C.paper};">
-  <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${accent};margin-right:8px;"></span>${esc(title)}</td></tr>
+<tr><td style="background:${C.paper2};border-bottom:1px solid ${C.line};padding:14px 20px;font-family:${F.display};font-size:16px;font-weight:700;color:${C.ink};">
+  <img src="${LOGO}" width="24" height="24" alt="NexaLab" style="display:inline-block;width:24px;height:24px;border:0;vertical-align:middle;margin-right:10px;">
+  <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${accent};margin-right:8px;vertical-align:middle;"></span><span style="vertical-align:middle;">${esc(title)}</span></td></tr>
 <tr><td style="padding:8px 20px 4px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows.map(([k, v], i) => `<tr><td style="padding:10px 0;${i ? `border-top:1px solid ${C.line};` : ''}">
     <p style="margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${C.ink3};">${k}</p>

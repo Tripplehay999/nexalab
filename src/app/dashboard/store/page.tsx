@@ -1,110 +1,107 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useDashboard } from '@/lib/useDashboard';
-import DashSidebar from '@/components/DashSidebar';
 import { createClient } from '@/lib/supabase/client';
-import { fmtDate } from '@/lib/utils';
+import { formatMetric, hostOf } from '@/lib/portal';
+import { timeAgo } from '@/lib/utils';
 import type { StoreIntegration, StoreOrder } from '@/lib/types';
+import ClientShell, { PortalLoading } from '@/components/portal/ClientShell';
+
+type Data = { integration: StoreIntegration | null; orders: StoreOrder[] };
+
+async function loadStore(clientId: string): Promise<Data> {
+  const supabase = createClient();
+  const [storeRes, ordersRes] = await Promise.all([
+    supabase.from('store_integrations').select('id, client_id, platform, store_url, is_active, last_synced_at, created_at').eq('client_id', clientId).eq('is_active', true).limit(1).maybeSingle(),
+    supabase.from('store_orders').select('*').eq('client_id', clientId).order('ordered_at', { ascending: false }).limit(25),
+  ]);
+  return { integration: storeRes.data as StoreIntegration | null, orders: (ordersRes.data ?? []) as StoreOrder[] };
+}
+
+const STATUS_TONE: Record<string, string> = { shipped: 'lime', fulfilled: 'lime', paid: 'sky', processing: 'sun', pending: '', refunded: 'rose', cancelled: 'rose' };
 
 export default function StorePage() {
   const { boot, loading } = useDashboard();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
-  const [storeData, setStoreData] = useState<StoreIntegration | null>(null);
-  const [orders, setOrders] = useState<StoreOrder[]>([]);
+  const [data, setData] = useState<Data | null>(null);
+  const userId = boot?.userId;
 
   useEffect(() => {
-    if (!boot) return;
-    const supabase = createClient();
-    const uid = boot.userId;
+    if (!userId) return;
+    let cancelled = false;
+    loadStore(userId).then((d) => { if (!cancelled) setData(d); });
+    return () => { cancelled = true; };
+  }, [userId]);
 
-    async function load() {
-      const [storeRes, ordersRes] = await Promise.all([
-        supabase.from('store_integrations').select('id, client_id, platform, store_url, is_active, last_synced_at, created_at').eq('client_id', uid).eq('is_active', true).limit(1).maybeSingle(),
-        supabase.from('store_orders').select('*').eq('client_id', uid).order('ordered_at', { ascending: false }).limit(20),
-      ]);
-      setStoreData(storeRes.data);
-      setOrders(ordersRes.data ?? []);
-    }
-    load();
-  }, [boot]);
-
-  if (loading || !boot) return <div className="dashboard-body"><div className="dash-main" style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'100vh' }}><p style={{ color:'var(--muted)' }}>Loading…</p></div></div>;
-
-  const pending    = orders.filter((o) => o.status === 'pending').length;
-  const processing = orders.filter((o) => o.status === 'processing').length;
-  const latestDay  = orders.slice(0, 10);
-  const dayRevenue = latestDay.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
-
-  const statusCounts: Record<string, number> = {};
-  orders.forEach((o) => { const s = o.status || 'unknown'; statusCounts[s] = (statusCounts[s] || 0) + 1; });
+  if (loading || !boot) return <PortalLoading />;
+  const orders = data?.orders ?? [];
+  const revenue = orders.reduce((s, o) => s + (Number(o.amount) || 0), 0);
+  const counts = orders.reduce<Record<string, number>>((acc, o) => { const k = o.status || 'unknown'; acc[k] = (acc[k] ?? 0) + 1; return acc; }, {});
 
   return (
-    <div className="dashboard-body">
-      <DashSidebar clientName={boot.profile.full_name || boot.email} company={boot.profile.company || ''} initials={boot.initials} isOpen={menuOpen} onClose={closeMenu} />
-      <div className="dash-main">
-        <header className="dash-topbar">
-          <button className="dash-menu-btn" onClick={() => setMenuOpen((o) => !o)} aria-label="Toggle menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-          </button>
-          <div className="dash-topbar-left"><h1 className="dash-page-title">Store</h1></div>
-          <div className="dash-topbar-right"><span className="dash-date">{new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span></div>
-        </header>
-
-        {!storeData ? (
-          <div className="dash-card" style={{ textAlign:'center', padding:'3rem 2rem' }}>
-            <div style={{ fontSize:'2.5rem', marginBottom:'1rem' }}>🛍️</div>
-            <h3 style={{ margin:'0 0 0.5rem', fontSize:'1.05rem' }}>No store connected yet</h3>
-            <p style={{ color:'var(--muted)', fontSize:'0.88rem', margin:0 }}>Your NexaLab team will connect your store once it&apos;s ready. Live orders and revenue will appear here.</p>
+    <ClientShell
+      boot={boot}
+      kicker="Store"
+      title={<>Live from <em>your store.</em></>}
+      subtitle="Recent orders synced from your store every 15 minutes."
+    >
+      {data === null ? (
+        <p className="pt-muted">Loading…</p>
+      ) : !data.integration ? (
+        <div className="pt-card pt-empty">
+          <span className="pt-empty-icon">🛍️</span>
+          <h3>Your store isn’t connected yet</h3>
+          <p>Once your team connects your store, recent orders and revenue appear here automatically. In the meantime, you can add numbers yourself in Insights.</p>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Link href="/dashboard/analytics" className="pt-btn pt-btn-primary pt-btn-sm">Add numbers</Link>
+            <Link href="/dashboard/support" className="pt-btn pt-btn-ghost pt-btn-sm">Ask us to connect it</Link>
           </div>
-        ) : (
-          <div>
-            <div className="dash-two-col" style={{ marginBottom:'1rem' }}>
-              <div className="dash-card">
-                <p className="dash-card-title">Connection</p>
-                <p style={{ fontSize:'0.85rem', color:'var(--text)', fontWeight:600 }}>{storeData.platform || 'Connected'}</p>
-                <p style={{ fontSize:'0.78rem', color:'var(--muted)', marginTop:'0.25rem' }}>Last sync: {fmtDate(storeData.last_synced_at)}</p>
-              </div>
-              <div className="dash-card">
-                <p className="dash-card-title">Sync schedule</p>
-                <p className="store-sync-desc">Your store data syncs automatically every <strong>15 minutes</strong>. Contact your account lead via Support for an immediate refresh.</p>
-              </div>
-            </div>
-
-            <div className="dash-stats" style={{ marginBottom:'1rem' }}>
-              <div className="dash-stat-card"><p className="dash-stat-label">Revenue (last 10 orders)</p><p className="dash-stat-val">${dayRevenue.toLocaleString()}</p></div>
-              <div className="dash-stat-card"><p className="dash-stat-label">Recent orders</p><p className="dash-stat-val">{latestDay.length}</p></div>
-              <div className="dash-stat-card"><p className="dash-stat-label">Pending orders</p><p className="dash-stat-val">{pending}</p></div>
-              <div className="dash-stat-card"><p className="dash-stat-label">Processing orders</p><p className="dash-stat-val">{processing}</p></div>
-            </div>
-
-            <div className="dash-two-col">
-              <div className="dash-card">
-                <p className="dash-card-title">Order status breakdown</p>
-                {Object.entries(statusCounts).map(([status, count]) => (
-                  <div key={status} className="store-order-row" style={{ display:'flex', justifyContent:'space-between', padding:'0.4rem 0', borderBottom:'1px solid var(--line)', fontSize:'0.83rem' }}>
-                    <span style={{ textTransform:'capitalize' }}>{status}</span>
-                    <span style={{ fontWeight:700 }}>{count}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="dash-card">
-                <p className="dash-card-title">Live order feed</p>
-                {orders.slice(0, 8).map((o) => (
-                  <div key={o.id} className="store-order-row" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.4rem 0', borderBottom:'1px solid var(--line)', fontSize:'0.82rem', gap:'0.5rem' }}>
-                    <span style={{ color:'var(--muted)', flexShrink:0 }}>#{o.external_id || o.id.slice(0,8)}</span>
-                    <span style={{ flex:1, overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{o.customer_name || '—'}</span>
-                    <span style={{ fontWeight:700, flexShrink:0 }}>${Number(o.amount || 0).toFixed(2)}</span>
-                    <span className={`dash-status ${o.status === 'shipped' ? 'status-shipped' : o.status === 'processing' ? 'status-processing' : 'status-pending'}`} style={{ flexShrink:0 }}>{o.status}</span>
-                  </div>
-                ))}
-                {orders.length === 0 && <p style={{ color:'var(--muted)', fontSize:'0.82rem' }}>No orders yet.</p>}
-              </div>
-            </div>
+        </div>
+      ) : (
+        <div className="pt-stack">
+          <div className="pt-grid pt-grid-4">
+            <div className="pt-metric"><span className="pt-metric-label">Connected</span><span className="pt-metric-value" style={{ fontSize: '1.2rem', textTransform: 'capitalize' }}>{data.integration.platform}</span><span className="pt-small pt-muted">{hostOf(data.integration.store_url)}</span></div>
+            <div className="pt-metric"><span className="pt-metric-label">Last sync</span><span className="pt-metric-value" style={{ fontSize: '1.2rem' }}>{data.integration.last_synced_at ? timeAgo(data.integration.last_synced_at) : 'Pending'}</span><span className="pt-small pt-muted">every 15 minutes</span></div>
+            <div className="pt-metric"><span className="pt-metric-label">Recent orders</span><span className="pt-metric-value">{orders.length}</span><span className="pt-small pt-muted">latest {orders.length}</span></div>
+            <div className="pt-metric"><span className="pt-metric-label">Their value</span><span className="pt-metric-value">{formatMetric('revenue', revenue, { compact: true })}</span><span className="pt-small pt-muted">combined</span></div>
           </div>
-        )}
-      </div>
-    </div>
+
+          <div className="pt-grid pt-grid-main">
+            <section className="pt-card pt-card-flush">
+              <div className="pt-card-head" style={{ padding: '1.1rem 1.2rem 0' }}><h2 className="pt-card-title">Recent orders</h2></div>
+              {orders.length === 0 ? (
+                <p className="pt-muted" style={{ padding: '0 1.2rem 1.2rem' }}>No orders synced yet.</p>
+              ) : (
+                <div className="pt-table-wrap">
+                  <table className="pt-table">
+                    <thead><tr><th>Order</th><th>Customer</th><th>Amount</th><th>Status</th><th>When</th></tr></thead>
+                    <tbody>
+                      {orders.map((o) => (
+                        <tr key={o.id}>
+                          <td className="pt-muted">#{o.external_id}</td>
+                          <td>{o.customer_name || '—'}</td>
+                          <td className="pt-strong">{formatMetric('revenue', Number(o.amount))}</td>
+                          <td><span className={`pt-pill tone-${STATUS_TONE[o.status ?? ''] ?? ''}`} style={{ textTransform: 'capitalize' }}>{o.status || 'unknown'}</span></td>
+                          <td className="pt-muted">{o.ordered_at ? timeAgo(o.ordered_at) : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+            <section className="pt-card">
+              <h2 className="pt-card-title">Orders by status</h2>
+              <ul className="pt-list" style={{ marginTop: '0.6rem' }}>
+                {Object.entries(counts).map(([s, n]) => (
+                  <li key={s} className="pt-row"><span className="pt-row-main" style={{ textTransform: 'capitalize' }}>{s}</span><strong>{n}</strong></li>
+                ))}
+              </ul>
+            </section>
+          </div>
+        </div>
+      )}
+    </ClientShell>
   );
 }

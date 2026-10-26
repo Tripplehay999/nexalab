@@ -11,6 +11,11 @@ export interface DashProfile {
   role?: string;
   email?: string;
   onboarded_at?: string | null;
+  onboarding?: Record<string, unknown> | null;
+  website?: string | null;
+  platform?: string | null;
+  phone?: string | null;
+  job_title?: string | null;
 }
 
 export interface DashProject {

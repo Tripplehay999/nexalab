@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useAdmin } from '@/lib/useAdmin';
-import AdminSidebar from '@/components/AdminSidebar';
+import AdminShell from '@/components/portal/AdminShell';
+import { PortalLoading } from '@/components/portal/ClientShell';
 import { createClient } from '@/lib/supabase/client';
 import { fmtDate, timeAgo } from '@/lib/utils';
 import type { Inquiry } from '@/lib/types';
@@ -18,8 +19,6 @@ async function fetchInquiries(filter: string) {
 
 export default function AdminInquiriesPage() {
   const { boot, loading } = useAdmin();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [active, setActive] = useState<Inquiry | null>(null);
   const [filter, setFilter] = useState('new');
@@ -52,19 +51,10 @@ export default function AdminInquiriesPage() {
     setSaving(false);
   }
 
-  if (loading || !boot) return <div className="dashboard-body"><div className="dash-main" style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'100vh' }}><p style={{ color:'var(--muted)' }}>Loading…</p></div></div>;
+  if (loading || !boot) return <PortalLoading />;
 
   return (
-    <div className="dashboard-body">
-      <AdminSidebar initials={boot.initials} adminName={boot.firstName} isOpen={menuOpen} onClose={closeMenu} />
-      <div className="dash-main">
-        <header className="dash-topbar">
-          <button className="dash-menu-btn" onClick={() => setMenuOpen((o) => !o)} aria-label="Toggle menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-          </button>
-          <div className="dash-topbar-left"><h1 className="dash-page-title">Inquiries</h1></div>
-          <div className="dash-topbar-right"><span className="dash-date">{new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span></div>
-        </header>
+    <AdminShell boot={boot} kicker="Inquiries" title={<>Project <em>inquiries.</em></>} subtitle="New project requests from the website. Review, add notes, and move them along.">
 
         <div style={{ display:'flex', gap:'0.5rem', marginBottom:'1rem', flexWrap:'wrap' }}>
           {['new','reviewing','contacted','closed','all'].map((s) => (
@@ -126,7 +116,6 @@ export default function AdminInquiriesPage() {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </AdminShell>
   );
 }

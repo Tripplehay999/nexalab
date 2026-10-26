@@ -10,6 +10,8 @@ export interface Profile {
   avatar_initials: string | null;
   phone: string | null;
   job_title: string | null;
+  website: string | null;
+  platform: string | null;
   onboarding: Record<string, unknown> | null;
   onboarded_at: string | null;
   welcome_sent_at: string | null;
@@ -159,5 +161,61 @@ export interface StoreOrder {
   status: string | null;
   platform: string | null;
   ordered_at: string | null;
+  created_at: string;
+}
+
+export interface Staff {
+  id: string;
+  full_name: string;
+  title: string;
+  email: string | null;
+  phone: string | null;
+  photo_url: string | null;
+  city: string | null;
+  bio: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Assignment {
+  id: string;
+  client_id: string;
+  staff_id: string;
+  role: string;
+  is_primary: boolean;
+  created_at: string;
+  staff?: Staff | null;
+}
+
+export interface Metric {
+  id: string;
+  client_id: string;
+  metric: string;
+  label: string | null;
+  value: number;
+  period: string;
+  note: string | null;
+  source: string;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface Goal {
+  id: string;
+  client_id: string;
+  metric: string;
+  label: string | null;
+  target: number;
+  due_date: string | null;
+  created_at: string;
+}
+
+export interface ClientLink {
+  id: string;
+  client_id: string;
+  label: string;
+  url: string;
+  category: string;
+  added_by: string | null;
   created_at: string;
 }

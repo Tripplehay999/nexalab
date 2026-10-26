@@ -1,91 +1,108 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useAdmin } from '@/lib/useAdmin';
-import AdminSidebar from '@/components/AdminSidebar';
 import { createClient } from '@/lib/supabase/client';
-import type { Profile, Project } from '@/lib/types';
-import { fmtDate } from '@/lib/utils';
+import { PROJECT_STATUS, hostOf } from '@/lib/portal';
+import { timeAgo } from '@/lib/utils';
+import type { Assignment, Profile, Project } from '@/lib/types';
+import AdminShell from '@/components/portal/AdminShell';
+import { PortalLoading } from '@/components/portal/ClientShell';
+import Avatar from '@/components/portal/Avatar';
 
-type ClientRow = Profile & { projects: Pick<Project, 'id' | 'name' | 'status' | 'plan'>[] | null };
+type Row = Profile & { projects: Pick<Project, 'id' | 'name' | 'status' | 'plan'>[] | null; team: Assignment[] };
+type Filter = 'all' | 'unassigned' | 'active' | 'pending' | 'onboarding';
+
+async function loadClients(): Promise<Row[]> {
+  const supabase = createClient();
+  const [clients, assigns] = await Promise.all([
+    supabase.from('profiles').select('*, projects(id,name,status,plan)').eq('role', 'client').order('created_at', { ascending: false }),
+    supabase.from('client_assignments').select('*, staff(*)').order('is_primary', { ascending: false }),
+  ]);
+  const team = (assigns.data ?? []) as Assignment[];
+  return ((clients.data ?? []) as Row[]).map((c) => ({ ...c, team: team.filter((a) => a.client_id === c.id && a.staff) }));
+}
 
 export default function AdminClientsPage() {
   const { boot, loading } = useAdmin();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
-  const [clients, setClients] = useState<ClientRow[]>([]);
+  const [rows, setRows] = useState<Row[] | null>(null);
   const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<Filter>('all');
 
   useEffect(() => {
     if (!boot) return;
-    const supabase = createClient();
-    supabase
-      .from('profiles')
-      .select('*, projects(id,name,status,plan)')
-      .eq('role', 'client')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => setClients((data ?? []) as ClientRow[]));
+    let cancelled = false;
+    loadClients().then((r) => { if (!cancelled) setRows(r); });
+    return () => { cancelled = true; };
   }, [boot]);
 
-  if (loading || !boot) return <div className="dashboard-body"><div className="dash-main" style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'100vh' }}><p style={{ color:'var(--muted)' }}>Loading…</p></div></div>;
+  if (loading || !boot) return <PortalLoading />;
 
-  const filtered = clients.filter((c) => {
-    const q = search.toLowerCase();
-    return !q || (c.full_name || '').toLowerCase().includes(q) || (c.company || '').toLowerCase().includes(q) || (c.email || '').toLowerCase().includes(q);
+  const q = search.toLowerCase();
+  const shown = (rows ?? []).filter((c) => {
+    const project = c.projects?.[0];
+    if (filter === 'unassigned' && c.team.length) return false;
+    if (filter === 'active' && project?.status !== 'active') return false;
+    if (filter === 'pending' && project?.status !== 'pending') return false;
+    if (filter === 'onboarding' && c.onboarded_at) return false;
+    return !q || [c.full_name, c.company, c.email, c.website].some((v) => (v ?? '').toLowerCase().includes(q));
   });
+  const count = (f: Filter) => (rows ?? []).filter((c) => {
+    const p = c.projects?.[0];
+    return f === 'all' || (f === 'unassigned' && !c.team.length) || (f === 'active' && p?.status === 'active') || (f === 'pending' && p?.status === 'pending') || (f === 'onboarding' && !c.onboarded_at);
+  }).length;
 
   return (
-    <div className="dashboard-body">
-      <AdminSidebar initials={boot.initials} adminName={boot.firstName} isOpen={menuOpen} onClose={closeMenu} />
-      <div className="dash-main">
-        <header className="dash-topbar">
-          <button className="dash-menu-btn" onClick={() => setMenuOpen((o) => !o)} aria-label="Toggle menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-          </button>
-          <div className="dash-topbar-left"><h1 className="dash-page-title">Clients</h1></div>
-          <div className="dash-topbar-right"><span className="dash-date">{new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span></div>
-        </header>
-
-        <div className="dash-card">
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.75rem', gap:'1rem', flexWrap:'wrap' }}>
-            <p className="dash-card-title" style={{ margin:0 }}>All clients ({clients.length})</p>
-            <input type="search" placeholder="Search by name, company or email…" value={search} onChange={(e) => setSearch(e.target.value)} style={{ fontSize:'0.82rem', padding:'0.45rem 0.75rem', background:'var(--card-raised)', border:'1px solid var(--line)', borderRadius:6, color:'var(--text)', outline:'none', minWidth:220 }} />
-          </div>
-
-          {filtered.length === 0
-            ? <p style={{ color:'var(--muted)', fontSize:'0.85rem' }}>No clients found.</p>
-            : (
-              <div className="admin-table-wrap">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th><th>Company</th><th>Plan</th><th>Project</th><th>Status</th><th>Joined</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((c) => {
-                      const project = c.projects?.[0];
-                      return (
-                        <tr key={c.id}>
-                          <td>
-                            <div style={{ fontWeight:600 }}>{c.full_name || '—'}</div>
-                            <div style={{ fontSize:'0.75rem', color:'var(--muted)' }}>{c.email}</div>
-                          </td>
-                          <td>{c.company || '—'}</td>
-                          <td>{project?.plan || '—'}</td>
-                          <td>{project?.name || '—'}</td>
-                          <td>{project ? <span className={`deliverable-badge ${project.status === 'active' ? 'badge-ready' : project.status === 'pending' ? 'badge-upcoming' : 'badge-draft'}`}>{project.status}</span> : <span style={{ color:'var(--muted)', fontSize:'0.8rem' }}>No project</span>}</td>
-                          <td style={{ color:'var(--muted)', fontSize:'0.8rem' }}>{fmtDate(c.created_at)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )
-          }
-        </div>
+    <AdminShell boot={boot} kicker="Clients" title={<>Your <em>clients.</em></>} subtitle="Open a client to manage their team, project, deliverables, insights, and resources.">
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1rem' }}>
+        <input className="pt-input" type="search" placeholder="Search name, company, email or website…" value={search} onChange={(e) => setSearch(e.target.value)} style={{ maxWidth: 360 }} />
       </div>
-    </div>
+      <div className="pt-tabbar" role="tablist" aria-label="Filter clients">
+        {(['all', 'unassigned', 'active', 'pending', 'onboarding'] as Filter[]).map((f) => (
+          <button key={f} role="tab" aria-selected={filter === f} className={filter === f ? 'is-active' : ''} onClick={() => setFilter(f)} style={{ textTransform: 'capitalize' }}>
+            {f === 'unassigned' ? 'No team' : f === 'onboarding' ? 'Still onboarding' : f} ({count(f)})
+          </button>
+        ))}
+      </div>
+
+      <section className="pt-card pt-card-flush">
+        {rows === null ? <p className="pt-muted" style={{ padding: '1.2rem' }}>Loading…</p> : shown.length === 0 ? (
+          <div className="pt-empty"><span className="pt-empty-icon">🔍</span><h3>No clients match</h3><p>Try a different search or filter.</p></div>
+        ) : (
+          <div className="pt-table-wrap">
+            <table className="pt-table">
+              <thead><tr><th>Client</th><th>Project</th><th>Team</th><th>Website</th><th>Joined</th></tr></thead>
+              <tbody>
+                {shown.map((c) => {
+                  const p = c.projects?.[0];
+                  const st = p ? PROJECT_STATUS[p.status] ?? { label: p.status, tone: '' } : null;
+                  return (
+                    <tr key={c.id}>
+                      <td>
+                        <Link href={`/admin/clients/${c.id}`} className="pt-person">
+                          <Avatar name={c.full_name || c.email || '?'} size={36} />
+                          <div><strong>{c.full_name || '—'}</strong><span>{c.company || c.email}</span></div>
+                        </Link>
+                      </td>
+                      <td>{p ? <><span className={`pt-pill tone-${st!.tone}`}>{st!.label}</span>{p.plan && <span className="pt-muted pt-small"> · {p.plan}</span>}</> : <span className="pt-muted">No project</span>}</td>
+                      <td>
+                        {c.team.length ? (
+                          <div className="pt-avatars" title={c.team.map((a) => `${a.staff!.full_name} (${a.role})`).join(', ')}>
+                            {c.team.slice(0, 4).map((a) => <Avatar key={a.id} name={a.staff!.full_name} src={a.staff!.photo_url} size={30} />)}
+                          </div>
+                        ) : <Link href={`/admin/clients/${c.id}?tab=team`} className="pt-pill tone-sun">Assign team</Link>}
+                      </td>
+                      <td className="pt-muted">{hostOf(c.website) || '—'}</td>
+                      <td className="pt-muted">{timeAgo(c.created_at)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </AdminShell>
   );
 }

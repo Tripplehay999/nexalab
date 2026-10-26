@@ -122,6 +122,8 @@ export default function OnboardingPage() {
       company: answers.company.trim() || null,
       job_title: answers.jobTitle.trim() || null,
       phone: answers.phone.trim() || null,
+      website: answers.website.trim() ? (/^https?:\/\//i.test(answers.website.trim()) ? answers.website.trim() : `https://${answers.website.trim()}`) : null,
+      platform: answers.platform || null,
       onboarding: { step: nextStep, answers },
       ...(complete ? { onboarded_at: new Date().toISOString() } : {}),
     }).eq('id', userId);

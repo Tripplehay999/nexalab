@@ -1,102 +1,176 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useAdmin } from '@/lib/useAdmin';
-import AdminSidebar from '@/components/AdminSidebar';
 import { createClient } from '@/lib/supabase/client';
-import type { Activity } from '@/lib/types';
+import { greeting } from '@/lib/portal';
 import { timeAgo } from '@/lib/utils';
+import type { Activity, Assignment, Profile, Staff } from '@/lib/types';
+import AdminShell from '@/components/portal/AdminShell';
+import { PortalLoading } from '@/components/portal/ClientShell';
+import Avatar from '@/components/portal/Avatar';
+import Icon from '@/components/portal/Icon';
 
-export default function AdminPage() {
+type Overview = {
+  counts: { clients: number; active: number; pending: number; tickets: number; inquiries: number; requests: number };
+  unassigned: Profile[];
+  recent: Profile[];
+  activity: Activity[];
+  staffLoad: { staff: Staff; clients: number }[];
+};
+
+async function loadOverview(): Promise<Overview> {
+  const supabase = createClient();
+  const [clients, active, pending, tickets, inquiries, requests, act, staff, assigns] = await Promise.all([
+    supabase.from('profiles').select('*').eq('role', 'client').order('created_at', { ascending: false }),
+    supabase.from('projects').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('projects').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('tickets').select('id', { count: 'exact', head: true }).neq('status', 'resolved'),
+    supabase.from('inquiries').select('id', { count: 'exact', head: true }).eq('status', 'new'),
+    supabase.from('support_requests').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+    supabase.from('activity').select('*').order('created_at', { ascending: false }).limit(8),
+    supabase.from('staff').select('*').eq('is_active', true).order('full_name'),
+    supabase.from('client_assignments').select('client_id, staff_id, is_primary'),
+  ]);
+  const clientRows = (clients.data ?? []) as Profile[];
+  const assignRows = (assigns.data ?? []) as Pick<Assignment, 'client_id' | 'staff_id' | 'is_primary'>[];
+  const withLead = new Set(assignRows.map((a) => a.client_id));
+  return {
+    counts: {
+      clients: clientRows.length, active: active.count ?? 0, pending: pending.count ?? 0,
+      tickets: tickets.count ?? 0, inquiries: inquiries.count ?? 0, requests: requests.count ?? 0,
+    },
+    unassigned: clientRows.filter((c) => !withLead.has(c.id)).slice(0, 6),
+    recent: clientRows.slice(0, 5),
+    activity: (act.data ?? []) as Activity[],
+    staffLoad: ((staff.data ?? []) as Staff[]).map((s) => ({ staff: s, clients: assignRows.filter((a) => a.staff_id === s.id).length })),
+  };
+}
+
+export default function AdminOverview() {
   const { boot, loading } = useAdmin();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
-  const [stats, setStats] = useState({ clients: 0, activeProjects: 0, openTickets: 0, pendingInquiries: 0 });
-  const [activity, setActivity] = useState<Activity[]>([]);
+  const [data, setData] = useState<Overview | null>(null);
 
   useEffect(() => {
     if (!boot) return;
-    const supabase = createClient();
-
-    async function load() {
-      const [clientsRes, projectsRes, ticketsRes, inquiriesRes, actRes] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'client'),
-        supabase.from('projects').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-        supabase.from('tickets').select('id', { count: 'exact', head: true }).neq('status', 'resolved'),
-        supabase.from('inquiries').select('id', { count: 'exact', head: true }).eq('status', 'new'),
-        supabase.from('activity').select('*').order('created_at', { ascending: false }).limit(8),
-      ]);
-      setStats({
-        clients:          clientsRes.count ?? 0,
-        activeProjects:   projectsRes.count ?? 0,
-        openTickets:      ticketsRes.count ?? 0,
-        pendingInquiries: inquiriesRes.count ?? 0,
-      });
-      setActivity(actRes.data ?? []);
-    }
-    load();
+    let cancelled = false;
+    loadOverview().then((d) => { if (!cancelled) setData(d); });
+    return () => { cancelled = true; };
   }, [boot]);
 
-  if (loading || !boot) return <div className="dashboard-body"><div className="dash-main" style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'100vh' }}><p style={{ color:'var(--muted)' }}>Loading…</p></div></div>;
+  if (loading || !boot) return <PortalLoading />;
+  const c = data?.counts;
+
+  const actions = c ? [
+    { n: c.pending, label: 'project', verb: 'waiting for approval', href: '/admin/pending', icon: '⏳' },
+    { n: c.tickets, label: 'ticket', verb: 'open', href: '/admin/tickets', icon: '🎫' },
+    { n: c.inquiries, label: 'new inquiry', verb: 'to review', href: '/admin/inquiries', icon: '📥' },
+    { n: c.requests, label: 'public support request', verb: 'open', href: '/admin/tickets', icon: '🆘' },
+  ].filter((a) => a.n > 0) : [];
 
   return (
-    <div className="dashboard-body">
-      <AdminSidebar initials={boot.initials} adminName={boot.firstName} isOpen={menuOpen} onClose={closeMenu} />
-      <div className="dash-main">
-        <header className="dash-topbar">
-          <button className="dash-menu-btn" onClick={() => setMenuOpen((o) => !o)} aria-label="Toggle menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-          </button>
-          <div className="dash-topbar-left"><h1 className="dash-page-title">Admin Overview</h1></div>
-          <div className="dash-topbar-right">
-            <span className="dash-date">{new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span>
-            <div className="dash-avatar-sm" style={{ background:'linear-gradient(135deg,#ff4fd8,#7c5cfc)' }}>{boot.initials}</div>
+    <AdminShell
+      boot={boot}
+      kicker={new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+      title={<>{greeting()}, <em>{boot.firstName}.</em></>}
+      subtitle={actions.length ? `${actions.reduce((s, a) => s + a.n, 0)} things need attention today.` : 'All clear — nothing waiting on you.'}
+      actions={<Link href="/admin/clients" className="pt-btn pt-btn-ink"><Icon name="user" size={16} /> All clients</Link>}
+    >
+      <div className="pt-grid pt-grid-4" style={{ marginBottom: '1rem' }}>
+        {[
+          ['Clients', c?.clients], ['Active projects', c?.active], ['Open tickets', c?.tickets], ['New inquiries', c?.inquiries],
+        ].map(([l, v]) => (
+          <div key={l as string} className="pt-metric" style={{ background: 'var(--card)', border: '1px solid var(--line)' }}>
+            <span className="pt-metric-label">{l}</span><span className="pt-metric-value">{v ?? '—'}</span>
           </div>
-        </header>
-
-        <div className="dash-stats">
-          <div className="dash-stat-card"><p className="dash-stat-label">Total clients</p><p className="dash-stat-val">{stats.clients}</p></div>
-          <div className="dash-stat-card"><p className="dash-stat-label">Active projects</p><p className="dash-stat-val">{stats.activeProjects}</p></div>
-          <div className="dash-stat-card"><p className="dash-stat-label">Open tickets</p><p className="dash-stat-val" style={{ color: stats.openTickets > 0 ? '#ff4fd8' : undefined }}>{stats.openTickets}</p></div>
-          <div className="dash-stat-card"><p className="dash-stat-label">Pending inquiries</p><p className="dash-stat-val" style={{ color: stats.pendingInquiries > 0 ? '#f59e0b' : undefined }}>{stats.pendingInquiries}</p></div>
-        </div>
-
-        <div className="dash-two-col" style={{ marginTop:'1rem' }}>
-          <div className="dash-card">
-            <p className="dash-card-title">Activity feed</p>
-            <ul className="activity-list">
-              {activity.length === 0
-                ? <li style={{ color:'var(--muted)', fontSize:'0.82rem' }}>No recent activity.</li>
-                : activity.map((a, i) => (
-                  <li key={i} className="activity-item">
-                    <span className={`activity-dot activity-dot--${a.color || 'gray'}`} />
-                    <div>
-                      <p className="activity-text">{a.text}</p>
-                      <p className="activity-time">{timeAgo(a.created_at)}</p>
-                    </div>
-                  </li>
-                ))
-              }
-            </ul>
-          </div>
-          <div className="dash-card">
-            <p className="dash-card-title">Quick actions</p>
-            <div style={{ display:'flex', flexDirection:'column', gap:'0.5rem' }}>
-              {[
-                { href:'/admin/inquiries', label:'Review new inquiries', count: stats.pendingInquiries },
-                { href:'/admin/pending',   label:'Approve pending projects' },
-                { href:'/admin/tickets',   label:'Respond to tickets', count: stats.openTickets },
-                { href:'/admin/clients',   label:'View all clients' },
-              ].map((a) => (
-                <a key={a.href} href={a.href} className="dash-quicknav-card" style={{ flexDirection:'row', justifyContent:'space-between', padding:'0.6rem 0.9rem' }}>
-                  <span style={{ fontSize:'0.85rem' }}>{a.label}</span>
-                  {a.count !== undefined && a.count > 0 && <span className="dash-badge">{a.count}</span>}
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
-    </div>
+
+      <div className="pt-grid pt-grid-main">
+        <div className="pt-stack">
+          <section className="pt-card">
+            <div className="pt-card-head"><h2 className="pt-card-title">Needs action</h2></div>
+            {actions.length === 0 ? (
+              <p className="pt-muted" style={{ margin: 0 }}>🎉 Inbox zero. Nothing waiting.</p>
+            ) : (
+              <ul className="pt-list">
+                {actions.map((a) => (
+                  <li key={a.label}>
+                    <Link href={a.href} className="pt-row pt-row-link">
+                      <span className="pt-row-icon">{a.icon}</span>
+                      <div className="pt-row-main"><p className="pt-row-title">{a.n} {a.label}{a.n > 1 ? 's' : ''} {a.verb}</p></div>
+                      <Icon name="arrow" size={18} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="pt-card">
+            <div className="pt-card-head">
+              <div><h2 className="pt-card-title">Clients without a team</h2><p className="pt-card-sub">Assign an account lead so they know who to talk to.</p></div>
+            </div>
+            {!data ? <p className="pt-muted">Loading…</p> : data.unassigned.length === 0 ? (
+              <p className="pt-muted" style={{ margin: 0 }}>Every client has a team. Nice.</p>
+            ) : (
+              <ul className="pt-list">
+                {data.unassigned.map((p) => (
+                  <li key={p.id}>
+                    <Link href={`/admin/clients/${p.id}?tab=team`} className="pt-row pt-row-link">
+                      <Avatar name={p.full_name || p.email || '?'} size={38} />
+                      <div className="pt-row-main"><p className="pt-row-title">{p.full_name || p.email}</p><p className="pt-row-sub">{p.company || 'No company'} · joined {timeAgo(p.created_at)}</p></div>
+                      <span className="pt-btn pt-btn-ghost pt-btn-sm">Assign</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="pt-card">
+            <div className="pt-card-head"><h2 className="pt-card-title">Recent activity</h2></div>
+            {data?.activity.length ? (
+              <ul className="pt-feed">
+                {data.activity.map((a) => (
+                  <li key={a.id}><span className={`pt-feed-dot ${a.color}`} /><div><p>{a.text}</p><time>{timeAgo(a.created_at)}</time></div></li>
+                ))}
+              </ul>
+            ) : <p className="pt-muted" style={{ margin: 0 }}>No activity yet.</p>}
+          </section>
+        </div>
+
+        <aside className="pt-stack">
+          <section className="pt-card">
+            <div className="pt-card-head"><h2 className="pt-card-title">Newest clients</h2><Link href="/admin/clients" className="pt-card-link">All <Icon name="arrow" size={15} /></Link></div>
+            <ul className="pt-list">
+              {(data?.recent ?? []).map((p) => (
+                <li key={p.id}>
+                  <Link href={`/admin/clients/${p.id}`} className="pt-row pt-row-link">
+                    <Avatar name={p.full_name || p.email || '?'} size={36} />
+                    <div className="pt-row-main"><p className="pt-row-title">{p.full_name || p.email}</p><p className="pt-row-sub">{p.onboarded_at ? 'Onboarded' : 'Onboarding'} · {timeAgo(p.created_at)}</p></div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="pt-card">
+            <div className="pt-card-head"><h2 className="pt-card-title">Team workload</h2><Link href="/admin/team" className="pt-card-link">Manage <Icon name="arrow" size={15} /></Link></div>
+            <ul className="pt-list">
+              {(data?.staffLoad ?? []).map(({ staff, clients }) => (
+                <li key={staff.id} className="pt-row">
+                  <Avatar name={staff.full_name} src={staff.photo_url} size={36} />
+                  <div className="pt-row-main"><p className="pt-row-title">{staff.full_name}</p><p className="pt-row-sub">{staff.title}</p></div>
+                  <span className="pt-pill">{clients} client{clients === 1 ? '' : 's'}</span>
+                </li>
+              ))}
+              {data && data.staffLoad.length === 0 && <p className="pt-muted" style={{ margin: 0 }}>No team members yet — add them in Team.</p>}
+            </ul>
+          </section>
+        </aside>
+      </div>
+    </AdminShell>
   );
 }
