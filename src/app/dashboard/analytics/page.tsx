@@ -4,21 +4,22 @@ import { useEffect, useState } from 'react';
 import { useDashboard } from '@/lib/useDashboard';
 import DashSidebar from '@/components/DashSidebar';
 import { createClient } from '@/lib/supabase/client';
+import type { StoreMetric } from '@/lib/types';
 
 export default function AnalyticsPage() {
   const { boot, loading } = useDashboard();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [analytics, setAnalytics] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<StoreMetric[]>([]);
   const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
-    if (!boot?.project) return;
+    if (!boot) return;
     const supabase = createClient();
     supabase
-      .from('analytics_snapshots')
+      .from('store_metrics')
       .select('*')
-      .eq('project_id', boot.project.id)
-      .order('snapshot_date', { ascending: false })
+      .eq('client_id', boot.userId)
+      .order('date', { ascending: false })
       .limit(30)
       .then(({ data }) => {
         if (data && data.length > 0) { setAnalytics(data); setHasData(true); }
@@ -54,35 +55,35 @@ export default function AnalyticsPage() {
           <div>
             <div className="dash-stats" style={{ marginBottom:'1rem' }}>
               <div className="dash-stat-card">
-                <p className="dash-stat-label">Revenue (latest snapshot)</p>
+                <p className="dash-stat-label">Revenue (latest day)</p>
                 <p className="dash-stat-val">${Number(latest.revenue || 0).toLocaleString()}</p>
                 {prior && <p className={`dash-stat-sub ${revDiff >= 0 ? 'dash-stat-green' : 'dash-stat-warn'}`}>{revDiff >= 0 ? '+' : ''}{revDiff.toLocaleString()} vs prev</p>}
               </div>
               <div className="dash-stat-card">
-                <p className="dash-stat-label">Orders (latest snapshot)</p>
+                <p className="dash-stat-label">Orders (latest day)</p>
                 <p className="dash-stat-val">{Number(latest.orders || 0).toLocaleString()}</p>
                 {prior && <p className={`dash-stat-sub ${ordDiff >= 0 ? 'dash-stat-green' : 'dash-stat-warn'}`}>{ordDiff >= 0 ? '+' : ''}{ordDiff} vs prev</p>}
               </div>
               <div className="dash-stat-card">
                 <p className="dash-stat-label">Avg order value</p>
-                <p className="dash-stat-val">{latest.orders ? '$' + (Number(latest.revenue || 0) / Number(latest.orders)).toFixed(2) : '—'}</p>
+                <p className="dash-stat-val">{latest.orders ? '$' + Number(latest.avg_order_value || Number(latest.revenue) / latest.orders).toFixed(2) : '—'}</p>
               </div>
               <div className="dash-stat-card">
-                <p className="dash-stat-label">Conversion rate</p>
-                <p className="dash-stat-val">{latest.conversion_rate ? `${Number(latest.conversion_rate).toFixed(1)}%` : '—'}</p>
+                <p className="dash-stat-label">Customers (latest day)</p>
+                <p className="dash-stat-val">{Number(latest.customers || 0).toLocaleString()}</p>
               </div>
             </div>
 
             <div className="dash-card">
               <p className="dash-card-title">Revenue history</p>
               <div className="analytics-bar-chart">
-                {[...analytics].reverse().map((snap: any, i: number) => {
-                  const maxRev = Math.max(...analytics.map((a: any) => Number(a.revenue || 0)));
+                {[...analytics].reverse().map((snap, i) => {
+                  const maxRev = Math.max(...analytics.map((a) => Number(a.revenue || 0)));
                   const pct = maxRev > 0 ? Math.round((Number(snap.revenue || 0) / maxRev) * 100) : 0;
                   return (
                     <div key={i} className="analytics-bar-col" title={`$${Number(snap.revenue || 0).toLocaleString()}`}>
                       <div className="analytics-bar-fill" style={{ height:`${Math.max(pct, 2)}%` }} />
-                      <span className="analytics-bar-label">{new Date(snap.snapshot_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+                      <span className="analytics-bar-label">{new Date(snap.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
                     </div>
                   );
                 })}

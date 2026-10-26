@@ -5,16 +5,18 @@ import { useDashboard } from '@/lib/useDashboard';
 import DashSidebar from '@/components/DashSidebar';
 import { createClient } from '@/lib/supabase/client';
 import { timeAgo } from '@/lib/utils';
+import type { Activity, Deliverable, Milestone, MilestoneTask, Ticket } from '@/lib/types';
 
 export default function DashboardPage() {
   const { boot, loading } = useDashboard();
   const [menuOpen, setMenuOpen] = useState(false);
   const [data, setData] = useState<{
-    milestones: any[];
-    deliverables: any[];
-    tickets: any[];
-    activity: any[];
+    milestones: Milestone[];
+    deliverables: Deliverable[];
+    tickets: Ticket[];
+    activity: Activity[];
   } | null>(null);
+  const [now, setNow] = useState(0);
 
   useEffect(() => {
     if (!boot?.project || ['pending','rejected'].includes(boot.project.status)) return;
@@ -22,7 +24,7 @@ export default function DashboardPage() {
     const pid = boot.project.id;
 
     async function loadData() {
-      const milestoneIds = (await supabase.from('milestones').select('id').eq('project_id', pid)).data?.map((m: any) => m.id) ?? [];
+      const milestoneIds = (await supabase.from('milestones').select('id').eq('project_id', pid)).data?.map((m: { id: string }) => m.id) ?? [];
       const [milRes, taskRes, dlvRes, tikRes, actRes] = await Promise.all([
         supabase.from('milestones').select('*').eq('project_id', pid).order('sort_order'),
         milestoneIds.length
@@ -32,9 +34,10 @@ export default function DashboardPage() {
         supabase.from('tickets').select('*').eq('project_id', pid).order('created_at', { ascending: false }),
         supabase.from('activity').select('*').eq('project_id', pid).order('created_at', { ascending: false }).limit(6),
       ]);
-      const milestones = milRes.data ?? [];
-      const allTasks   = taskRes.data ?? [];
-      milestones.forEach((m: any) => { m.tasks = allTasks.filter((t: any) => t.milestone_id === m.id); });
+      const milestones = (milRes.data ?? []) as Milestone[];
+      const allTasks   = (taskRes.data ?? []) as MilestoneTask[];
+      milestones.forEach((m) => { m.tasks = allTasks.filter((t) => t.milestone_id === m.id); });
+      setNow(Date.now());
       setData({ milestones, deliverables: dlvRes.data ?? [], tickets: tikRes.data ?? [], activity: actRes.data ?? [] });
     }
     loadData();
@@ -46,7 +49,7 @@ export default function DashboardPage() {
 
   const project = boot.project;
   const statusMap: Record<string, string> = { active: 'Sprint Active', paused: 'Paused', complete: 'Complete' };
-  const openTickets = (data?.tickets ?? []).filter((t: any) => t.status !== 'resolved').length;
+  const openTickets = (data?.tickets ?? []).filter((t) => t.status !== 'resolved').length;
 
   return (
     <div className="dashboard-body">
@@ -91,7 +94,7 @@ export default function DashboardPage() {
             <div className="project-status-icon">⏳</div>
             <h2 className="project-status-title">Your project is under review</h2>
             <p className="project-status-body">Our team has received your intake and will review it within 1 business day. You&apos;ll get an email the moment it&apos;s approved.</p>
-            <p className="project-status-sub">In the meantime, feel free to reach out at <a href="mailto:hello@nexalab.io" className="auth-link">hello@nexalab.io</a>.</p>
+            <p className="project-status-sub">In the meantime, feel free to reach out at <a href="mailto:hello@nexalab.studio" className="auth-link">hello@nexalab.studio</a>.</p>
           </div>
         )}
         {project && project.status === 'rejected' && (
@@ -99,20 +102,20 @@ export default function DashboardPage() {
             <div className="project-status-icon">📋</div>
             <h2 className="project-status-title">Thank you for your interest</h2>
             <p className="project-status-body">After reviewing your project intake, we weren&apos;t able to move forward at this time.</p>
-            <p className="project-status-sub">Reply to our email or reach us at <a href="mailto:hello@nexalab.io" className="auth-link">hello@nexalab.io</a>.</p>
+            <p className="project-status-sub">Reply to our email or reach us at <a href="mailto:hello@nexalab.studio" className="auth-link">hello@nexalab.studio</a>.</p>
           </div>
         )}
 
         {/* Active project overview */}
         {project && !['pending','rejected'].includes(project.status) && data && (() => {
           const startDate   = project.started_at ? new Date(project.started_at) : new Date();
-          const daysActive  = Math.floor((Date.now() - startDate.getTime()) / 86400000);
-          const complete    = data.milestones.filter((m: any) => m.status === 'complete').length;
-          const dlvReady    = data.deliverables.filter((d: any) => d.status === 'ready').length;
+          const daysActive  = Math.max(0, Math.floor((now - startDate.getTime()) / 86400000));
+          const complete    = data.milestones.filter((m) => m.status === 'complete').length;
+          const dlvReady    = data.deliverables.filter((d) => d.status === 'ready').length;
           const pctM        = data.milestones.length ? Math.round((complete / data.milestones.length) * 100) : 0;
           const pctD        = data.deliverables.length ? Math.round((dlvReady / data.deliverables.length) * 100) : 0;
-          const nextM       = data.milestones.find((m: any) => m.status === 'active') || data.milestones.find((m: any) => m.status === 'pending');
-          const activeM     = data.milestones.find((m: any) => m.status === 'active');
+          const nextM       = data.milestones.find((m) => m.status === 'active') || data.milestones.find((m) => m.status === 'pending');
+          const activeM     = data.milestones.find((m) => m.status === 'active');
           const activeIdx   = activeM ? data.milestones.indexOf(activeM) + 1 : null;
           const totalPct    = data.milestones.length ? Math.round((complete / data.milestones.length) * 100) : 0;
 
@@ -166,7 +169,7 @@ export default function DashboardPage() {
                   <ul className="activity-list">
                     {data.activity.length === 0
                       ? <li className="activity-item" style={{ color: 'var(--muted)', fontSize: '0.82rem' }}>No activity yet.</li>
-                      : data.activity.map((a: any, i: number) => (
+                      : data.activity.map((a, i) => (
                         <li key={i} className="activity-item">
                           <span className={`activity-dot activity-dot--${a.color || 'gray'}`} />
                           <div>
@@ -184,7 +187,7 @@ export default function DashboardPage() {
                     ? <p style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>All milestones complete — great work!</p>
                     : (() => {
                       const tasks     = nextM.tasks || [];
-                      const doneTasks = tasks.filter((t: any) => t.status === 'done').length;
+                      const doneTasks = tasks.filter((t) => t.status === 'done').length;
                       const pct       = tasks.length ? Math.round((doneTasks / tasks.length) * 100) : 0;
                       const dueStr    = nextM.due_date ? new Date(nextM.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD';
                       const idx       = data.milestones.indexOf(nextM) + 1;
@@ -204,7 +207,7 @@ export default function DashboardPage() {
                             <div className="milestone-tasks">
                               <p className="milestone-tasks-label">Sub-tasks</p>
                               <ul className="milestone-task-list">
-                                {tasks.map((t: any, i: number) => <li key={i} className={`mtask ${t.status}`}>{t.name}</li>)}
+                                {tasks.map((t, i) => <li key={i} className={`mtask ${t.status}`}>{t.name}</li>)}
                               </ul>
                             </div>
                           )}

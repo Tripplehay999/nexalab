@@ -3,14 +3,17 @@
 //
 // Required secrets (set in Supabase Dashboard → Edge Functions → Secrets):
 //   RESEND_API_KEY  — your Resend API key (re_...)
-//   FROM_EMAIL      — verified sender, e.g. "NexaLab <hello@nexalab.io>"
+//   FROM_EMAIL      — verified sender, e.g. "NexaLab <hello@nexalab.studio>"
 //   ADMIN_EMAIL     — email address that receives admin notifications
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 const RESEND_KEY  = Deno.env.get('RESEND_API_KEY') ?? '';
-const FROM        = Deno.env.get('FROM_EMAIL')     ?? 'NexaLab <hello@nexalab.io>';
-const ADMIN_EMAIL = Deno.env.get('ADMIN_EMAIL')    ?? 'hello@nexalab.io';
+const FROM        = Deno.env.get('FROM_EMAIL')     ?? 'NexaLab <hello@nexalab.studio>';
+const ADMIN_EMAIL = Deno.env.get('ADMIN_EMAIL')    ?? 'hello@nexalab.studio';
+
+const esc = (v: unknown) =>
+  String(v ?? '—').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 const cors = {
   'Access-Control-Allow-Origin':  '*',
@@ -38,7 +41,7 @@ serve(async (req) => {
   <li>Strategy call (30 min) — no pitch deck, just a focused conversation.</li>
   <li>Proposal + timeline — delivered within 48 hours.</li>
 </ol>
-<p>Once your project is approved you'll be able to log into your client portal at <a href="${data.portalUrl ?? 'https://nexalab.io/dashboard.html'}">nexalab.io/dashboard.html</a>.</p>
+<p>Once your project is approved you'll be able to log into your client portal at <a href="${data.portalUrl ?? 'https://nexalab.studio/dashboard.html'}">nexalab.studio/dashboard.html</a>.</p>
 <p>— The NexaLab Team</p>`,
       },
 
@@ -57,7 +60,7 @@ serve(async (req) => {
   <tr><td><strong>Services</strong></td><td>${(data.services ?? []).join(', ') || '—'}</td></tr>
   <tr><td><strong>Goal</strong></td><td>${data.goal ?? '—'}</td></tr>
 </table>
-<p><a href="https://nexalab.io/admin.html#pending">Review in Admin Portal →</a></p>`,
+<p><a href="https://nexalab.studio/admin.html#pending">Review in Admin Portal →</a></p>`,
       },
 
       // ── Admin alert when a job application is submitted ───────────────────
@@ -76,6 +79,23 @@ serve(async (req) => {
 </table>`,
       },
 
+      // ── Admin alert: new support ticket or public support request ────────
+      support_request_admin_alert: {
+        subject: `${data.priority === 'urgent' ? '[URGENT] ' : ''}Support ${data.ref ?? ''}: ${String(data.subject ?? 'New request').slice(0, 120)}`,
+        html: `<p><strong>New support ${data.isClient ? 'ticket from a client' : 'request'}.</strong></p>
+<table cellpadding="6" style="border-collapse:collapse;width:100%">
+  <tr><td><strong>Ref</strong></td><td>${esc(data.ref)}</td></tr>
+  <tr><td><strong>Priority</strong></td><td>${esc(data.priority)}</td></tr>
+  <tr><td><strong>Topic</strong></td><td>${esc(data.topic)}</td></tr>
+  <tr><td><strong>Name</strong></td><td>${esc(data.name)}</td></tr>
+  <tr><td><strong>Email</strong></td><td>${esc(data.email)}</td></tr>
+  <tr><td><strong>Store</strong></td><td>${esc(data.storeUrl)}</td></tr>
+  <tr><td><strong>Subject</strong></td><td>${esc(data.subject)}</td></tr>
+  <tr><td><strong>Details</strong></td><td>${esc(data.description)}</td></tr>
+</table>
+<p><a href="https://nexalab.studio/admin/tickets">Open in Admin Portal →</a></p>`,
+      },
+
       // ── Client notification: project approved ─────────────────────────────
       project_approved: {
         subject: 'Your NexaLab project has been approved!',
@@ -83,7 +103,7 @@ serve(async (req) => {
 <p>Great news — your project has been approved and your client portal is now active.</p>
 <p><strong>Plan:</strong> ${data.plan ?? 'NexaLab Retainer'}</p>
 <p>Log in to your portal to track milestones, review deliverables, and get in touch with your team.</p>
-<p><a href="${data.portalUrl ?? 'https://nexalab.io/dashboard.html'}">Access your client portal →</a></p>
+<p><a href="${data.portalUrl ?? 'https://nexalab.studio/dashboard.html'}">Access your client portal →</a></p>
 <p>— The NexaLab Team</p>`,
       },
 
@@ -93,7 +113,7 @@ serve(async (req) => {
         html: `<p>Hi ${data.name ?? 'there'},</p>
 <p>Thank you for your interest in NexaLab. After reviewing your project intake, we weren't able to move forward at this time.</p>
 <p>This often comes down to a fit or timing issue rather than the quality of the project. If you'd like to discuss further, we're happy to chat.</p>
-<p>Reply to this email or reach us at <a href="mailto:hello@nexalab.io">hello@nexalab.io</a>.</p>
+<p>Reply to this email or reach us at <a href="mailto:hello@nexalab.studio">hello@nexalab.studio</a>.</p>
 <p>— The NexaLab Team</p>`,
       },
 
@@ -105,7 +125,7 @@ serve(async (req) => {
 <blockquote style="border-left:3px solid #7c5cfc;padding:0.5rem 1rem;margin:1rem 0;color:#555;">
   ${data.replyContent ?? ''}
 </blockquote>
-<p><a href="${data.portalUrl ?? 'https://nexalab.io/dashboard.html'}#support">View ticket &amp; reply →</a></p>
+<p><a href="${data.portalUrl ?? 'https://nexalab.studio/dashboard.html'}#support">View ticket &amp; reply →</a></p>
 <p>— The NexaLab Team</p>`,
       },
 
@@ -116,7 +136,7 @@ serve(async (req) => {
 <blockquote style="border-left:3px solid #22d3a8;padding:0.5rem 1rem;margin:1rem 0;color:#555;">
   ${data.replyContent ?? ''}
 </blockquote>
-<p><a href="https://nexalab.io/admin.html#tickets">View in Admin Portal →</a></p>`,
+<p><a href="https://nexalab.studio/admin.html#tickets">View in Admin Portal →</a></p>`,
       },
     };
 

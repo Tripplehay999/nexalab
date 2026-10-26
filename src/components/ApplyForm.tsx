@@ -59,7 +59,7 @@ export default function ApplyForm({ jobSlug, jobTitle }: { jobSlug: string; jobT
           .from('resumes')
           .upload(resumePath, resume, { contentType: resume.type });
         if (uploadErr) {
-          setError('Could not upload your resume. Please try again or email careers@nexalab.io');
+          setError('Could not upload your resume. Please try again or email careers@nexalab.studio');
           setLoading(false);
           return;
         }
@@ -83,7 +83,7 @@ export default function ApplyForm({ jobSlug, jobTitle }: { jobSlug: string; jobT
         referral_source: get('source') || null,
       });
       if (insertErr) {
-        setError('Something went wrong. Please email careers@nexalab.io');
+        setError('Something went wrong. Please email careers@nexalab.studio');
         setLoading(false);
         return;
       }
@@ -95,7 +95,7 @@ export default function ApplyForm({ jobSlug, jobTitle }: { jobSlug: string; jobT
 
       setSuccess(true);
     } catch {
-      setError('Could not reach our servers. Please email us directly at careers@nexalab.io');
+      setError('Could not reach our servers. Please email us directly at careers@nexalab.studio');
       setLoading(false);
     }
   }

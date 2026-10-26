@@ -16,7 +16,7 @@ export const JOBS: Job[] = [
     slug: 'senior-full-stack-engineer',
     title: 'Senior Full-Stack Engineer',
     department: 'Engineering',
-    location: 'Remote (US / EU)',
+    location: 'Hybrid · Toronto or Brooklyn',
     type: 'Full-time',
     salary: '$140k – $180k + equity',
     summary:
@@ -42,7 +42,7 @@ export const JOBS: Job[] = [
     slug: 'frontend-engineer',
     title: 'Frontend Engineer',
     department: 'Engineering',
-    location: 'Remote',
+    location: 'Remote (US / Canada)',
     type: 'Full-time',
     salary: '$110k – $145k + equity',
     summary:
@@ -67,7 +67,7 @@ export const JOBS: Job[] = [
     slug: 'devops-platform-engineer',
     title: 'DevOps / Platform Engineer',
     department: 'Engineering',
-    location: 'Remote (US)',
+    location: 'Hybrid · Toronto',
     type: 'Full-time',
     salary: '$130k – $165k + equity',
     summary:
@@ -92,7 +92,7 @@ export const JOBS: Job[] = [
     slug: 'product-designer',
     title: 'Product Designer',
     department: 'Design',
-    location: 'Remote',
+    location: 'Hybrid · Brooklyn',
     type: 'Full-time',
     salary: '$100k – $135k + equity',
     summary:
@@ -114,7 +114,7 @@ export const JOBS: Job[] = [
     slug: 'growth-marketing-manager',
     title: 'Growth Marketing Manager',
     department: 'Growth',
-    location: 'Remote (US)',
+    location: 'Remote (US / Canada)',
     type: 'Full-time',
     salary: '$90k – $120k + bonus',
     summary:
@@ -136,7 +136,7 @@ export const JOBS: Job[] = [
     slug: 'client-success-manager',
     title: 'Client Success Manager',
     department: 'Operations',
-    location: 'Remote (US)',
+    location: 'Hybrid · Toronto',
     type: 'Full-time',
     salary: '$70k – $90k + bonus',
     summary:

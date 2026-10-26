@@ -1,11 +1,23 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { LiveStatus } from '@/components/site/live';
+import { CONTACT, SUPPORT_TEAM, person, photo } from '@/lib/site-data';
 
-type Panel = 'signin' | 'signup' | 'check-email' | 'reset-email';
+type Panel = 'signin' | 'signup' | 'check-email' | 'reset-email' | 'new-password' | 'password-updated';
+
+function Spinner() {
+  return (
+    <svg className="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-label="Loading">
+      <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" />
+      <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 function AuthCard() {
   const router = useRouter();
@@ -15,9 +27,10 @@ function AuthCard() {
   const urlFirst   = searchParams.get('firstName') || '';
   const urlCompany = searchParams.get('company')   || '';
   const urlPlan    = searchParams.get('plan')      || '';
+  const isReset    = urlMode === 'reset';
 
-  const [tab, setTab]   = useState<'signin' | 'signup'>(urlMode === 'signup' ? 'signup' : 'signin');
-  const [panel, setPanel] = useState<Panel>(urlMode === 'signup' ? 'signup' : 'signin');
+  const [supabase] = useState(createClient);
+  const [panel, setPanel] = useState<Panel>(isReset ? 'new-password' : urlMode === 'signup' ? 'signup' : 'signin');
 
   // Sign in state
   const [siEmail, setSiEmail]       = useState('');
@@ -35,20 +48,25 @@ function AuthCard() {
   const [suError, setSuError]       = useState('');
   const [suLoading, setSuLoading]   = useState(false);
 
+  // New password (after reset link)
+  const [npPassword, setNpPassword] = useState('');
+  const [npConfirm, setNpConfirm]   = useState('');
+  const [npError, setNpError]       = useState('');
+  const [npLoading, setNpLoading]   = useState(false);
+
   const [checkEmailName, setCheckEmailName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  const supabase = createClient();
-
-  // Persist plan, redirect if already signed in
+  // Persist plan, redirect if already signed in (except while resetting a password)
   useEffect(() => {
     if (urlPlan) localStorage.setItem('nexalab_plan', urlPlan);
+    if (isReset) return;
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) return;
       const { data: p } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
-      if (p?.role === 'admin') { router.replace('/admin'); return; }
-      router.replace('/dashboard');
+      router.replace(p?.role === 'admin' ? '/admin' : '/dashboard');
     });
-  }, []);
+  }, [isReset, router, supabase, urlPlan]);
 
   async function redirectToDashboard() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -56,8 +74,14 @@ function AuthCard() {
     const { data: p } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
     localStorage.removeItem('nexalab_plan');
     localStorage.removeItem('nexalab_new_signup');
-    if (p?.role === 'admin') { router.replace('/admin'); return; }
-    router.replace('/dashboard');
+    router.replace(p?.role === 'admin' ? '/admin' : '/dashboard');
+  }
+
+  function switchTo(next: 'signin' | 'signup') {
+    setPanel(next);
+    setSiError('');
+    setSuError('');
+    setShowPassword(false);
   }
 
   async function signInWithProvider(provider: 'google' | 'github') {
@@ -101,133 +125,194 @@ function AuthCard() {
     if (!siEmail) { setSiError('Enter your email above first.'); return; }
     setSiLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(siEmail, {
-      redirectTo: `${window.location.origin}/auth`,
+      redirectTo: `${window.location.origin}/auth?mode=reset`,
     });
     setSiLoading(false);
     if (error) { setSiError(error.message); return; }
     setPanel('reset-email');
   }
 
-  const Spinner = () => (
-    <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" />
-      <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
-    </svg>
-  );
+  async function handleNewPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (npPassword.length < 8) { setNpError('Password must be at least 8 characters.'); return; }
+    if (npPassword !== npConfirm) { setNpError('Passwords do not match.'); return; }
+    setNpLoading(true); setNpError('');
+    const { error } = await supabase.auth.updateUser({ password: npPassword });
+    setNpLoading(false);
+    if (error) {
+      setNpError(error.message.includes('session') ? 'This reset link has expired. Request a new one from the sign-in page.' : error.message);
+      return;
+    }
+    setPanel('password-updated');
+  }
+
+  const isTabbed = panel === 'signin' || panel === 'signup';
+  const pwType = showPassword ? 'text' : 'password';
+  const lead = person('Sofia Marchetti');
 
   return (
-    <div className="auth-wrap">
-      <div className="auth-card">
-        <Link href="/" className="auth-brand">NexaLab</Link>
-        <p className="auth-portal-label">Client Portal</p>
+    <div className="lg">
+      <aside className="lg-brand">
+        <Link href="/" className="logo logo-light">
+          <span className="logo-mark" aria-hidden="true"><span /></span>
+          NexaLab
+        </Link>
+        <div className="lg-brand-body">
+          <LiveStatus className="on-dark" openText="Your team is online" closedText="Team offline — emergency line open 24/7" />
+          <h2 className="lg-brand-title">Your store, your team, <em>one place.</em></h2>
+          <ul className="lg-perks">
+            <li>Track milestones and launch progress</li>
+            <li>Download deliverables, repos, and files</li>
+            <li>See live orders and revenue</li>
+            <li>Open tickets and chat with your team</li>
+          </ul>
+        </div>
+        <figure className="lg-quote">
+          <blockquote>“Whenever something comes up, open a ticket here and one of us picks it up — usually within minutes.”</blockquote>
+          <figcaption>
+            <Image src={photo(lead.photo, 96, 96)} alt={lead.name} width={40} height={40} />
+            <span><strong>{lead.name}</strong>{lead.role}</span>
+          </figcaption>
+        </figure>
+      </aside>
 
-        {/* Tabs */}
-        {(panel === 'signin' || panel === 'signup') && (
-          <div className="auth-tabs" role="tablist">
-            {(['signin', 'signup'] as const).map((t) => (
-              <button
-                key={t}
-                className={`auth-tab${tab === t ? ' is-active' : ''}`}
-                role="tab"
-                aria-selected={tab === t}
-                onClick={() => { setTab(t); setPanel(t); setSiError(''); setSuError(''); }}
-              >
-                {t === 'signin' ? 'Sign in' : 'Create account'}
+      <main className="lg-main">
+        <div className="lg-top">
+          <Link href="/" className="logo lg-mobile-logo">
+            <span className="logo-mark" aria-hidden="true"><span /></span>
+            NexaLab
+          </Link>
+          <Link href="/" className="back-link lg-back">← Back to site</Link>
+        </div>
+
+        <div className="lg-card">
+          {isTabbed && (
+            <>
+              <p className="kicker">Client portal</p>
+              <h1 className="lg-title">{panel === 'signin' ? <>Welcome <em>back.</em></> : <>Create your <em>account.</em></>}</h1>
+
+              <div className="lg-tabs" role="tablist" aria-label="Sign in or create account">
+                {(['signin', 'signup'] as const).map((t) => (
+                  <button key={t} role="tab" aria-selected={panel === t} className={panel === t ? 'is-active' : ''} onClick={() => switchTo(t)}>
+                    {t === 'signin' ? 'Sign in' : 'Create account'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="lg-social">
+                <button type="button" onClick={() => signInWithProvider('google')}>
+                  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                    <path d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.7-.4-3.9z" fill="#FFC107"/>
+                    <path d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" fill="#FF3D00"/>
+                    <path d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2A12 12 0 0 1 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" fill="#4CAF50"/>
+                    <path d="M43.6 20.1H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.7-.4-3.9z" fill="#1976D2"/>
+                  </svg>
+                  Google
+                </button>
+                <button type="button" onClick={() => signInWithProvider('github')}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+                  </svg>
+                  GitHub
+                </button>
+              </div>
+              <div className="lg-divider"><span>or with email</span></div>
+            </>
+          )}
+
+          {panel === 'signin' && (
+            <form className="lg-form" noValidate onSubmit={handleSignIn}>
+              <label className="lg-field">
+                Email address
+                <input type="email" placeholder="you@brand.com" autoComplete="email" required value={siEmail} onChange={(e) => setSiEmail(e.target.value)} />
+              </label>
+              <label className="lg-field">
+                <span className="lg-field-row">Password <button type="button" className="lg-link" onClick={handleForgotPassword}>Forgot password?</button></span>
+                <span className="lg-pw">
+                  <input type={pwType} placeholder="••••••••" autoComplete="current-password" required value={siPassword} onChange={(e) => setSiPassword(e.target.value)} />
+                  <button type="button" className="lg-pw-toggle" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? 'Hide' : 'Show'}</button>
+                </span>
+              </label>
+              {siError && <p className="lg-error" aria-live="polite">{siError}</p>}
+              <button className="s-btn s-btn-tomato s-btn-lg lg-submit" type="submit" disabled={siLoading}>
+                {siLoading ? <Spinner /> : 'Sign in'}
               </button>
+              <p className="lg-note">New to NexaLab? <Link href="/contact" className="lg-link">Start a project</Link> and we’ll set up your portal.</p>
+            </form>
+          )}
+
+          {panel === 'signup' && (
+            <form className="lg-form" noValidate onSubmit={handleSignUp}>
+              <div className="lg-grid-2">
+                <label className="lg-field">First name * <input type="text" placeholder="Jane" autoComplete="given-name" required value={suFname} onChange={(e) => setSuFname(e.target.value)} /></label>
+                <label className="lg-field">Last name * <input type="text" placeholder="Smith" autoComplete="family-name" required value={suLname} onChange={(e) => setSuLname(e.target.value)} /></label>
+              </div>
+              <label className="lg-field">Company / brand <input type="text" placeholder="Acme Inc." autoComplete="organization" value={suCompany} onChange={(e) => setSuCompany(e.target.value)} /></label>
+              <label className="lg-field">Work email * <input type="email" placeholder="you@brand.com" autoComplete="email" required value={suEmail} onChange={(e) => setSuEmail(e.target.value)} /></label>
+              <div className="lg-grid-2">
+                <label className="lg-field">Password * <input type={pwType} placeholder="Min. 8 characters" autoComplete="new-password" required minLength={8} value={suPassword} onChange={(e) => setSuPassword(e.target.value)} /></label>
+                <label className="lg-field">Confirm * <input type={pwType} placeholder="Repeat password" autoComplete="new-password" required value={suConfirm} onChange={(e) => setSuConfirm(e.target.value)} /></label>
+              </div>
+              <label className="lg-check"><input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} /> Show passwords</label>
+              {suError && <p className="lg-error" aria-live="polite">{suError}</p>}
+              <button className="s-btn s-btn-tomato s-btn-lg lg-submit" type="submit" disabled={suLoading}>
+                {suLoading ? <Spinner /> : 'Create account'}
+              </button>
+              <p className="lg-note">By creating an account you agree to NexaLab’s terms of service.</p>
+            </form>
+          )}
+
+          {panel === 'check-email' && (
+            <div className="lg-done">
+              <span className="lg-done-icon" aria-hidden="true">✉️</span>
+              <h1 className="lg-title">Check your inbox, <em>{checkEmailName}.</em></h1>
+              <p>We’ve sent a confirmation link to <strong>{suEmail}</strong>. Click it to activate your account and you’ll land straight in your client portal.</p>
+              <button className="s-btn s-btn-line lg-submit" onClick={() => switchTo('signin')}>Back to sign in</button>
+            </div>
+          )}
+
+          {panel === 'reset-email' && (
+            <div className="lg-done">
+              <span className="lg-done-icon" aria-hidden="true">🔑</span>
+              <h1 className="lg-title">Reset link <em>sent.</em></h1>
+              <p>Check <strong>{siEmail}</strong> for a link to choose a new password. It expires in 1 hour.</p>
+              <button className="s-btn s-btn-line lg-submit" onClick={() => { switchTo('signin'); setSiLoading(false); }}>Back to sign in</button>
+            </div>
+          )}
+
+          {panel === 'new-password' && (
+            <form className="lg-form" noValidate onSubmit={handleNewPassword}>
+              <p className="kicker">Account recovery</p>
+              <h1 className="lg-title">Choose a new <em>password.</em></h1>
+              <label className="lg-field">New password <input type={pwType} placeholder="Min. 8 characters" autoComplete="new-password" required minLength={8} value={npPassword} onChange={(e) => setNpPassword(e.target.value)} /></label>
+              <label className="lg-field">Confirm new password <input type={pwType} placeholder="Repeat password" autoComplete="new-password" required value={npConfirm} onChange={(e) => setNpConfirm(e.target.value)} /></label>
+              <label className="lg-check"><input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} /> Show passwords</label>
+              {npError && <p className="lg-error" aria-live="polite">{npError}</p>}
+              <button className="s-btn s-btn-tomato s-btn-lg lg-submit" type="submit" disabled={npLoading}>
+                {npLoading ? <Spinner /> : 'Update password'}
+              </button>
+            </form>
+          )}
+
+          {panel === 'password-updated' && (
+            <div className="lg-done">
+              <span className="lg-done-icon" aria-hidden="true">✅</span>
+              <h1 className="lg-title">Password <em>updated.</em></h1>
+              <p>You’re all set. Head to your portal to pick up where you left off.</p>
+              <button className="s-btn s-btn-tomato s-btn-lg lg-submit" onClick={redirectToDashboard}>Go to my portal</button>
+            </div>
+          )}
+        </div>
+
+        <div className="lg-help">
+          <div className="face-stack">
+            {SUPPORT_TEAM.slice(0, 3).map((p) => (
+              <Image key={p.name} src={photo(p.photo, 80, 80)} alt="" width={32} height={32} />
             ))}
           </div>
-        )}
-
-        {/* Social buttons */}
-        {(panel === 'signin' || panel === 'signup') && (
-          <div id="social-section">
-            <div className="auth-social-btns">
-              <button className="auth-social-btn" type="button" onClick={() => signInWithProvider('google')}>
-                <svg width="18" height="18" viewBox="0 0 48 48">
-                  <path d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.7-.4-3.9z" fill="#FFC107"/>
-                  <path d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" fill="#FF3D00"/>
-                  <path d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2A12 12 0 0 1 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" fill="#4CAF50"/>
-                  <path d="M43.6 20.1H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.7-.4-3.9z" fill="#1976D2"/>
-                </svg>
-                Continue with Google
-              </button>
-              <button className="auth-social-btn" type="button" onClick={() => signInWithProvider('github')}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
-                </svg>
-                Continue with GitHub
-              </button>
-            </div>
-            <div className="auth-divider"><span>or continue with email</span></div>
-          </div>
-        )}
-
-        {/* Sign In */}
-        {panel === 'signin' && (
-          <form className="auth-form" noValidate onSubmit={handleSignIn}>
-            <label className="auth-field">
-              Email address
-              <input type="email" placeholder="you@brand.com" autoComplete="email" required value={siEmail} onChange={(e) => setSiEmail(e.target.value)} />
-            </label>
-            <label className="auth-field">
-              Password
-              <input type="password" placeholder="••••••••" autoComplete="current-password" required value={siPassword} onChange={(e) => setSiPassword(e.target.value)} />
-            </label>
-            <div className="auth-row">
-              <button type="button" className="auth-link" onClick={handleForgotPassword}>Forgot password?</button>
-            </div>
-            {siError && <p className="auth-error" aria-live="polite">{siError}</p>}
-            <button className="btn btn-primary auth-submit" type="submit" disabled={siLoading}>
-              {siLoading ? <Spinner /> : 'Sign in'}
-            </button>
-            <p className="auth-footer-note">Access is invite-only. <Link href="/contact" className="auth-link">Book a demo</Link> to get started.</p>
-          </form>
-        )}
-
-        {/* Sign Up */}
-        {panel === 'signup' && (
-          <form className="auth-form" noValidate onSubmit={handleSignUp}>
-            <div className="auth-grid-2">
-              <label className="auth-field">First name * <input type="text" placeholder="Jane" autoComplete="given-name" required value={suFname} onChange={(e) => setSuFname(e.target.value)} /></label>
-              <label className="auth-field">Last name * <input type="text" placeholder="Smith" autoComplete="family-name" required value={suLname} onChange={(e) => setSuLname(e.target.value)} /></label>
-            </div>
-            <label className="auth-field">Company / brand name <input type="text" placeholder="Acme Inc." autoComplete="organization" value={suCompany} onChange={(e) => setSuCompany(e.target.value)} /></label>
-            <label className="auth-field">Work email * <input type="email" placeholder="you@brand.com" autoComplete="email" required value={suEmail} onChange={(e) => setSuEmail(e.target.value)} /></label>
-            <label className="auth-field">Password * <span className="auth-field-hint">(min 8 characters)</span><input type="password" placeholder="••••••••" autoComplete="new-password" required minLength={8} value={suPassword} onChange={(e) => setSuPassword(e.target.value)} /></label>
-            <label className="auth-field">Confirm password * <input type="password" placeholder="••••••••" autoComplete="new-password" required value={suConfirm} onChange={(e) => setSuConfirm(e.target.value)} /></label>
-            {suError && <p className="auth-error" aria-live="polite">{suError}</p>}
-            <button className="btn btn-primary auth-submit" type="submit" disabled={suLoading}>
-              {suLoading ? <Spinner /> : 'Create account'}
-            </button>
-            <p className="auth-footer-note">By creating an account you agree to NexaLab&apos;s terms of service.</p>
-          </form>
-        )}
-
-        {/* Check email */}
-        {panel === 'check-email' && (
-          <div>
-            <div className="auth-success-icon">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#22d3a8" strokeWidth="1.5"/><path d="M7 12l4 4 6-7" stroke="#22d3a8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </div>
-            <h3 className="auth-success-title">Check your inbox, {checkEmailName}</h3>
-            <p className="auth-success-body">We&apos;ve sent a confirmation link to your email. Click it to activate your account — you&apos;ll then be taken straight to your client portal.</p>
-            <button className="btn btn-outline auth-submit" style={{ marginTop: '1.2rem' }} onClick={() => { setPanel('signin'); setTab('signin'); }}>Back to sign in</button>
-          </div>
-        )}
-
-        {/* Reset email */}
-        {panel === 'reset-email' && (
-          <div>
-            <div className="auth-success-icon">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#9aa8ff" strokeWidth="1.5"/><polyline points="22,6 12,13 2,6" stroke="#9aa8ff" strokeWidth="1.5"/></svg>
-            </div>
-            <h3 className="auth-success-title">Reset link sent</h3>
-            <p className="auth-success-body">Check your inbox for a password reset link. It expires in 1 hour.</p>
-            <button className="btn btn-outline auth-submit" style={{ marginTop: '1.2rem' }} onClick={() => { setPanel('signin'); setSiLoading(false); }}>Back to sign in</button>
-          </div>
-        )}
-      </div>
-      <p className="auth-back"><Link href="/">← Back to NexaLab</Link></p>
+          <p>Trouble signing in? <Link href="/support#ticket" className="lg-link">Open a ticket</Link> or email <a href={`mailto:${CONTACT.support}`} className="lg-link">{CONTACT.support}</a></p>
+        </div>
+      </main>
     </div>
   );
 }

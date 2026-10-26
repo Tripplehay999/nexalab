@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react';
 import { useAdmin } from '@/lib/useAdmin';
 import AdminSidebar from '@/components/AdminSidebar';
 import { createClient } from '@/lib/supabase/client';
+import type { Activity } from '@/lib/types';
 import { timeAgo } from '@/lib/utils';
 
 export default function AdminPage() {
   const { boot, loading } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
   const [stats, setStats] = useState({ clients: 0, activeProjects: 0, openTickets: 0, pendingInquiries: 0 });
-  const [activity, setActivity] = useState<any[]>([]);
+  const [activity, setActivity] = useState<Activity[]>([]);
 
   useEffect(() => {
     if (!boot) return;
@@ -65,7 +66,7 @@ export default function AdminPage() {
             <ul className="activity-list">
               {activity.length === 0
                 ? <li style={{ color:'var(--muted)', fontSize:'0.82rem' }}>No recent activity.</li>
-                : activity.map((a: any, i: number) => (
+                : activity.map((a, i) => (
                   <li key={i} className="activity-item">
                     <span className={`activity-dot activity-dot--${a.color || 'gray'}`} />
                     <div>

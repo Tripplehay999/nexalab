@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { useDashboard } from '@/lib/useDashboard';
 import DashSidebar from '@/components/DashSidebar';
 import { createClient } from '@/lib/supabase/client';
+import type { Deliverable } from '@/lib/types';
 
 export default function DeliverablesPage() {
   const { boot, loading } = useDashboard();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [deliverables, setDeliverables] = useState<any[]>([]);
+  const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
 
   useEffect(() => {
     if (!boot?.project) return;
@@ -24,8 +25,8 @@ export default function DeliverablesPage() {
   if (loading || !boot) return <div className="dashboard-body"><div className="dash-main" style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'100vh' }}><p style={{ color:'var(--muted)' }}>Loading…</p></div></div>;
 
   const typeIcon: Record<string, string> = { document:'📄', repo:'💻', link:'🔗', design:'🎨', video:'🎥' };
-  const groups = deliverables.reduce((acc: Record<string, any[]>, d: any) => {
-    const g = d.category || 'Other';
+  const groups = deliverables.reduce((acc: Record<string, Deliverable[]>, d) => {
+    const g = d.type ? d.type.charAt(0).toUpperCase() + d.type.slice(1) : 'Other';
     if (!acc[g]) acc[g] = [];
     acc[g].push(d);
     return acc;
@@ -55,12 +56,12 @@ export default function DeliverablesPage() {
               <div key={group} className="dash-card" style={{ marginBottom:'1rem' }}>
                 <p className="dash-card-title">{group}</p>
                 <div className="deliverable-list">
-                  {items.map((d: any) => (
+                  {items.map((d) => (
                     <div key={d.id} className="deliverable-item">
                       <span className="deliverable-icon">{typeIcon[d.type] || '📁'}</span>
                       <div className="deliverable-info">
                         <p className="deliverable-name">{d.name}</p>
-                        {d.description && <p className="deliverable-desc">{d.description}</p>}
+                        {d.meta && <p className="deliverable-desc">{d.meta}</p>}
                       </div>
                       <div className="deliverable-actions">
                         <span className={`deliverable-badge ${d.status === 'ready' ? 'badge-ready' : d.status === 'upcoming' ? 'badge-upcoming' : 'badge-draft'}`}>{d.status}</span>

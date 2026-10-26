@@ -1,18 +1,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useDashboard } from '@/lib/useDashboard';
 import DashSidebar from '@/components/DashSidebar';
 import { createClient } from '@/lib/supabase/client';
-import { timeAgo, fmtDate } from '@/lib/utils';
+import { timeAgo, fmtDate, sendNotification } from '@/lib/utils';
+import type { Ticket, TicketReply } from '@/lib/types';
+
+async function fetchTickets(projectId: string) {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from('tickets')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false });
+  return (data ?? []) as Ticket[];
+}
 
 export default function SupportPage() {
   const { boot, loading } = useDashboard();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [activeTicket, setActiveTicket] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
+  const [messages, setMessages] = useState<TicketReply[]>([]);
   const [showNewForm, setShowNewForm] = useState(false);
   const [form, setForm] = useState({ title: '', category: 'General', description: '' });
   const [replyContent, setReplyContent] = useState('');
@@ -20,31 +30,28 @@ export default function SupportPage() {
   const [replyError, setReplyError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!boot?.project) return;
-    loadTickets();
-  }, [boot]);
+  const projectId = boot?.project?.id;
 
-  async function loadTickets() {
-    if (!boot?.project) return;
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('tickets')
-      .select('*')
-      .eq('project_id', boot.project.id)
-      .order('created_at', { ascending: false });
-    setTickets(data ?? []);
+  useEffect(() => {
+    if (!projectId) return;
+    let cancelled = false;
+    fetchTickets(projectId).then((rows) => { if (!cancelled) setTickets(rows); });
+    return () => { cancelled = true; };
+  }, [projectId]);
+
+  function loadTickets() {
+    if (projectId) fetchTickets(projectId).then(setTickets);
   }
 
-  async function openTicket(ticket: any) {
+  async function openTicket(ticket: Ticket) {
     setActiveTicket(ticket);
     const supabase = createClient();
     const { data } = await supabase
-      .from('ticket_messages')
+      .from('ticket_replies')
       .select('*')
       .eq('ticket_id', ticket.id)
       .order('created_at');
-    setMessages(data ?? []);
+    setMessages((data ?? []) as TicketReply[]);
   }
 
   async function submitTicket(e: React.FormEvent) {
@@ -53,6 +60,7 @@ export default function SupportPage() {
     if (!boot?.project) return;
     setSubmitting(true); setFormError('');
     const supabase = createClient();
+    const ref = `NX-${crypto.randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase()}`;
     const { error } = await supabase.from('tickets').insert({
       project_id: boot.project.id,
       client_id: boot.userId,
@@ -60,9 +68,14 @@ export default function SupportPage() {
       category: form.category,
       description: form.description,
       status: 'open',
+      ticket_ref: ref,
     });
     setSubmitting(false);
     if (error) { setFormError(error.message); return; }
+    sendNotification('support_request_admin_alert', {
+      ref, priority: 'normal', topic: form.category, subject: form.title, description: form.description,
+      name: boot.profile.full_name || boot.email, email: boot.email, isClient: true,
+    });
     setForm({ title:'', category:'General', description:'' });
     setShowNewForm(false);
     loadTickets();
@@ -73,11 +86,12 @@ export default function SupportPage() {
     if (!replyContent.trim() || !activeTicket) return;
     setSubmitting(true); setReplyError('');
     const supabase = createClient();
-    const { error } = await supabase.from('ticket_messages').insert({
+    const { error } = await supabase.from('ticket_replies').insert({
       ticket_id: activeTicket.id,
-      sender_id: boot!.userId,
-      sender_role: 'client',
+      author_id: boot!.userId,
+      author_name: boot!.profile.full_name || boot!.email,
       content: replyContent,
+      is_admin: false,
     });
     setSubmitting(false);
     if (error) { setReplyError(error.message); return; }
@@ -91,7 +105,7 @@ export default function SupportPage() {
 
   const statusBadge = (s: string) => {
     if (s === 'open') return 'badge-open';
-    if (s === 'in_progress') return 'badge-inprogress';
+    if (s === 'in_progress' || s === 'in-progress') return 'badge-inprogress';
     if (s === 'resolved') return 'badge-resolved';
     return '';
   };
@@ -147,13 +161,13 @@ export default function SupportPage() {
                 ? <p style={{ color:'var(--muted)', fontSize:'0.85rem' }}>No tickets yet. Submit one if you need help.</p>
                 : (
                   <ul className="ticket-list" style={{ listStyle:'none', margin:0, padding:0 }}>
-                    {tickets.map((t: any) => (
+                    {tickets.map((t) => (
                       <li key={t.id} className={`ticket-item${activeTicket?.id === t.id ? ' is-active' : ''}`} onClick={() => openTicket(t)} style={{ cursor:'pointer', padding:'0.6rem 0.5rem', borderBottom:'1px solid var(--line)', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'0.75rem' }}>
                         <div>
                           <p style={{ fontSize:'0.85rem', fontWeight:600, margin:0 }}>{t.title}</p>
                           <p style={{ fontSize:'0.75rem', color:'var(--muted)', margin:'0.15rem 0 0' }}>{t.category} · {timeAgo(t.created_at)}</p>
                         </div>
-                        <span className={`deliverable-badge ${statusBadge(t.status)}`}>{t.status.replace('_',' ')}</span>
+                        <span className={`deliverable-badge ${statusBadge(t.status)}`}>{t.status.replace(/[-_]/,' ')}</span>
                       </li>
                     ))}
                   </ul>
@@ -178,9 +192,9 @@ export default function SupportPage() {
                       <p style={{ fontSize:'0.85rem', margin:0, lineHeight:1.5 }}>{activeTicket.description}</p>
                     </div>
                   )}
-                  {messages.map((msg: any) => (
-                    <div key={msg.id} className={`ticket-msg ticket-msg--${msg.sender_role}`}>
-                      <p style={{ fontSize:'0.78rem', color:'var(--muted)', margin:'0 0 0.2rem', fontWeight:600 }}>{msg.sender_role === 'client' ? 'You' : 'NexaLab'} · {timeAgo(msg.created_at)}</p>
+                  {messages.map((msg) => (
+                    <div key={msg.id} className={`ticket-msg ticket-msg--${msg.is_admin ? 'admin' : 'client'}`}>
+                      <p style={{ fontSize:'0.78rem', color:'var(--muted)', margin:'0 0 0.2rem', fontWeight:600 }}>{msg.is_admin ? `${msg.author_name || 'NexaLab'} · NexaLab` : 'You'} · {timeAgo(msg.created_at)}</p>
                       <p style={{ fontSize:'0.85rem', margin:0, lineHeight:1.5 }}>{msg.content}</p>
                     </div>
                   ))}
@@ -211,7 +225,7 @@ export default function SupportPage() {
                 <div className="lead-detail-row"><span className="lead-detail-label">Next check-in</span><span>Weekly</span></div>
               </div>
               <p style={{ marginTop:'0.75rem', fontSize:'0.82rem', color:'var(--muted)' }}>
-                Reach us any time at <a href="mailto:hello@nexalab.io" className="auth-link">hello@nexalab.io</a>
+                Reach us any time at <a href="mailto:hello@nexalab.studio" className="auth-link">hello@nexalab.studio</a>
               </p>
             </div>
 
@@ -220,7 +234,7 @@ export default function SupportPage() {
               <div className="faq-list">
                 {[
                   { q:'How do I access my deliverables?', a:'Go to the Deliverables page. Click "Download" for documents, "View repo" for code, or "Open" for links. Upcoming deliverables haven\'t been released yet.' },
-                  { q:'What are your response times?', a:'We typically respond to support tickets within the same business day. For urgent issues, email hello@nexalab.io directly.' },
+                  { q:'What are your response times?', a:'We typically respond to support tickets within the same business day. For urgent issues, email hello@nexalab.studio directly.' },
                   { q:'How do I report a bug or request a feature?', a:'Submit a ticket using "+ New ticket" and choose "Bug report" or "Feature request". Include screenshots and steps to reproduce.' },
                 ].map((faq, i) => (
                   <details key={i} className="faq-item">

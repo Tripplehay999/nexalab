@@ -5,54 +5,89 @@ import { useAdmin } from '@/lib/useAdmin';
 import AdminSidebar from '@/components/AdminSidebar';
 import { createClient } from '@/lib/supabase/client';
 import { fmtDate, timeAgo } from '@/lib/utils';
+import type { SupportRequest, Ticket, TicketReply } from '@/lib/types';
 
-const STATUS_OPTS = ['open', 'in_progress', 'resolved'];
+type TicketRow = Ticket & { profiles: { full_name: string | null; company: string | null } | null };
+type Filter = 'open' | 'in-progress' | 'resolved' | 'all';
+
+const STATUS_OPTS = ['open', 'in-progress', 'resolved'] as const;
+// Older rows were written as 'in_progress'; treat both spellings the same.
+const statusValues = (f: Filter) => (f === 'in-progress' ? ['in-progress', 'in_progress'] : [f]);
+const norm = (s: string) => s.replace('_', '-');
+const statusBadge = (s: string) => (s === 'open' ? 'badge-open' : norm(s) === 'in-progress' ? 'badge-inprogress' : 'badge-resolved');
+
+async function fetchTickets(filter: Filter) {
+  const supabase = createClient();
+  const q = supabase.from('tickets').select('*, profiles!client_id(full_name,company)').order('created_at', { ascending: false });
+  const { data } = filter === 'all' ? await q : await q.in('status', statusValues(filter));
+  return (data ?? []) as TicketRow[];
+}
+
+async function fetchRequests(filter: Filter) {
+  const supabase = createClient();
+  const q = supabase.from('support_requests').select('*').order('created_at', { ascending: false });
+  const { data } = filter === 'all' ? await q : await q.in('status', statusValues(filter));
+  return (data ?? []) as SupportRequest[];
+}
 
 export default function AdminTicketsPage() {
   const { boot, loading } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [active, setActive] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [filter, setFilter] = useState('open');
+  const [view, setView] = useState<'clients' | 'public'>('clients');
+  const [filter, setFilter] = useState<Filter>('open');
+  const [tickets, setTickets] = useState<TicketRow[]>([]);
+  const [requests, setRequests] = useState<SupportRequest[]>([]);
+  const [active, setActive] = useState<TicketRow | null>(null);
+  const [activeReq, setActiveReq] = useState<SupportRequest | null>(null);
+  const [messages, setMessages] = useState<TicketReply[]>([]);
   const [replyContent, setReplyContent] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const loadTickets = () => fetchTickets(filter).then(setTickets);
+  const loadRequests = () => fetchRequests(filter).then(setRequests);
+
   useEffect(() => {
     if (!boot) return;
-    loadTickets();
-  }, [boot, filter]);
+    let cancelled = false;
+    if (view === 'clients') fetchTickets(filter).then((rows) => { if (!cancelled) setTickets(rows); });
+    else fetchRequests(filter).then((rows) => { if (!cancelled) setRequests(rows); });
+    return () => { cancelled = true; };
+  }, [boot, view, filter]);
 
-  async function loadTickets() {
-    const supabase = createClient();
-    const q = supabase.from('tickets').select('*, profiles!client_id(full_name,company)').order('created_at', { ascending: false });
-    const { data } = filter === 'all' ? await q : await q.eq('status', filter);
-    setTickets(data ?? []);
-  }
-
-  async function openThread(ticket: any) {
+  async function openThread(ticket: TicketRow) {
     setActive(ticket);
     const supabase = createClient();
-    const { data } = await supabase.from('ticket_messages').select('*').eq('ticket_id', ticket.id).order('created_at');
-    setMessages(data ?? []);
+    const { data } = await supabase.from('ticket_replies').select('*').eq('ticket_id', ticket.id).order('created_at');
+    setMessages((data ?? []) as TicketReply[]);
     setReplyContent('');
   }
 
-  async function updateStatus(id: string, status: string) {
+  async function updateStatus(table: 'tickets' | 'support_requests', id: string, status: string) {
     setSaving(true);
     const supabase = createClient();
-    await supabase.from('tickets').update({ status }).eq('id', id);
+    await supabase.from(table).update({ status }).eq('id', id);
     setSaving(false);
-    setActive((prev: any) => prev?.id === id ? { ...prev, status } : prev);
-    loadTickets();
+    if (table === 'tickets') {
+      setActive((prev) => (prev?.id === id ? { ...prev, status } : prev));
+      loadTickets();
+    } else {
+      setActiveReq((prev) => (prev?.id === id ? { ...prev, status } : prev));
+      loadRequests();
+    }
   }
 
   async function sendReply(e: React.FormEvent) {
     e.preventDefault();
-    if (!replyContent.trim() || !active) return;
+    if (!replyContent.trim() || !active || !boot) return;
     setSaving(true);
     const supabase = createClient();
-    await supabase.from('ticket_messages').insert({ ticket_id: active.id, sender_id: boot!.userId, sender_role: 'admin', content: replyContent });
+    await supabase.from('ticket_replies').insert({
+      ticket_id: active.id,
+      author_id: boot.userId,
+      author_name: boot.firstName,
+      content: replyContent,
+      is_admin: true,
+    });
     setSaving(false);
     setReplyContent('');
     openThread(active);
@@ -60,7 +95,7 @@ export default function AdminTicketsPage() {
 
   if (loading || !boot) return <div className="dashboard-body"><div className="dash-main" style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'100vh' }}><p style={{ color:'var(--muted)' }}>Loading…</p></div></div>;
 
-  const statusBadge = (s: string) => s === 'open' ? 'badge-open' : s === 'in_progress' ? 'badge-inprogress' : 'badge-resolved';
+  const list = view === 'clients' ? tickets : requests;
 
   return (
     <div className="dashboard-body">
@@ -74,32 +109,49 @@ export default function AdminTicketsPage() {
           <div className="dash-topbar-right"><span className="dash-date">{new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span></div>
         </header>
 
-        <div style={{ display:'flex', gap:'0.5rem', marginBottom:'1rem', flexWrap:'wrap' }}>
-          {['open','in_progress','resolved','all'].map((s) => (
-            <button key={s} className={`btn btn-sm ${filter===s?'btn-primary':'btn-outline'}`} onClick={() => setFilter(s)} style={{ textTransform:'capitalize' }}>{s.replace('_',' ')}</button>
-          ))}
+        <div className="adm-toolbar">
+          <div className="adm-seg" role="tablist" aria-label="Ticket source">
+            <button role="tab" aria-selected={view === 'clients'} className={view === 'clients' ? 'is-active' : ''} onClick={() => { setView('clients'); setActiveReq(null); }}>Client tickets</button>
+            <button role="tab" aria-selected={view === 'public'} className={view === 'public' ? 'is-active' : ''} onClick={() => { setView('public'); setActive(null); }}>Public requests</button>
+          </div>
+          <div className="adm-filters">
+            {(['open', 'in-progress', 'resolved', 'all'] as Filter[]).map((s) => (
+              <button key={s} className={`btn btn-sm ${filter === s ? 'btn-primary' : 'btn-outline'}`} onClick={() => setFilter(s)} style={{ textTransform:'capitalize' }}>{s.replace('-', ' ')}</button>
+            ))}
+          </div>
         </div>
 
         <div className="dash-two-col">
           <div className="dash-card">
-            <p className="dash-card-title" style={{ marginBottom:'0.5rem' }}>Tickets ({tickets.length})</p>
-            {tickets.length === 0
-              ? <p style={{ color:'var(--muted)', fontSize:'0.85rem' }}>None in this status.</p>
-              : tickets.map((t: any) => (
-                <div key={t.id} className={`adm-inquiry-row${active?.id === t.id ? ' is-active' : ''}`} onClick={() => openThread(t)} style={{ cursor:'pointer', padding:'0.65rem 0.5rem', borderBottom:'1px solid var(--line)' }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', gap:'0.5rem', marginBottom:'0.2rem' }}>
-                    <p style={{ fontSize:'0.85rem', fontWeight:600, margin:0 }}>{t.title}</p>
-                    <span className={`deliverable-badge ${statusBadge(t.status)}`}>{t.status.replace('_',' ')}</span>
-                  </div>
-                  <p style={{ fontSize:'0.75rem', color:'var(--muted)', margin:0 }}>
-                    {t.profiles?.full_name || '—'} {t.profiles?.company ? `· ${t.profiles.company}` : ''} · {t.category} · {timeAgo(t.created_at)}
-                  </p>
+            <p className="dash-card-title" style={{ marginBottom:'0.5rem' }}>{view === 'clients' ? 'Tickets' : 'Requests'} ({list.length})</p>
+            {list.length === 0 && <p style={{ color:'var(--muted)', fontSize:'0.85rem' }}>None in this status.</p>}
+
+            {view === 'clients' && tickets.map((t) => (
+              <div key={t.id} className={`adm-inquiry-row${active?.id === t.id ? ' is-active' : ''}`} onClick={() => openThread(t)} style={{ cursor:'pointer', padding:'0.65rem 0.5rem', borderBottom:'1px solid var(--line)' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', gap:'0.5rem', marginBottom:'0.2rem' }}>
+                  <p style={{ fontSize:'0.85rem', fontWeight:600, margin:0 }}>{t.title}</p>
+                  <span className={`deliverable-badge ${statusBadge(t.status)}`}>{norm(t.status).replace('-', ' ')}</span>
                 </div>
-              ))
-            }
+                <p style={{ fontSize:'0.75rem', color:'var(--muted)', margin:0 }}>
+                  {t.ticket_ref ? `${t.ticket_ref} · ` : ''}{t.profiles?.full_name || '—'} {t.profiles?.company ? `· ${t.profiles.company}` : ''} · {t.category} · {timeAgo(t.created_at)}
+                </p>
+              </div>
+            ))}
+
+            {view === 'public' && requests.map((r) => (
+              <div key={r.id} className={`adm-inquiry-row${activeReq?.id === r.id ? ' is-active' : ''}`} onClick={() => setActiveReq(r)} style={{ cursor:'pointer', padding:'0.65rem 0.5rem', borderBottom:'1px solid var(--line)' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', gap:'0.5rem', marginBottom:'0.2rem' }}>
+                  <p style={{ fontSize:'0.85rem', fontWeight:600, margin:0 }}>
+                    {r.priority === 'urgent' && <span className="adm-urgent">Urgent</span>}{r.subject}
+                  </p>
+                  <span className={`deliverable-badge ${statusBadge(r.status)}`}>{norm(r.status).replace('-', ' ')}</span>
+                </div>
+                <p style={{ fontSize:'0.75rem', color:'var(--muted)', margin:0 }}>{r.ref} · {r.full_name}{r.company ? ` · ${r.company}` : ''} · {r.topic} · {timeAgo(r.created_at)}</p>
+              </div>
+            ))}
           </div>
 
-          {active ? (
+          {view === 'clients' && active && (
             <div className="dash-card">
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'0.75rem', marginBottom:'0.75rem', flexWrap:'wrap' }}>
                 <div>
@@ -108,7 +160,7 @@ export default function AdminTicketsPage() {
                 </div>
                 <div style={{ display:'flex', gap:'0.4rem', flexWrap:'wrap' }}>
                   {STATUS_OPTS.map((s) => (
-                    <button key={s} className={`btn btn-sm ${active.status===s?'btn-primary':'btn-outline'}`} style={{ textTransform:'capitalize', fontSize:'0.72rem' }} onClick={() => updateStatus(active.id, s)} disabled={saving}>{s.replace('_',' ')}</button>
+                    <button key={s} className={`btn btn-sm ${norm(active.status) === s ? 'btn-primary' : 'btn-outline'}`} style={{ textTransform:'capitalize', fontSize:'0.72rem' }} onClick={() => updateStatus('tickets', active.id, s)} disabled={saving}>{s.replace('-', ' ')}</button>
                   ))}
                 </div>
               </div>
@@ -120,22 +172,47 @@ export default function AdminTicketsPage() {
                     <p style={{ fontSize:'0.85rem', margin:0, lineHeight:1.5 }}>{active.description}</p>
                   </div>
                 )}
-                {messages.map((msg: any) => (
-                  <div key={msg.id} className={`ticket-msg ticket-msg--${msg.sender_role}`}>
-                    <p style={{ fontSize:'0.78rem', color:'var(--muted)', margin:'0 0 0.2rem', fontWeight:600 }}>{msg.sender_role === 'client' ? 'Client' : 'Admin (you)'} · {timeAgo(msg.created_at)}</p>
+                {messages.map((msg) => (
+                  <div key={msg.id} className={`ticket-msg ticket-msg--${msg.is_admin ? 'admin' : 'client'}`}>
+                    <p style={{ fontSize:'0.78rem', color:'var(--muted)', margin:'0 0 0.2rem', fontWeight:600 }}>{msg.is_admin ? `${msg.author_name || 'Admin'} (team)` : msg.author_name || 'Client'} · {timeAgo(msg.created_at)}</p>
                     <p style={{ fontSize:'0.85rem', margin:0, lineHeight:1.5 }}>{msg.content}</p>
                   </div>
                 ))}
               </div>
 
               <form onSubmit={sendReply} style={{ marginTop:'0.75rem' }}>
-                <textarea rows={2} placeholder="Send a reply…" style={{ width:'100%', resize:'vertical', fontSize:'0.82rem', padding:'0.5rem', background:'var(--card-raised)', border:'1px solid var(--line)', borderRadius:6, color:'var(--text)' }} required value={replyContent} onChange={(e) => setReplyContent(e.target.value)} />
+                <textarea rows={2} placeholder="Send a reply…" className="adm-inline-input" style={{ width:'100%', resize:'vertical' }} required value={replyContent} onChange={(e) => setReplyContent(e.target.value)} />
                 <button className="btn btn-sm btn-primary" type="submit" disabled={saving} style={{ marginTop:'0.5rem' }}>{saving ? 'Sending…' : 'Send reply'}</button>
               </form>
             </div>
-          ) : (
+          )}
+
+          {view === 'public' && activeReq && (
+            <div className="dash-card">
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'0.75rem', marginBottom:'0.75rem', flexWrap:'wrap' }}>
+                <div>
+                  <p className="dash-card-title" style={{ margin:'0 0 0.15rem' }}>{activeReq.subject}</p>
+                  <p style={{ fontSize:'0.75rem', color:'var(--muted)', margin:0 }}>{activeReq.ref} · {activeReq.topic} · {activeReq.priority} priority · {fmtDate(activeReq.created_at)}</p>
+                </div>
+                <div style={{ display:'flex', gap:'0.4rem', flexWrap:'wrap' }}>
+                  {STATUS_OPTS.map((s) => (
+                    <button key={s} className={`btn btn-sm ${norm(activeReq.status) === s ? 'btn-primary' : 'btn-outline'}`} style={{ textTransform:'capitalize', fontSize:'0.72rem' }} onClick={() => updateStatus('support_requests', activeReq.id, s)} disabled={saving}>{s.replace('-', ' ')}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="adm-detail">
+                <p><strong>From:</strong> {activeReq.full_name} · <a href={`mailto:${activeReq.email}?subject=${encodeURIComponent(`[${activeReq.ref}] ${activeReq.subject}`)}`} className="auth-link">{activeReq.email}</a></p>
+                {activeReq.company && <p><strong>Company:</strong> {activeReq.company}</p>}
+                {activeReq.store_url && <p><strong>Store:</strong> <a href={activeReq.store_url} target="_blank" rel="noreferrer" className="auth-link">{activeReq.store_url}</a></p>}
+                <p style={{ whiteSpace:'pre-wrap', lineHeight:1.55 }}>{activeReq.description}</p>
+              </div>
+              <a className="btn btn-sm btn-primary" style={{ marginTop:'0.75rem' }} href={`mailto:${activeReq.email}?subject=${encodeURIComponent(`[${activeReq.ref}] ${activeReq.subject}`)}`}>Reply by email</a>
+            </div>
+          )}
+
+          {((view === 'clients' && !active) || (view === 'public' && !activeReq)) && (
             <div className="dash-card" style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:200 }}>
-              <p style={{ color:'var(--muted)', fontSize:'0.85rem' }}>Select a ticket to view thread</p>
+              <p style={{ color:'var(--muted)', fontSize:'0.85rem' }}>Select a {view === 'clients' ? 'ticket' : 'request'} to view details</p>
             </div>
           )}
         </div>

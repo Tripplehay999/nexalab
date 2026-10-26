@@ -50,7 +50,8 @@ export async function proxy(request: NextRequest) {
   }
 
   // Authenticated user hitting /auth → redirect to dashboard
-  if (user && pathname === '/auth') {
+  // (except when finishing a password reset, which needs the session on /auth)
+  if (user && pathname === '/auth' && request.nextUrl.searchParams.get('mode') !== 'reset') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

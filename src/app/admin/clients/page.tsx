@@ -4,12 +4,15 @@ import { useEffect, useState } from 'react';
 import { useAdmin } from '@/lib/useAdmin';
 import AdminSidebar from '@/components/AdminSidebar';
 import { createClient } from '@/lib/supabase/client';
+import type { Profile, Project } from '@/lib/types';
 import { fmtDate } from '@/lib/utils';
+
+type ClientRow = Profile & { projects: Pick<Project, 'id' | 'name' | 'status' | 'plan'>[] | null };
 
 export default function AdminClientsPage() {
   const { boot, loading } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<ClientRow[]>([]);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -20,7 +23,7 @@ export default function AdminClientsPage() {
       .select('*, projects(id,name,status,plan)')
       .eq('role', 'client')
       .order('created_at', { ascending: false })
-      .then(({ data }) => setClients(data ?? []));
+      .then(({ data }) => setClients((data ?? []) as ClientRow[]));
   }, [boot]);
 
   if (loading || !boot) return <div className="dashboard-body"><div className="dash-main" style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'100vh' }}><p style={{ color:'var(--muted)' }}>Loading…</p></div></div>;
@@ -59,7 +62,7 @@ export default function AdminClientsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((c: any) => {
+                    {filtered.map((c) => {
                       const project = c.projects?.[0];
                       return (
                         <tr key={c.id}>

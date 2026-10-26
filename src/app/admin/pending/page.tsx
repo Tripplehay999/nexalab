@@ -4,28 +4,35 @@ import { useEffect, useState } from 'react';
 import { useAdmin } from '@/lib/useAdmin';
 import AdminSidebar from '@/components/AdminSidebar';
 import { createClient } from '@/lib/supabase/client';
-import { fmtDate, timeAgo, sendNotification } from '@/lib/utils';
+import { timeAgo, sendNotification } from '@/lib/utils';
+import type { Project } from '@/lib/types';
+
+type PendingProject = Project & { profiles: { full_name: string | null; email: string | null; company: string | null } | null };
+
+async function fetchPending() {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from('projects')
+    .select('*, profiles!client_id(full_name,email,company)')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+  return (data ?? []) as PendingProject[];
+}
 
 export default function AdminPendingPage() {
   const { boot, loading } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<PendingProject[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
 
   useEffect(() => {
     if (!boot) return;
-    loadPending();
+    let cancelled = false;
+    fetchPending().then((rows) => { if (!cancelled) setProjects(rows); });
+    return () => { cancelled = true; };
   }, [boot]);
 
-  async function loadPending() {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('projects')
-      .select('*, profiles!client_id(full_name,email,company)')
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false });
-    setProjects(data ?? []);
-  }
+  const loadPending = () => fetchPending().then(setProjects);
 
   async function setStatus(projectId: string, clientId: string, status: 'active' | 'rejected') {
     setSaving(projectId);
@@ -60,7 +67,7 @@ export default function AdminPendingPage() {
           </div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
-            {projects.map((p: any) => {
+            {projects.map((p) => {
               const client = p.profiles;
               return (
                 <div key={p.id} className="dash-card">

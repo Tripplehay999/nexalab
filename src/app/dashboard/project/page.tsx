@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { useDashboard } from '@/lib/useDashboard';
 import DashSidebar from '@/components/DashSidebar';
 import { createClient } from '@/lib/supabase/client';
+import type { Milestone, MilestoneTask } from '@/lib/types';
 
 export default function ProjectPage() {
   const { boot, loading } = useDashboard();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [milestones, setMilestones] = useState<any[]>([]);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
 
   useEffect(() => {
     if (!boot?.project) return;
@@ -16,14 +17,15 @@ export default function ProjectPage() {
     const pid = boot.project.id;
 
     async function load() {
-      const { data: mils } = await supabase.from('milestones').select('*').eq('project_id', pid).order('sort_order');
-      if (!mils) return;
-      const milIds = mils.map((m: any) => m.id);
+      const { data } = await supabase.from('milestones').select('*').eq('project_id', pid).order('sort_order');
+      if (!data) return;
+      const mils = data as Milestone[];
+      const milIds = mils.map((m) => m.id);
       if (milIds.length > 0) {
         const { data: tasks } = await supabase.from('milestone_tasks').select('*').in('milestone_id', milIds);
-        mils.forEach((m: any) => { m.tasks = (tasks ?? []).filter((t: any) => t.milestone_id === m.id); });
+        mils.forEach((m) => { m.tasks = ((tasks ?? []) as MilestoneTask[]).filter((t) => t.milestone_id === m.id); });
       } else {
-        mils.forEach((m: any) => { m.tasks = []; });
+        mils.forEach((m) => { m.tasks = []; });
       }
       setMilestones(mils);
     }
@@ -75,9 +77,9 @@ export default function ProjectPage() {
               <div className="dash-card">
                 <p className="dash-card-title">Project timeline</p>
                 <div className="project-timeline">
-                  {milestones.map((m: any, idx: number) => {
+                  {milestones.map((m, idx) => {
                     const tasks    = m.tasks || [];
-                    const done     = tasks.filter((t: any) => t.status === 'done').length;
+                    const done     = tasks.filter((t) => t.status === 'done').length;
                     const pct      = tasks.length ? Math.round((done / tasks.length) * 100) : (m.status === 'complete' ? 100 : 0);
                     const dueStr   = m.due_date ? new Date(m.due_date).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : null;
                     const isLast   = idx === milestones.length - 1;
@@ -103,7 +105,7 @@ export default function ProjectPage() {
                                 <span style={{ fontSize:'0.72rem', color:'var(--muted)', whiteSpace:'nowrap' }}>{done}/{tasks.length} tasks</span>
                               </div>
                               <ul className="milestone-task-list">
-                                {tasks.map((t: any, i: number) => <li key={i} className={`mtask ${t.status}`}>{t.name}</li>)}
+                                {tasks.map((t, i) => <li key={i} className={`mtask ${t.status}`}>{t.name}</li>)}
                               </ul>
                             </div>
                           )}

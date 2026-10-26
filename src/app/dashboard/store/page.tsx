@@ -5,22 +5,23 @@ import { useDashboard } from '@/lib/useDashboard';
 import DashSidebar from '@/components/DashSidebar';
 import { createClient } from '@/lib/supabase/client';
 import { fmtDate } from '@/lib/utils';
+import type { StoreIntegration, StoreOrder } from '@/lib/types';
 
 export default function StorePage() {
   const { boot, loading } = useDashboard();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [storeData, setStoreData] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [storeData, setStoreData] = useState<StoreIntegration | null>(null);
+  const [orders, setOrders] = useState<StoreOrder[]>([]);
 
   useEffect(() => {
-    if (!boot?.project) return;
+    if (!boot) return;
     const supabase = createClient();
-    const pid = boot.project.id;
+    const uid = boot.userId;
 
     async function load() {
       const [storeRes, ordersRes] = await Promise.all([
-        supabase.from('store_integrations').select('*').eq('project_id', pid).maybeSingle(),
-        supabase.from('store_orders').select('*').eq('project_id', pid).order('created_at', { ascending: false }).limit(20),
+        supabase.from('store_integrations').select('id, client_id, platform, store_url, is_active, last_synced_at, created_at').eq('client_id', uid).eq('is_active', true).limit(1).maybeSingle(),
+        supabase.from('store_orders').select('*').eq('client_id', uid).order('ordered_at', { ascending: false }).limit(20),
       ]);
       setStoreData(storeRes.data);
       setOrders(ordersRes.data ?? []);
@@ -33,10 +34,10 @@ export default function StorePage() {
   const pending    = orders.filter((o) => o.status === 'pending').length;
   const processing = orders.filter((o) => o.status === 'processing').length;
   const latestDay  = orders.slice(0, 10);
-  const dayRevenue = latestDay.reduce((sum: number, o: any) => sum + (Number(o.total) || 0), 0);
+  const dayRevenue = latestDay.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
 
   const statusCounts: Record<string, number> = {};
-  orders.forEach((o) => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
+  orders.forEach((o) => { const s = o.status || 'unknown'; statusCounts[s] = (statusCounts[s] || 0) + 1; });
 
   return (
     <div className="dashboard-body">
@@ -71,8 +72,8 @@ export default function StorePage() {
             </div>
 
             <div className="dash-stats" style={{ marginBottom:'1rem' }}>
-              <div className="dash-stat-card"><p className="dash-stat-label">Latest day revenue</p><p className="dash-stat-val">${dayRevenue.toLocaleString()}</p></div>
-              <div className="dash-stat-card"><p className="dash-stat-label">Latest day orders</p><p className="dash-stat-val">{latestDay.length}</p></div>
+              <div className="dash-stat-card"><p className="dash-stat-label">Revenue (last 10 orders)</p><p className="dash-stat-val">${dayRevenue.toLocaleString()}</p></div>
+              <div className="dash-stat-card"><p className="dash-stat-label">Recent orders</p><p className="dash-stat-val">{latestDay.length}</p></div>
               <div className="dash-stat-card"><p className="dash-stat-label">Pending orders</p><p className="dash-stat-val">{pending}</p></div>
               <div className="dash-stat-card"><p className="dash-stat-label">Processing orders</p><p className="dash-stat-val">{processing}</p></div>
             </div>
@@ -89,11 +90,11 @@ export default function StorePage() {
               </div>
               <div className="dash-card">
                 <p className="dash-card-title">Live order feed</p>
-                {orders.slice(0, 8).map((o: any) => (
+                {orders.slice(0, 8).map((o) => (
                   <div key={o.id} className="store-order-row" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.4rem 0', borderBottom:'1px solid var(--line)', fontSize:'0.82rem', gap:'0.5rem' }}>
                     <span style={{ color:'var(--muted)', flexShrink:0 }}>#{o.external_id || o.id.slice(0,8)}</span>
                     <span style={{ flex:1, overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{o.customer_name || '—'}</span>
-                    <span style={{ fontWeight:700, flexShrink:0 }}>${Number(o.total || 0).toFixed(2)}</span>
+                    <span style={{ fontWeight:700, flexShrink:0 }}>${Number(o.amount || 0).toFixed(2)}</span>
                     <span className={`dash-status ${o.status === 'shipped' ? 'status-shipped' : o.status === 'processing' ? 'status-processing' : 'status-pending'}`} style={{ flexShrink:0 }}>{o.status}</span>
                   </div>
                 ))}

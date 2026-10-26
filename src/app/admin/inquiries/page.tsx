@@ -5,36 +5,41 @@ import { useAdmin } from '@/lib/useAdmin';
 import AdminSidebar from '@/components/AdminSidebar';
 import { createClient } from '@/lib/supabase/client';
 import { fmtDate, timeAgo } from '@/lib/utils';
+import type { Inquiry } from '@/lib/types';
 
 const STATUS_OPTS = ['new', 'reviewing', 'contacted', 'closed'];
+
+async function fetchInquiries(filter: string) {
+  const supabase = createClient();
+  const q = supabase.from('inquiries').select('*').order('created_at', { ascending: false });
+  const { data } = filter === 'all' ? await q : await q.eq('status', filter);
+  return (data ?? []) as Inquiry[];
+}
 
 export default function AdminInquiriesPage() {
   const { boot, loading } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [inquiries, setInquiries] = useState<any[]>([]);
-  const [active, setActive] = useState<any>(null);
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [active, setActive] = useState<Inquiry | null>(null);
   const [filter, setFilter] = useState('new');
   const [saving, setSaving] = useState(false);
   const [note, setNote] = useState('');
 
   useEffect(() => {
     if (!boot) return;
-    loadInquiries();
+    let cancelled = false;
+    fetchInquiries(filter).then((rows) => { if (!cancelled) setInquiries(rows); });
+    return () => { cancelled = true; };
   }, [boot, filter]);
 
-  async function loadInquiries() {
-    const supabase = createClient();
-    const q = supabase.from('inquiries').select('*').order('created_at', { ascending: false });
-    const { data } = filter === 'all' ? await q : await q.eq('status', filter);
-    setInquiries(data ?? []);
-  }
+  const loadInquiries = () => fetchInquiries(filter).then(setInquiries);
 
   async function updateStatus(id: string, status: string) {
     setSaving(true);
     const supabase = createClient();
     await supabase.from('inquiries').update({ status }).eq('id', id);
     setSaving(false);
-    setActive((prev: any) => prev?.id === id ? { ...prev, status } : prev);
+    setActive((prev) => prev?.id === id ? { ...prev, status } : prev);
     loadInquiries();
   }
 
@@ -71,13 +76,13 @@ export default function AdminInquiriesPage() {
             <p className="dash-card-title" style={{ marginBottom:'0.5rem' }}>Inquiries ({inquiries.length})</p>
             {inquiries.length === 0
               ? <p style={{ color:'var(--muted)', fontSize:'0.85rem' }}>None in this status.</p>
-              : inquiries.map((inq: any) => (
+              : inquiries.map((inq) => (
                 <div key={inq.id} className={`adm-inquiry-row${active?.id === inq.id ? ' is-active' : ''}`} onClick={() => { setActive(inq); setNote(inq.admin_note || ''); }} style={{ cursor:'pointer', padding:'0.65rem 0.5rem', borderBottom:'1px solid var(--line)' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', gap:'0.5rem', marginBottom:'0.25rem' }}>
-                    <p style={{ fontSize:'0.85rem', fontWeight:600, margin:0 }}>{inq.name || inq.first_name || '—'} {inq.last_name || ''}</p>
+                    <p style={{ fontSize:'0.85rem', fontWeight:600, margin:0 }}>{inq.full_name || '—'}</p>
                     <span className={`deliverable-badge ${inq.status === 'new' ? 'badge-open' : inq.status === 'reviewing' ? 'badge-inprogress' : 'badge-draft'}`}>{inq.status}</span>
                   </div>
-                  <p style={{ fontSize:'0.75rem', color:'var(--muted)', margin:0 }}>{inq.company || inq.email} · {timeAgo(inq.created_at)}</p>
+                  <p style={{ fontSize:'0.75rem', color:'var(--muted)', margin:0 }}>{inq.company || inq.work_email} · {timeAgo(inq.created_at)}</p>
                 </div>
               ))
             }
@@ -87,12 +92,15 @@ export default function AdminInquiriesPage() {
             <div className="dash-card">
               <p className="dash-card-title">Inquiry detail</p>
               <div style={{ fontSize:'0.82rem', lineHeight:1.7 }}>
-                <p><strong>Name:</strong> {active.first_name} {active.last_name}</p>
-                <p><strong>Email:</strong> {active.email}</p>
+                <p><strong>Name:</strong> {active.full_name}</p>
+                <p><strong>Email:</strong> <a href={`mailto:${active.work_email}`} className="auth-link">{active.work_email}</a></p>
                 {active.company && <p><strong>Company:</strong> {active.company}</p>}
                 {active.plan && <p><strong>Plan:</strong> {active.plan}</p>}
                 {active.website && <p><strong>Website:</strong> <a href={active.website} target="_blank" rel="noopener noreferrer" style={{ color:'var(--purple)' }}>{active.website}</a></p>}
-                {active.message && <div style={{ marginTop:'0.5rem', padding:'0.75rem', background:'var(--card-raised)', borderRadius:8 }}><p style={{ margin:0, whiteSpace:'pre-wrap' }}>{active.message}</p></div>}
+                {active.platform && <p><strong>Platform:</strong> {active.platform}</p>}
+                <p><strong>Revenue:</strong> {active.revenue} · <strong>Budget:</strong> {active.budget}{active.timeline ? <> · <strong>Timeline:</strong> {active.timeline}</> : null}</p>
+                {active.services && active.services.length > 0 && <p><strong>Services:</strong> {active.services.join(', ')}</p>}
+                {active.goal && <div style={{ marginTop:'0.5rem', padding:'0.75rem', background:'var(--card-raised)', borderRadius:8 }}><p style={{ margin:0, whiteSpace:'pre-wrap' }}>{active.goal}</p></div>}
                 <p style={{ color:'var(--muted)', fontSize:'0.78rem', marginTop:'0.5rem' }}>Submitted {fmtDate(active.created_at)}</p>
               </div>
 

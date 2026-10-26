@@ -3,8 +3,8 @@
 //
 // Environment variables (set via: supabase secrets set KEY=value):
 //   RESEND_API_KEY   — your Resend API key
-//   TEAM_EMAIL       — NexaLab inbox that receives notifications (e.g. hello@nexalab.io)
-//   SITE_URL         — your live site URL (e.g. https://nexalab.io)
+//   TEAM_EMAIL       — NexaLab inbox that receives notifications (e.g. hello@nexalab.studio)
+//   SITE_URL         — your live site URL (e.g. https://nexalab.studio)
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -68,14 +68,14 @@ serve(async (req: Request) => {
 
   // ── Send emails via Resend ────────────────────────────────
   const resendKey = Deno.env.get('RESEND_API_KEY');
-  const teamEmail = Deno.env.get('TEAM_EMAIL') || 'hello@nexalab.io';
-  const siteUrl   = Deno.env.get('SITE_URL') || 'https://nexalab.io';
+  const teamEmail = Deno.env.get('TEAM_EMAIL') || 'hello@nexalab.studio';
+  const siteUrl   = Deno.env.get('SITE_URL') || 'https://nexalab.studio';
   const firstName = fullName.split(' ')[0];
 
   if (resendKey) {
     // Welcome email to submitter
     await sendEmail(resendKey, {
-      from: 'NexaLab <hello@nexalab.io>',
+      from: 'NexaLab <hello@nexalab.studio>',
       to: workEmail,
       subject: `Got it, ${firstName} — here's what happens next`,
       html: welcomeHtml(firstName, siteUrl),
@@ -83,7 +83,7 @@ serve(async (req: Request) => {
 
     // Notification to NexaLab team
     await sendEmail(resendKey, {
-      from: 'NexaLab Inquiries <hello@nexalab.io>',
+      from: 'NexaLab Inquiries <hello@nexalab.studio>',
       to: teamEmail,
       subject: `New inquiry — ${fullName}${company ? ` · ${company}` : ''}`,
       html: teamHtml({ fullName, workEmail, company, website, platform, revenue, budget, timeline, services, goal }),
@@ -174,8 +174,8 @@ function welcomeHtml(firstName: string, siteUrl: string): string {
     <a href="${siteUrl}" class="cta">Visit NexaLab →</a>
   </div>
   <div class="footer">
-    © ${new Date().getFullYear()} NexaLab · <a href="mailto:hello@nexalab.io">hello@nexalab.io</a><br/>
-    You received this because you submitted a project intake on nexalab.io.
+    © ${new Date().getFullYear()} NexaLab · <a href="mailto:hello@nexalab.studio">hello@nexalab.studio</a><br/>
+    You received this because you submitted a project intake on nexalab.studio.
   </div>
 </div>
 </body>

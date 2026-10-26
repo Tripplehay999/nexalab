@@ -73,7 +73,7 @@ export default function IntakeForm() {
       if (plan) payload.plan = plan;
 
       const { error: insertErr } = await supabase.from('inquiries').insert(payload);
-      if (insertErr) { setError('Something went wrong. Please email hello@nexalab.io'); setLoading(false); return; }
+      if (insertErr) { setError('Something went wrong. Please email hello@nexalab.studio'); setLoading(false); return; }
 
       await sendNotification('intake_admin_alert', {
         name: fullName, email: workEmail, company: get('company'), plan, revenue, budget,
@@ -97,7 +97,7 @@ export default function IntakeForm() {
       setSuccess(true);
       setTimeout(() => router.push('/dashboard'), 2200);
     } catch {
-      setError('Could not reach our servers. Please email us directly at hello@nexalab.io');
+      setError('Could not reach our servers. Please email us directly at hello@nexalab.studio');
       setLoading(false);
     }
   }
@@ -124,7 +124,7 @@ export default function IntakeForm() {
       {urlPlan && (
         <div id="intake-plan-banner" className="intake-plan-banner">
           <span>Selected plan: {urlPlan}</span>
-          <a href="/#pricing" className="intake-plan-change">Change plan</a>
+          <a href="/services#pricing" className="intake-plan-change">Change plan</a>
         </div>
       )}
 
