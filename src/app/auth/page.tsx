@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { LiveStatus } from '@/components/site/live';
 import { CONTACT, SUPPORT_TEAM, person, photo } from '@/lib/site-data';
 
-type Panel = 'signin' | 'signup' | 'check-email' | 'reset-email' | 'new-password' | 'password-updated';
+type Panel = 'signin' | 'signup' | 'check-email' | 'forgot' | 'reset-email' | 'reset-expired' | 'new-password' | 'password-updated';
 
 function Spinner() {
   return (
@@ -30,7 +30,7 @@ function AuthCard() {
   const isReset    = urlMode === 'reset';
 
   const [supabase] = useState(createClient);
-  const [panel, setPanel] = useState<Panel>(isReset ? 'new-password' : urlMode === 'signup' ? 'signup' : 'signin');
+  const [panel, setPanel] = useState<Panel>(isReset ? 'new-password' : urlMode === 'signup' ? 'signup' : urlMode === 'forgot' ? 'forgot' : 'signin');
 
   // Sign in state
   const [siEmail, setSiEmail]       = useState('');
@@ -60,7 +60,10 @@ function AuthCard() {
   // Persist plan, redirect if already signed in (except while resetting a password)
   useEffect(() => {
     if (urlPlan) localStorage.setItem('nexalab_plan', urlPlan);
-    if (isReset) return;
+    if (isReset) {
+      supabase.auth.getSession().then(({ data: { session } }) => { if (!session) setPanel('reset-expired'); });
+      return;
+    }
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) return;
       const { data: p } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
@@ -124,9 +127,10 @@ function AuthCard() {
     setPanel('check-email');
   }
 
-  async function handleForgotPassword() {
-    if (!siEmail) { setSiError('Enter your email above first.'); return; }
-    setSiLoading(true);
+  async function handleForgotPassword(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (!siEmail) { setSiError('Enter the email you use to sign in.'); return; }
+    setSiLoading(true); setSiError('');
     const { error } = await supabase.auth.resetPasswordForEmail(siEmail, {
       redirectTo: `${window.location.origin}/auth?mode=reset`,
     });
@@ -143,7 +147,8 @@ function AuthCard() {
     const { error } = await supabase.auth.updateUser({ password: npPassword });
     setNpLoading(false);
     if (error) {
-      setNpError(error.message.includes('session') ? 'This reset link has expired. Request a new one from the sign-in page.' : error.message);
+      if (error.message.toLowerCase().includes('session')) { setPanel('reset-expired'); return; }
+      setNpError(error.message);
       return;
     }
     setPanel('password-updated');
@@ -250,7 +255,7 @@ function AuthCard() {
                 <input type="email" placeholder="you@brand.com" autoComplete="email" required value={siEmail} onChange={(e) => setSiEmail(e.target.value)} />
               </label>
               <label className="lg-field">
-                <span className="lg-field-row">Password <button type="button" className="lg-link" onClick={handleForgotPassword}>Forgot password?</button></span>
+                <span className="lg-field-row">Password <button type="button" className="lg-link" onClick={() => { setSiError(''); setPanel('forgot'); }}>Forgot password?</button></span>
                 <span className="lg-pw">
                   <input type={pwType} placeholder="••••••••" autoComplete="current-password" required value={siPassword} onChange={(e) => setSiPassword(e.target.value)} />
                   <button type="button" className="lg-pw-toggle" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? 'Hide' : 'Show'}</button>
@@ -295,12 +300,39 @@ function AuthCard() {
             </div>
           )}
 
+          {panel === 'forgot' && (
+            <form className="lg-form" noValidate onSubmit={handleForgotPassword}>
+              <p className="kicker">Account recovery</p>
+              <h1 className="lg-title">Forgot your <em>password?</em></h1>
+              <p className="lg-intro">Enter the email you sign in with and we’ll send you a link to choose a new one.</p>
+              <label className="lg-field">
+                Email address
+                <input type="email" placeholder="you@brand.com" autoComplete="email" required value={siEmail} onChange={(e) => setSiEmail(e.target.value)} />
+              </label>
+              {siError && <p className="lg-error" aria-live="polite">{siError}</p>}
+              <button className="s-btn s-btn-tomato s-btn-lg lg-submit" type="submit" disabled={siLoading}>
+                {siLoading ? <Spinner /> : 'Send reset link'}
+              </button>
+              <p className="lg-note">Remembered it? <button type="button" className="lg-link" onClick={() => switchTo('signin')}>Back to sign in</button></p>
+            </form>
+          )}
+
           {panel === 'reset-email' && (
             <div className="lg-done">
               <span className="lg-done-icon" aria-hidden="true">🔑</span>
               <h1 className="lg-title">Reset link <em>sent.</em></h1>
-              <p>Check <strong>{siEmail}</strong> for a link to choose a new password. It expires in 1 hour.</p>
+              <p>Check <strong>{siEmail}</strong> for a link to choose a new password. It expires in 1 hour, and only the newest link works.</p>
+              <p className="lg-fine" style={{ marginBottom: '1.4rem' }}>Not there in a minute? Check your spam or promotions folder — and mark it “Not spam” so future emails arrive normally.</p>
               <button className="s-btn s-btn-line lg-submit" onClick={() => { switchTo('signin'); setSiLoading(false); }}>Back to sign in</button>
+            </div>
+          )}
+
+          {panel === 'reset-expired' && (
+            <div className="lg-done">
+              <span className="lg-done-icon" aria-hidden="true">⏳</span>
+              <h1 className="lg-title">That link has <em>expired.</em></h1>
+              <p>Reset links work once and expire after an hour. If you requested more than one, only the newest works. Send yourself a fresh one:</p>
+              <button className="s-btn s-btn-tomato s-btn-lg lg-submit" onClick={() => { setSiError(''); setPanel('forgot'); }}>Send me a new reset link</button>
             </div>
           )}
 

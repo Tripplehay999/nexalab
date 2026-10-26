@@ -982,3 +982,9 @@ a.chip:hover { transform: translateY(-2px); }
 .lg-steps span { color: rgba(245, 239, 228, 0.72); font-size: 0.92rem; }
 
 .ob-plan { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: -0.4rem 0 1.4rem; padding: 0.5rem 0.9rem; border-radius: 999px; background: var(--sun); font-size: 0.92rem; }
+
+/* /auth/confirm — single column, no brand panel */
+.lg-solo { grid-template-columns: 1fr; }
+.lg-solo .lg-top { justify-content: space-between; }
+.lg-solo .lg-top { margin-bottom: 0; }
+.lg-solo .lg-card { margin-top: auto; margin-bottom: auto; }

@@ -41,6 +41,21 @@ const cors = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
+// Plain-text alternative (HTML-only email scores worse with spam filters).
+function toText(html: string) {
+  return html
+    .replace(/<head[\s\S]*?<\/head>/gi, '')
+    .replace(/<div style="display:none[\s\S]*?<\/div>/i, '')
+    .replace(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, (_m, href: string, label: string) => `${label.replace(/<[^>]+>/g, '').trim()} (${href})`)
+    .replace(/<(br|\/p|\/h[1-6]|\/tr|\/li|\/div)[^>]*>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#\d+;/g, '')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n /g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 async function getCaller(req: Request) {
   const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
   if (!token) return null;
@@ -85,7 +100,7 @@ serve(async (req) => {
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: FROM, to: recipient, reply_to: REPLY_TO, subject: tmpl.subject, html: tmpl.html }),
+      body: JSON.stringify({ from: FROM, to: recipient, reply_to: REPLY_TO, subject: tmpl.subject, html: tmpl.html, text: toText(tmpl.html) }),
     });
     const emailBody = await emailRes.json();
     return json({ ok: emailRes.ok, resend: emailBody }, emailRes.ok ? 200 : 502);

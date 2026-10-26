@@ -226,7 +226,7 @@ const SUPPORT_ROWS: [string, string][] = [
 
 // ── Supabase Auth emails ────────────────────────────────────────────────────
 // Pasted into Supabase → Authentication → Emails. They use Supabase's Go-template
-// placeholders ({{ .ConfirmationURL }}, {{ .Token }}, {{ .Email }}, {{ .NewEmail }})
+// placeholders ({{ .TokenHash }}, {{ .Token }}, {{ .Email }}, {{ .NewEmail }})
 // instead of runtime data. Regenerate the HTML with: deno run -A supabase/templates/generate.ts
 
 const code = (token: string) =>
@@ -240,6 +240,11 @@ const securityNote = (what: string) =>
 
 const smallNote = (text: string) => `<p style="margin:14px 0 0;font-family:${F.sans};font-size:14px;color:${C.ink3};">${text}</p>`;
 const ignoreLine = (text: string) => pad(p(text, 14), 0, 32);
+// Auth links point at our own /auth/confirm page with a token hash (not Supabase's
+// {{ .ConfirmationURL }}): same-domain links are less spammy, work in any browser or
+// device, and the token is only used on click — scanners can't burn it.
+const confirmLink = (type: string, next: string) =>
+  `${SITE}/auth/confirm?token_hash={{ .TokenHash }}&type=${type}&next=${encodeURIComponent(next)}`;
 const hl = (v: string) => `<strong style="color:${C.lime};">${v}</strong>`;
 
 export type AuthEmail = { file: string; supabaseName: string; subject: string; html: string };
@@ -253,7 +258,7 @@ export function authEmails(): AuthEmail[] {
       file: 'confirm-signup.html', supabaseName: 'Confirm signup', subject: 'Confirm your NexaLab account',
       html: wrap('Confirm your account', 'Confirm your email to activate your NexaLab client portal.', [
         hero({ kicker: 'Confirm your email', title: 'One click and', accent: 'you’re in.', lead: 'Confirm your email to activate your NexaLab client portal. You’ll go straight into a quick onboarding so we can book your kickoff call.' }),
-        pad(button('{{ .ConfirmationURL }}', 'Confirm my email →') + smallNote('This link expires in 24 hours.'), 32, 28),
+        pad(button(confirmLink('email', '/onboarding'), 'Confirm my email →') + smallNote('This link expires in 24 hours.'), 32, 28),
         divider,
         pad(h2('What happens next', 'Three quick steps.') + timeline([
           { when: 'Right after you confirm', title: 'A 3-minute onboarding', body: 'Tell us about your business, goals, and the best times for a call.' },
@@ -267,7 +272,7 @@ export function authEmails(): AuthEmail[] {
       file: 'reset-password.html', supabaseName: 'Reset password', subject: 'Reset your NexaLab password',
       html: wrap('Account security', 'Choose a new password for your NexaLab client portal.', [
         hero({ kicker: 'Password reset', title: 'Let’s get you', accent: 'back in.', lead: `We got a request to reset the password for ${hl('{{ .Email }}')}. Click below to choose a new one.` }),
-        pad(button('{{ .ConfirmationURL }}', 'Choose a new password →') + smallNote('For your security, this link expires in 1 hour and can only be used once.'), 32, 28),
+        pad(button(confirmLink('recovery', '/auth?mode=reset'), 'Choose a new password →') + smallNote('For your security, this link expires in 1 hour and can only be used once.'), 32, 28),
         divider,
         pad(h2('Good to know', 'A few quick tips.') + checklist([
           'Use <strong>at least 8 characters</strong> — a short phrase is easier to remember and harder to guess.',
@@ -281,7 +286,7 @@ export function authEmails(): AuthEmail[] {
       file: 'magic-link.html', supabaseName: 'Magic link', subject: 'Your NexaLab sign-in link',
       html: wrap('Sign in', 'Your one-click sign-in link for the NexaLab client portal.', [
         hero({ kicker: 'Sign-in link', title: 'Your sign-in', accent: 'link.', lead: `Click below to sign in to your NexaLab client portal as ${hl('{{ .Email }}')} — no password needed.` }),
-        pad(button('{{ .ConfirmationURL }}', 'Sign in to NexaLab →') + smallNote('This link expires in 1 hour and works once.'), 32, 28),
+        pad(button(confirmLink('magiclink', '/dashboard'), 'Sign in to NexaLab →') + smallNote('This link expires in 1 hour and works once.'), 32, 28),
         ignoreLine('Didn’t try to sign in? You can safely ignore this email — nobody can sign in without this link.'),
       ]),
     },
@@ -289,7 +294,7 @@ export function authEmails(): AuthEmail[] {
       file: 'invite-user.html', supabaseName: 'Invite user', subject: 'You’re invited to the NexaLab client portal',
       html: wrap('Invitation', 'You’ve been invited to a NexaLab client portal.', [
         hero({ kicker: 'You’re invited', title: 'Come on', accent: 'in.', lead: `The NexaLab team has invited ${hl('{{ .Email }}')} to a client portal — where your project, deliverables, store stats, and support all live in one place.` }),
-        pad(button('{{ .ConfirmationURL }}', 'Accept invitation →') + smallNote('You’ll set a password, then take a 3-minute onboarding.'), 32, 28),
+        pad(button(confirmLink('invite', '/auth?mode=reset'), 'Accept invitation →') + smallNote('You’ll set a password, then take a 3-minute onboarding.'), 32, 28),
         divider,
         pad(h2('Inside your portal', 'Everything in one place.') + tiles([
           { emoji: '🗺️', title: 'Project timeline', body: 'Every milestone and due date, updated as we work.', bg: C.lime },
@@ -304,7 +309,7 @@ export function authEmails(): AuthEmail[] {
       file: 'change-email.html', supabaseName: 'Change email address', subject: 'Confirm your new NexaLab email address',
       html: wrap('Account security', 'Confirm the new email address for your NexaLab account.', [
         hero({ kicker: 'Email change', title: 'Confirm your', accent: 'new email.', lead: `You asked to change your NexaLab sign-in email from ${hl('{{ .Email }}')} to ${hl('{{ .NewEmail }}')}.` }),
-        pad(button('{{ .ConfirmationURL }}', 'Confirm new email →') + smallNote('Until you confirm, you’ll keep signing in with your current email.'), 32, 28),
+        pad(button(confirmLink('email_change', '/dashboard'), 'Confirm new email →') + smallNote('Until you confirm, you’ll keep signing in with your current email.'), 32, 28),
         securityNote('If you didn’t request this, don’t click the button.'),
       ]),
     },
