@@ -3,14 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useDashboard } from '@/lib/useDashboard';
 import { createClient } from '@/lib/supabase/client';
-import { LINK_CATEGORIES, fetchLinks, hostOf, normalizeUrl } from '@/lib/portal';
+import { LINK_CATEGORIES, deleteLink, fetchLinks, hostOf, normalizeUrl } from '@/lib/portal';
 import type { ClientLink } from '@/lib/types';
 import ClientShell, { PortalLoading } from '@/components/portal/ClientShell';
+import FileDropzone from '@/components/portal/FileDropzone';
+import ResourceRow from '@/components/portal/ResourceRow';
 import Icon from '@/components/portal/Icon';
 
 const CATEGORY_HINT: Record<string, string> = {
   Brand: 'Logos, fonts, colors, brand guidelines',
-  Files: 'Drive, Dropbox, product photos',
+  Files: 'Product photos, documents, spreadsheets',
   Design: 'Figma, mood boards, inspiration',
   Store: 'Store admin, apps, suppliers',
   Analytics: 'GA4, Meta, Klaviyo dashboards',
@@ -23,6 +25,7 @@ export default function ResourcesPage() {
   const { boot, loading } = useDashboard();
   const [links, setLinks] = useState<ClientLink[] | null>(null);
   const [form, setForm] = useState({ label: '', url: '', category: 'Brand' });
+  const [uploadCategory, setUploadCategory] = useState('Brand');
   const [store, setStore] = useState<{ website: string; platform: string } | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string; where: 'link' | 'store' } | null>(null);
   const userId = boot?.userId;
@@ -36,6 +39,7 @@ export default function ResourcesPage() {
 
   if (loading || !boot) return <PortalLoading />;
 
+  const reload = () => fetchLinks(boot.userId).then(setLinks);
   const ob = (boot.profile.onboarding ?? {}) as { answers?: { website?: string; platform?: string } };
   const storeValues = store ?? { website: boot.profile.website || ob.answers?.website || '', platform: boot.profile.platform || ob.answers?.platform || '' };
 
@@ -44,7 +48,7 @@ export default function ResourcesPage() {
     const website = storeValues.website.trim();
     if (website && !hostOf(website)) { setMsg({ kind: 'err', text: 'That doesn’t look like a web address.', where: 'store' }); return; }
     const { error } = await createClient().from('profiles').update({ website: website ? normalizeUrl(website) : null, platform: storeValues.platform || null }).eq('id', boot!.userId);
-    setMsg(error ? { kind: 'err', text: 'Couldn’t save — please try again.', where: 'store' } : { kind: 'ok', text: 'Saved. Your home page will show the live preview.', where: 'store' });
+    setMsg(error ? { kind: 'err', text: 'Couldn’t save — please try again.', where: 'store' } : { kind: 'ok', text: 'Saved. Your home page now shows the live preview.', where: 'store' });
   }
 
   async function addLink(e: React.FormEvent) {
@@ -54,49 +58,51 @@ export default function ResourcesPage() {
     if (error) { setMsg({ kind: 'err', text: 'Couldn’t save that link — please try again.', where: 'link' }); return; }
     setMsg({ kind: 'ok', text: 'Shared with your team.', where: 'link' });
     setForm({ label: '', url: '', category: form.category });
-    fetchLinks(boot!.userId).then(setLinks);
-  }
-
-  async function removeLink(id: string) {
-    await createClient().from('client_links').delete().eq('id', id);
-    fetchLinks(boot!.userId).then(setLinks);
+    reload();
   }
 
   const byCategory = LINK_CATEGORIES.map((c) => ({ c, items: (links ?? []).filter((l) => l.category === c) })).filter((g) => g.items.length);
+  const fileCount = (links ?? []).filter((l) => l.file_path).length;
 
   return (
     <ClientShell
       boot={boot}
       kicker="Resources"
       title={<>Everything we need, <em>in one place.</em></>}
-      subtitle="Share brand assets, folders, and logins with your team — and find the links we share with you. Never paste passwords here; we’ll send a secure invite instead."
+      subtitle="Drop in brand assets, photos, and documents, or share links to folders and tools. Never paste passwords here — we’ll send a secure invite instead."
     >
       <div className="pt-grid pt-grid-main">
         <div className="pt-stack">
+          <section className="pt-card">
+            <div className="pt-card-head">
+              <div><h2 className="pt-card-title">Upload files</h2><p className="pt-card-sub">Private to you and your NexaLab team{fileCount ? ` · ${fileCount} uploaded` : ''}.</p></div>
+              <select className="pt-input" value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value)} style={{ width: 'auto', minHeight: 36 }} aria-label="Category for uploads">
+                {LINK_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <FileDropzone
+              clientId={boot.userId}
+              category={uploadCategory}
+              onUploaded={reload}
+              onUrl={(url) => { setForm({ ...form, url, label: form.label || hostOf(url) }); setMsg({ kind: 'ok', text: 'Link dropped — give it a name and share it.', where: 'link' }); }}
+            />
+          </section>
+
           {links === null ? (
             <p className="pt-muted">Loading…</p>
           ) : byCategory.length === 0 ? (
             <div className="pt-card pt-empty">
-              <span className="pt-empty-icon">🔗</span>
-              <h3>No resources yet</h3>
-              <p>Start with your logo and brand guidelines — a Google Drive or Dropbox folder link is perfect.</p>
+              <span className="pt-empty-icon">🎨</span>
+              <h3>Nothing shared yet</h3>
+              <p>Start with your logo and brand guidelines — drag them into the box above, or share a Google Drive folder link.</p>
             </div>
           ) : (
             byCategory.map(({ c, items }) => (
               <section key={c} className="pt-card">
-                <div className="pt-card-head"><div><h2 className="pt-card-title">{c}</h2><p className="pt-card-sub">{CATEGORY_HINT[c]}</p></div></div>
+                <div className="pt-card-head"><div><h2 className="pt-card-title">{c}</h2><p className="pt-card-sub">{CATEGORY_HINT[c]}</p></div><span className="pt-muted pt-small">{items.length}</span></div>
                 <ul className="pt-list">
                   {items.map((l) => (
-                    <li key={l.id} className="pt-row">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`https://www.google.com/s2/favicons?domain=${hostOf(l.url)}&sz=64`} alt="" width={32} height={32} className="pt-row-icon" style={{ padding: 7 }} />
-                      <div className="pt-row-main">
-                        <a href={l.url} target="_blank" rel="noopener noreferrer" className="pt-row-title" style={{ display: 'block' }}>{l.label}</a>
-                        <p className="pt-row-sub">{hostOf(l.url)} · {l.added_by === boot.userId ? 'Added by you' : 'Shared by NexaLab'}</p>
-                      </div>
-                      <a href={l.url} target="_blank" rel="noopener noreferrer" className="pt-icon-btn" aria-label={`Open ${l.label}`}><Icon name="external" size={16} /></a>
-                      {l.added_by === boot.userId && <button className="pt-icon-btn" onClick={() => removeLink(l.id)} aria-label={`Remove ${l.label}`}><Icon name="trash" size={16} /></button>}
-                    </li>
+                    <ResourceRow key={l.id} link={l} byYou={l.added_by === boot.userId} canDelete={l.added_by === boot.userId} onDelete={async () => { await deleteLink(l); reload(); }} />
                   ))}
                 </ul>
               </section>
@@ -123,7 +129,7 @@ export default function ResourcesPage() {
 
           <section className="pt-card">
             <h2 className="pt-card-title">Share a link</h2>
-            <p className="pt-card-sub" style={{ marginBottom: '1rem' }}>Only you and your NexaLab team can see these.</p>
+            <p className="pt-card-sub" style={{ marginBottom: '1rem' }}>Drive, Dropbox, Figma, Notion… Tip: you can drag a link onto the upload box too.</p>
             <form className="pt-form" onSubmit={addLink}>
               <label className="pt-field">Name<input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="e.g. Brand guidelines" maxLength={80} /></label>
               <label className="pt-field">Link<input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://drive.google.com/…" /></label>
@@ -141,3 +147,4 @@ export default function ResourcesPage() {
     </ClientShell>
   );
 }
+

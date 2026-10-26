@@ -69,8 +69,31 @@ export async function fetchGoals(clientId: string) {
 }
 
 export async function fetchLinks(clientId: string) {
-  const { data } = await createClient().from('client_links').select('*').eq('client_id', clientId).order('created_at', { ascending: false });
-  return (data ?? []) as ClientLink[];
+  const supabase = createClient();
+  const { data } = await supabase.from('client_links').select('*').eq('client_id', clientId).order('created_at', { ascending: false });
+  const links = (data ?? []) as ClientLink[];
+  // Uploaded files live in a private bucket — attach short-lived download links.
+  const paths = links.filter((l) => l.file_path).map((l) => l.file_path!);
+  if (paths.length) {
+    const { data: signed } = await supabase.storage.from(FILES_BUCKET).createSignedUrls(paths, 3600);
+    const byPath = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]));
+    links.forEach((l) => { if (l.file_path) l.signed_url = byPath.get(l.file_path) ?? null; });
+  }
+  return links;
+}
+
+export const FILES_BUCKET = 'client-files';
+export const MAX_FILE_BYTES = 50 * 1024 * 1024;
+
+export function formatBytes(n: number | null | undefined) {
+  if (!n) return '';
+  return n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+export async function deleteLink(link: ClientLink) {
+  const supabase = createClient();
+  if (link.file_path) await supabase.storage.from(FILES_BUCKET).remove([link.file_path]);
+  await supabase.from('client_links').delete().eq('id', link.id);
 }
 
 // ── Small helpers ───────────────────────────────────────────────────────────
@@ -97,6 +120,8 @@ export const PROJECT_STATUS: Record<string, { label: string; tone: string }> = {
   complete: { label: 'Launched', tone: 'lilac' },
   rejected: { label: 'Not accepted', tone: 'rose' },
 };
+
+export const SOURCE_LABEL: Record<string, string> = { manual: 'You', nexalab: 'NexaLab', google_analytics: 'Google Analytics', plausible: 'Plausible' };
 
 export const ASSIGNMENT_ROLES = ['Account lead', 'Project manager', 'Developer', 'Designer', 'Growth', 'Support', 'On-call'];
 export const LINK_CATEGORIES = ['Brand', 'Files', 'Design', 'Store', 'Analytics', 'General'];

@@ -1,5 +1,8 @@
 {
   "version": "5",
+  "redirects": {
+    "https://esm.sh/@supabase/supabase-js@2": "https://esm.sh/@supabase/supabase-js@2.97.0"
+  },
   "remote": {
     "https://deno.land/std@0.168.0/async/abortable.ts": "80b2ac399f142cc528f95a037a7d0e653296352d95c681e284533765961de409",
     "https://deno.land/std@0.168.0/async/deadline.ts": "2c2deb53c7c28ca1dda7a3ad81e70508b1ebc25db52559de6b8636c9278fd41f",
@@ -12,7 +15,8 @@
     "https://deno.land/std@0.168.0/async/retry.ts": "e8e5173623915bbc0ddc537698fa418cf875456c347eda1ed453528645b42e67",
     "https://deno.land/std@0.168.0/async/tee.ts": "3a47cc4e9a940904fd4341f0224907e199121c80b831faa5ec2b054c6d2eff5e",
     "https://deno.land/std@0.168.0/http/server.ts": "e99c1bee8a3f6571ee4cdeb2966efad465b8f6fe62bec1bdb59c1f007cc4d155",
-    "https://esm.sh/@supabase/supabase-js@2.45.4": "1108d69216995335d057dbd15907caaf514a4d1ef082f097050573b9d589a57c"
+    "https://esm.sh/@supabase/supabase-js@2.45.4": "1108d69216995335d057dbd15907caaf514a4d1ef082f097050573b9d589a57c",
+    "https://esm.sh/@supabase/supabase-js@2.97.0": "dcdf60d835a7a2edf75c186e8bb33fa5f43fec7dec96c93c89abfbb20b78245d"
   },
   "workspace": {
     "packageJson": {

@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDashboard } from '@/lib/useDashboard';
 import { createClient } from '@/lib/supabase/client';
-import { METRICS, fetchGoals, fetchMetrics, formatMetric, groupMetrics, metricDef, slug, trend } from '@/lib/portal';
+import { METRICS, SOURCE_LABEL, fetchGoals, fetchMetrics, formatMetric, groupMetrics, metricDef, slug, trend } from '@/lib/portal';
 import type { Goal, Metric, StoreMetric } from '@/lib/types';
 import ClientShell, { PortalLoading } from '@/components/portal/ClientShell';
 import Icon from '@/components/portal/Icon';
+import AnalyticsConnections from '@/components/portal/AnalyticsConnections';
 import { LineChart, Progress } from '@/components/portal/Charts';
 
 type Data = { metrics: Metric[]; goals: Goal[]; store: StoreMetric[] };
@@ -99,7 +100,7 @@ export default function InsightsPage() {
       boot={boot}
       kicker="Insights"
       title={<>How your store is <em>doing.</em></>}
-      subtitle="Add your numbers as often as you like — weekly or monthly works great. Your team adds theirs too, and everything charts here."
+      subtitle="Connect Google Analytics or Plausible and your numbers update every day — or add them yourself. Your team adds theirs too, and everything charts here."
     >
       <div className="pt-tabbar" role="tablist" aria-label="Choose a metric">
         {allKeys.map((k) => (
@@ -149,7 +150,7 @@ export default function InsightsPage() {
                         <td>{shortDate(m.period)}</td>
                         <td className="pt-strong">{formatMetric(selected, m.value)}</td>
                         <td className="pt-muted">{m.note || '—'}</td>
-                        <td><span className={`pt-pill ${m.source === 'manual' ? '' : 'tone-lime'}`}>{m.created_by === boot.userId ? 'You' : 'NexaLab'}</span></td>
+                        <td><span className={`pt-pill ${m.source === 'manual' ? '' : 'tone-lime'}`}>{m.source === 'manual' ? (m.created_by === boot.userId ? 'You' : 'NexaLab') : SOURCE_LABEL[m.source] ?? m.source}</span></td>
                         <td style={{ textAlign: 'right' }}>
                           {m.created_by === boot.userId && m.source === 'manual' && (
                             <button className="pt-icon-btn" onClick={() => removeMetric(m.id)} aria-label="Delete entry" title="Delete"><Icon name="trash" size={16} /></button>
@@ -174,8 +175,10 @@ export default function InsightsPage() {
         </div>
 
         <aside className="pt-stack">
+          <AnalyticsConnections clientId={boot.userId} onChange={reload} />
+
           <section className="pt-card">
-            <h2 className="pt-card-title">Add numbers</h2>
+            <h2 className="pt-card-title">Add numbers manually</h2>
             <p className="pt-card-sub" style={{ marginBottom: '1rem' }}>Rough figures are totally fine.</p>
             <form className="pt-form" onSubmit={addMetric}>
               <label className="pt-field">What are you adding?

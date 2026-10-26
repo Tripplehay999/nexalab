@@ -214,8 +214,12 @@ export interface ClientLink {
   id: string;
   client_id: string;
   label: string;
-  url: string;
+  url: string | null;
+  file_path: string | null;
+  file_size: number | null;
+  mime_type: string | null;
   category: string;
   added_by: string | null;
   created_at: string;
+  signed_url?: string | null;
 }

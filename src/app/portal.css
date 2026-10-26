@@ -333,3 +333,17 @@ body:has(.pt) { background: #F5EFE4; }
 }
 
 .pt-row-btn { width: 100%; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+
+/* Drag & drop uploader */
+.pt-drop { display: grid; justify-items: center; gap: 0.35rem; padding: 1.8rem 1rem; border: 2px dashed var(--line-2); border-radius: var(--r); background: var(--paper); text-align: center; color: var(--ink-2); cursor: pointer; transition: border-color 0.15s, background 0.15s, transform 0.2s var(--ease); }
+.pt-drop:hover { border-color: var(--ink-3); }
+.pt-drop.is-over { border-color: var(--tomato); background: #FFF1EC; transform: scale(1.01); }
+.pt-drop strong { font-family: var(--f-display); font-size: 1.1rem; color: var(--ink); }
+.pt-drop span { font-size: 0.86rem; }
+.pt-drop-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: var(--card); color: var(--tomato); margin-bottom: 0.3rem; }
+.pt-rot-90 { transform: rotate(90deg); }
+
+/* Numbered how-to steps */
+.pt-steps { margin: 0; padding: 0; list-style: none; counter-reset: pts; display: grid; gap: 0.55rem; }
+.pt-steps li { position: relative; padding-left: 2.1rem; font-size: 0.92rem; color: var(--ink-2); counter-increment: pts; }
+.pt-steps li::before { content: counter(pts); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--paper-2); color: var(--ink); font-size: 0.76rem; font-weight: 800; }

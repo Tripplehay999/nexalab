@@ -7,8 +7,8 @@ import { useAdmin } from '@/lib/useAdmin';
 import { createClient } from '@/lib/supabase/client';
 import { sendNotification, timeAgo } from '@/lib/utils';
 import {
-  ASSIGNMENT_ROLES, LINK_CATEGORIES, METRICS, PROJECT_STATUS, fetchGoals, fetchLinks, fetchMetrics, fetchTeam,
-  formatMetric, groupMetrics, hostOf, metricDef, normalizeUrl, slug,
+  ASSIGNMENT_ROLES, LINK_CATEGORIES, METRICS, PROJECT_STATUS, deleteLink, fetchGoals, fetchLinks, fetchMetrics, fetchTeam,
+  formatMetric, groupMetrics, hostOf, metricDef, normalizeUrl, slug, SOURCE_LABEL,
 } from '@/lib/portal';
 import type { Activity, Assignment, ClientLink, Deliverable, Goal, Metric, Milestone, MilestoneTask, Profile, Project, Staff } from '@/lib/types';
 import AdminShell from '@/components/portal/AdminShell';
@@ -17,6 +17,9 @@ import WebsiteCard from '@/components/portal/WebsiteCard';
 import Avatar from '@/components/portal/Avatar';
 import Icon from '@/components/portal/Icon';
 import { LineChart } from '@/components/portal/Charts';
+import AnalyticsConnections from '@/components/portal/AnalyticsConnections';
+import FileDropzone from '@/components/portal/FileDropzone';
+import ResourceRow from '@/components/portal/ResourceRow';
 
 const TABS = ['overview', 'team', 'project', 'deliverables', 'insights', 'resources', 'activity'] as const;
 type Tab = (typeof TABS)[number];
@@ -541,7 +544,7 @@ function InsightsTab({ clientId }: { clientId: string }) {
                   <li key={m.id} className="pt-row">
                     <span className="pt-row-main">{shortDate(m.period)}{m.note ? <span className="pt-muted"> · {m.note}</span> : null}</span>
                     <strong>{formatMetric(k, m.value)}</strong>
-                    <span className={`pt-pill ${m.source === 'manual' ? '' : 'tone-lime'}`}>{m.source === 'manual' ? 'Client' : 'NexaLab'}</span>
+                    <span className={`pt-pill ${m.source === 'manual' ? '' : 'tone-lime'}`}>{m.source === 'manual' ? 'Client' : SOURCE_LABEL[m.source] ?? m.source}</span>
                     <button className="pt-icon-btn" onClick={() => remove(m.id)} aria-label="Delete entry"><Icon name="trash" size={15} /></button>
                   </li>
                 ))}
@@ -551,6 +554,7 @@ function InsightsTab({ clientId }: { clientId: string }) {
         })}
       </div>
       <aside className="pt-stack">
+        <AnalyticsConnections clientId={clientId} asAdmin onChange={reload} />
         <section className="pt-card">
           <h2 className="pt-card-title">Add a number</h2>
           <form className="pt-form" onSubmit={add} style={{ marginTop: '0.8rem' }}>
@@ -587,6 +591,7 @@ function InsightsTab({ clientId }: { clientId: string }) {
 function ResourcesTab({ clientId }: { clientId: string }) {
   const [links, setLinks] = useState<ClientLink[] | null>(null);
   const [form, setForm] = useState({ label: '', url: '', category: 'General' });
+  const [uploadCategory, setUploadCategory] = useState('Files');
 
   useEffect(() => {
     let cancelled = false;
@@ -602,8 +607,8 @@ function ResourcesTab({ clientId }: { clientId: string }) {
     fetchLinks(clientId).then(setLinks);
   }
 
-  async function remove(id: string) {
-    await createClient().from('client_links').delete().eq('id', id);
+  async function remove(link: ClientLink) {
+    await deleteLink(link);
     fetchLinks(clientId).then(setLinks);
   }
 
@@ -614,22 +619,28 @@ function ResourcesTab({ clientId }: { clientId: string }) {
         {links === null ? <p className="pt-muted">Loading…</p> : links.length === 0 ? <p className="pt-muted" style={{ margin: 0 }}>Nothing shared yet.</p> : (
           <ul className="pt-list">
             {links.map((l) => (
-              <li key={l.id} className="pt-row">
-                <div className="pt-row-main"><a href={l.url} target="_blank" rel="noopener noreferrer" className="pt-row-title" style={{ display: 'block' }}>{l.label}</a><p className="pt-row-sub">{l.category} · {hostOf(l.url)} · {l.added_by === clientId ? 'from client' : 'from NexaLab'}</p></div>
-                <button className="pt-icon-btn" onClick={() => remove(l.id)} aria-label={`Remove ${l.label}`}><Icon name="trash" size={15} /></button>
-              </li>
+              <ResourceRow key={l.id} link={l} byYou={l.added_by !== clientId} canDelete onDelete={() => remove(l)} />
             ))}
           </ul>
         )}
       </section>
-      <aside className="pt-card">
-        <h2 className="pt-card-title">Share with client</h2>
+      <aside className="pt-stack">
+      <section className="pt-card">
+        <div className="pt-card-head">
+          <h2 className="pt-card-title">Upload for client</h2>
+          <select className="pt-input" value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value)} style={{ width: 'auto', minHeight: 36 }} aria-label="Category">{LINK_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select>
+        </div>
+        <FileDropzone clientId={clientId} category={uploadCategory} onUploaded={() => fetchLinks(clientId).then(setLinks)} onUrl={(url) => setForm({ ...form, url, label: form.label || hostOf(url) })} />
+      </section>
+      <section className="pt-card">
+        <h2 className="pt-card-title">Share a link</h2>
         <form className="pt-form" onSubmit={add} style={{ marginTop: '0.8rem' }}>
           <label className="pt-field">Name<input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="e.g. Staging site" /></label>
           <label className="pt-field">Link<input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} /></label>
           <label className="pt-field">Category<select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>{LINK_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></label>
           <button className="pt-btn pt-btn-primary"><Icon name="plus" size={16} /> Share</button>
         </form>
+      </section>
       </aside>
     </div>
   );

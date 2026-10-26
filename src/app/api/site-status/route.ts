@@ -1,17 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isPublicHost } from '@/lib/net';
 
 // Checks whether the signed-in client's website is up, for the dashboard's
 // "Your website" card. Only the URL saved on the caller's own profile is checked
 // (admins can pass ?client=<id>), and private/internal hosts are refused.
 export const dynamic = 'force-dynamic';
-
-function isPublicHost(hostname: string) {
-  const h = hostname.toLowerCase();
-  if (h === 'localhost' || h.endsWith('.local') || h.endsWith('.internal') || h.endsWith('.localhost')) return false;
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(h) || h.includes(':')) return false; // raw IPv4 / IPv6
-  return h.includes('.');
-}
 
 export async function GET(request: Request) {
   const supabase = await createClient();

@@ -284,11 +284,16 @@ Deno.serve(async (req: Request) => {
     const token = req.headers.get('Authorization')?.replace('Bearer ', '');
     if (!token) return new Response('Unauthorized', { status: 401, headers: CORS });
 
-    const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
-    if (authErr || !user) return new Response('Unauthorized', { status: 401, headers: CORS });
+    // The NexaLab web app's server calls with the service-role key right after a
+    // client connects their store, so the first sync happens immediately.
+    const isServerCall = token === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!isServerCall) {
+      const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
+      if (authErr || !user) return new Response('Unauthorized', { status: 401, headers: CORS });
 
-    const { data: caller } = await supabaseAdmin.from('profiles').select('role').eq('id', user.id).single();
-    if (caller?.role !== 'admin') return new Response('Forbidden', { status: 403, headers: CORS });
+      const { data: caller } = await supabaseAdmin.from('profiles').select('role').eq('id', user.id).single();
+      if (caller?.role !== 'admin') return new Response('Forbidden', { status: 403, headers: CORS });
+    }
   }
 
   // Parse body (may be empty for cron calls)
