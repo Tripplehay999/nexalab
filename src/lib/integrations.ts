@@ -1,7 +1,7 @@
 // Server-side analytics integrations (Google Analytics 4, Plausible).
 // Synced figures are written to client_metrics as monthly rows, tagged with the
 // provider as `source`, so they chart alongside manual entries in Insights.
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -13,6 +13,9 @@ export const PROVIDERS = {
 export type Provider = keyof typeof PROVIDERS;
 
 type Row = { metric: string; period: string; value: number };
+
+/** SHA-256 of an API key — keys are stored hashed and compared by hash. */
+export const hashKey = (key: string) => createHash('sha256').update(key).digest('hex');
 
 // ── Auth helpers ────────────────────────────────────────────────────────────
 
@@ -172,4 +175,37 @@ export async function syncConnection(db: ReturnType<typeof createAdminClient>, c
     await db.from('analytics_connections').update({ status: 'error', last_error: message }).eq('id', connectionId);
     return { ok: false, error: message };
   }
+}
+
+/** Roll the embed tracker's daily totals into monthly client_metrics (source 'tracker') for the last 3 months. */
+export async function syncTrackerMetrics(db: ReturnType<typeof createAdminClient>) {
+  const start = new Date();
+  start.setUTCDate(1);
+  start.setUTCMonth(start.getUTCMonth() - 2);
+  const first = start.toISOString().slice(0, 10);
+  const { data } = await db.from('tracker_daily').select('client_id, day, visitors, orders, revenue').gte('day', first).limit(50000);
+  const months = new Map<string, { client: string; period: string; visitors: number; orders: number; revenue: number }>();
+  for (const d of data ?? []) {
+    const period = `${String(d.day).slice(0, 7)}-01`;
+    const k = `${d.client_id}:${period}`;
+    const m = months.get(k) ?? { client: d.client_id, period, visitors: 0, orders: 0, revenue: 0 };
+    m.visitors += d.visitors; m.orders += d.orders; m.revenue += Number(d.revenue);
+    months.set(k, m);
+  }
+  const rows = [];
+  for (const m of months.values()) {
+    const base = { client_id: m.client, period: m.period, source: 'tracker', created_by: null, note: 'From your site tracker' };
+    rows.push({ ...base, metric: 'visitors', value: m.visitors });
+    if (m.orders) {
+      const revenue = Math.round(m.revenue * 100) / 100;
+      rows.push({ ...base, metric: 'orders', value: m.orders }, { ...base, metric: 'revenue', value: revenue }, { ...base, metric: 'aov', value: Math.round((revenue / m.orders) * 100) / 100 });
+      if (m.visitors) rows.push({ ...base, metric: 'conversion', value: Math.round((m.orders / m.visitors) * 10000) / 100 });
+    }
+  }
+  const clients = [...new Set([...months.values()].map((m) => m.client))];
+  if (clients.length) {
+    await db.from('client_metrics').delete().eq('source', 'tracker').in('client_id', clients).gte('period', first);
+    await db.from('client_metrics').insert(rows);
+  }
+  return { clients: clients.length, rows: rows.length };
 }

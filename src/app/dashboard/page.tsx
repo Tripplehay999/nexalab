@@ -22,12 +22,13 @@ type HomeData = {
   metrics: Metric[];
   team: Assignment[];
   linkCount: number;
+  openInvoices: { id: string; number: string; total: number; currency: string; due_date: string | null }[];
   now: number;
 };
 
 async function loadHome(clientId: string, projectId: string | null): Promise<HomeData> {
   const supabase = createClient();
-  const [milRes, dlvRes, tikRes, actRes, metrics, team, links] = await Promise.all([
+  const [milRes, dlvRes, tikRes, actRes, metrics, team, links, invRes] = await Promise.all([
     projectId ? supabase.from('milestones').select('*').eq('project_id', projectId).order('sort_order') : Promise.resolve({ data: [] }),
     projectId ? supabase.from('deliverables').select('*').eq('project_id', projectId).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
     projectId ? supabase.from('tickets').select('*').eq('project_id', projectId).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
@@ -35,6 +36,7 @@ async function loadHome(clientId: string, projectId: string | null): Promise<Hom
     fetchMetrics(clientId),
     fetchTeam(clientId),
     fetchLinks(clientId),
+    supabase.from('invoices').select('id, number, total, currency, due_date').eq('client_id', clientId).eq('status', 'open').order('due_date'),
   ]);
   const milestones = (milRes.data ?? []) as Milestone[];
   if (milestones.length) {
@@ -52,7 +54,8 @@ async function loadHome(clientId: string, projectId: string | null): Promise<Hom
   }
   return {
     milestones, deliverables: (dlvRes.data ?? []) as Deliverable[], tickets, awaitingReply,
-    activity: (actRes.data ?? []) as Activity[], metrics, team, linkCount: links.length, now: Date.now(),
+    activity: (actRes.data ?? []) as Activity[], metrics, team, linkCount: links.length,
+    openInvoices: (invRes.data ?? []) as HomeData['openInvoices'], now: Date.now(),
   };
 }
 
@@ -99,6 +102,10 @@ export default function DashboardHome() {
   // Things waiting on the client
   const attention: { icon: string; title: string; sub: string; href: string }[] = [];
   if (data) {
+    data.openInvoices.slice(0, 2).forEach((inv) => {
+      const overdue = inv.due_date && inv.due_date < new Date(data.now).toISOString().slice(0, 10);
+      attention.push({ icon: overdue ? '⚠️' : '🧾', title: `Invoice ${inv.number} ${overdue ? 'is overdue' : 'is ready'}`, sub: `${new Intl.NumberFormat('en-US', { style: 'currency', currency: inv.currency }).format(Number(inv.total))}${inv.due_date ? ` · due ${new Date(`${inv.due_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''} — pay securely by card`, href: `/invoice/${inv.id}` });
+    });
     if (data.awaitingReply) attention.push({ icon: '💬', title: `Your team replied on ${data.awaitingReply} ticket${data.awaitingReply > 1 ? 's' : ''}`, sub: 'Have a look and let us know.', href: '/dashboard/support' });
     const fresh = data.deliverables.filter((d) => d.status === 'ready' && d.delivered_at && data.now - new Date(d.delivered_at).getTime() < 14 * 864e5);
     if (fresh.length) attention.push({ icon: '📦', title: `${fresh.length} new deliverable${fresh.length > 1 ? 's' : ''} ready`, sub: fresh.slice(0, 2).map((d) => d.name).join(', '), href: '/dashboard/deliverables' });

@@ -5,9 +5,17 @@ import { hostOf } from '@/lib/portal';
 import { timeAgo } from '@/lib/utils';
 import type { StoreIntegration } from '@/lib/types';
 
-type Platform = 'shopify' | 'woocommerce' | 'bigcommerce';
+type Platform = 'shopify' | 'woocommerce' | 'bigcommerce' | 'custom';
 
 const GUIDE: Record<Platform, { name: string; domain: string; steps: string[] }> = {
+  custom: {
+    name: 'Custom-built', domain: 'github.com',
+    steps: [
+      'Create your private webhook below — you’ll get an address and a secret key.',
+      'Have your developer send each new or updated order to that address (example below).',
+      'Orders appear here instantly, and daily revenue charts in Insights.',
+    ],
+  },
   shopify: {
     name: 'Shopify', domain: 'shopify.com',
     steps: [
@@ -47,12 +55,61 @@ export default function StoreConnect({ integration, clientId, asAdmin = false, o
   const [f, setF] = useState({ storeUrl: '', accessToken: '', apiKey: '', apiSecret: '', storeHash: '' });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [webhook, setWebhook] = useState<{ endpoint: string; key: string } | null>(null);
   const client = asAdmin ? clientId : undefined;
+
+  async function createWebhook(action: 'connect-custom' | 'rotate-key') {
+    if (action === 'rotate-key' && !window.confirm('Create a new key? The old key stops working immediately — update your site with the new one.')) return;
+    setBusy(true); setMsg(null);
+    try {
+      const j = await post({ action, client });
+      setWebhook({ endpoint: j.endpoint, key: j.key });
+      setMsg({ ok: true, text: 'Copy your key now — for security it won’t be shown again.' });
+      onChange();
+    } catch (e) { setMsg({ ok: false, text: e instanceof Error ? e.message : 'Something went wrong' }); }
+    setBusy(false);
+  }
 
   async function run(body: Record<string, unknown>, ok: string) {
     setBusy(true); setMsg(null);
     try { await post({ ...body, client }); setMsg({ ok: true, text: ok }); onChange(); } catch (e) { setMsg({ ok: false, text: e instanceof Error ? e.message : 'Something went wrong' }); }
     setBusy(false);
+  }
+
+
+  const webhookBox = webhook && (
+    <div className="pt-code-card">
+      <CopyField label="Webhook address" value={webhook.endpoint} />
+      <CopyField label="Secret key" value={webhook.key} />
+      <p className="pt-small pt-muted" style={{ margin: '0.6rem 0 0.3rem' }}>Example request:</p>
+      <pre className="pt-code">{`curl -X POST ${webhook.endpoint} \\
+  -H "Authorization: Bearer ${webhook.key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"id":"1001","amount":129.50,"currency":"USD","status":"paid",
+       "customer_name":"Jane Smith","customer_email":"jane@example.com",
+       "ordered_at":"2026-10-26T14:03:00Z"}'`}</pre>
+      <p className="pt-small pt-muted" style={{ margin: '0.4rem 0 0' }}>Send <code>{'{ "orders": [ … ] }'}</code> for up to 500 at once. Re-sending an order with the same <code>id</code> updates it.</p>
+    </div>
+  );
+
+  if (integration?.platform === 'custom') {
+    return (
+      <section className="pt-card">
+        <div className="pt-card-head">
+          <div><h2 className="pt-card-title">Custom site connection</h2><p className="pt-card-sub">Your site sends orders to a private webhook.</p></div>
+          <span className="pt-pill tone-lime"><span className="pt-dot is-live" />Connected</span>
+        </div>
+        <ul className="pt-list">
+          <li className="pt-row"><span className="pt-row-main pt-muted">Last order received</span><strong>{integration.last_synced_at ? timeAgo(integration.last_synced_at) : 'Waiting for the first one'}</strong></li>
+        </ul>
+        {msg && <p className={msg.ok ? 'pt-success' : 'pt-error'} style={{ marginTop: '0.8rem' }}>{msg.text}</p>}
+        {webhookBox}
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+          <button className="pt-btn pt-btn-ghost pt-btn-sm" disabled={busy} onClick={() => createWebhook('rotate-key')}>{busy ? 'Working…' : 'Get a new key'}</button>
+          <button className="pt-btn pt-btn-danger pt-btn-sm" disabled={busy} onClick={() => window.confirm('Disconnect? The webhook stops working and synced orders are removed.') && run({ action: 'disconnect' }, 'Disconnected.')}>Disconnect</button>
+        </div>
+      </section>
+    );
   }
 
   if (integration) {
@@ -85,7 +142,7 @@ export default function StoreConnect({ integration, clientId, asAdmin = false, o
       <p className="pt-card-sub" style={{ marginBottom: '1rem' }}>Read-only access — we can see orders, never change anything. Takes about 3 minutes.</p>
 
       <div className="pt-tabbar" role="tablist" aria-label="Store platform" style={{ marginBottom: '1rem' }}>
-        {(Object.keys(GUIDE) as Platform[]).map((p) => (
+        {(['shopify', 'woocommerce', 'bigcommerce', 'custom'] as Platform[]).map((p) => (
           <button key={p} role="tab" aria-selected={platform === p} className={platform === p ? 'is-active' : ''} onClick={() => { setPlatform(p); setMsg(null); }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`https://www.google.com/s2/favicons?domain=${GUIDE[p].domain}&sz=32`} alt="" width={16} height={16} style={{ verticalAlign: '-3px', marginRight: 6 }} />{GUIDE[p].name}
@@ -97,6 +154,13 @@ export default function StoreConnect({ integration, clientId, asAdmin = false, o
         {g.steps.map((s) => <li key={s}>{s}</li>)}
       </ol>
 
+      {platform === 'custom' ? (
+        <div style={{ marginTop: '1rem' }}>
+          {msg && <p className={msg.ok ? 'pt-success' : 'pt-error'} style={{ marginBottom: '0.8rem' }}>{msg.text}</p>}
+          {webhookBox ?? <button className="pt-btn pt-btn-primary" disabled={busy} onClick={() => createWebhook('connect-custom')}>{busy ? 'Creating…' : 'Create my webhook'}</button>}
+          <p className="pt-small pt-muted" style={{ margin: '0.8rem 0 0' }}>Want to follow code updates too? Link your GitHub repo on the Project page.</p>
+        </div>
+      ) : (
       <form className="pt-form" style={{ marginTop: '1rem' }} onSubmit={(e) => { e.preventDefault(); run({ action: 'connect', platform, ...f }, `${g.name} connected — your first orders are syncing now.`); }}>
         {platform !== 'bigcommerce' && (
           <label className="pt-field">{platform === 'shopify' ? 'Store address' : 'Website address'}
@@ -116,8 +180,21 @@ export default function StoreConnect({ integration, clientId, asAdmin = false, o
         )}
         {msg && <p className={msg.ok ? 'pt-success' : 'pt-error'}>{msg.text}</p>}
         <button className="pt-btn pt-btn-primary" disabled={busy} style={{ justifySelf: 'start' }}>{busy ? 'Checking & connecting…' : `Connect ${g.name}`}</button>
-        <p className="pt-small pt-muted" style={{ margin: 0 }}>Your keys are stored encrypted at rest, are never shown again, and can be revoked from your store admin any time.</p>
+        <p className="pt-small pt-muted" style={{ margin: 0 }}>Your keys are stored securely, are never shown again, and can be revoked from your store admin any time.</p>
       </form>
+      )}
     </section>
+  );
+}
+
+function CopyField({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <label className="pt-field" style={{ marginBottom: '0.6rem' }}>{label}
+      <span style={{ display: 'flex', gap: '0.4rem' }}>
+        <input className="pt-input" readOnly value={value} onFocus={(e) => e.currentTarget.select()} style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.82rem' }} />
+        <button type="button" className="pt-btn pt-btn-ghost pt-btn-sm" onClick={() => { navigator.clipboard?.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>{copied ? 'Copied' : 'Copy'}</button>
+      </span>
+    </label>
   );
 }

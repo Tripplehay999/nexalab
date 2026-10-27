@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { sendNotification } from '@/lib/utils';
 import { CONTACT } from '@/lib/site-data';
+import HumanCheck, { Honeypot } from '@/components/HumanCheck';
 
 const TOPICS = ['Orders & shipping', 'Payments & checkout', 'Store changes', 'Integrations', 'Reports & analytics', 'Billing & account', 'Something else'];
 
@@ -27,6 +28,10 @@ export default function TicketForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState<{ ref: string; isClient: boolean } | null>(null);
+  const [turnstile, setTurnstile] = useState('');
+  const onToken = useCallback((t: string) => setTurnstile(t), []);
+  const openedAt = useRef(0);
+  useEffect(() => { openedAt.current = Date.now(); }, []);
 
   // Signed-in clients with a project file a real ticket on that project.
   useEffect(() => {
@@ -70,30 +75,38 @@ export default function TicketForm() {
     }
 
     setLoading(true);
-    const supabase = createClient();
-    const ref = newRef();
 
-    const { error: insertErr } = client
-      ? await supabase.from('tickets').insert({
-          project_id: client.projectId,
-          client_id: client.userId,
-          title: priority === 'urgent' ? `[Urgent] ${subject}` : subject,
-          description,
-          category: topic,
-          status: 'open',
-          ticket_ref: ref,
-        })
-      : await supabase.from('support_requests').insert({
-          ref,
-          full_name: fullName,
-          email,
-          company: get('company') || null,
-          store_url: get('storeUrl') || null,
-          topic,
-          priority,
-          subject,
-          description,
-        });
+    if (!client) {
+      // Visitors go through the rate-limited server route (no direct database access).
+      const res = await fetch('/api/forms/support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName, email, company: get('company'), storeUrl: get('storeUrl'), topic, priority, subject, description,
+          company_website: get('company_website'), _t: openedAt.current, turnstile,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(j.error || `We couldn’t submit your ticket. Please email ${CONTACT.support} or call ${CONTACT.phone}.`);
+        setLoading(false);
+        return;
+      }
+      setDone({ ref: j.ref, isClient: false });
+      setLoading(false);
+      return;
+    }
+
+    const ref = newRef();
+    const { error: insertErr } = await createClient().from('tickets').insert({
+      project_id: client.projectId,
+      client_id: client.userId,
+      title: priority === 'urgent' ? `[Urgent] ${subject}` : subject,
+      description,
+      category: topic,
+      status: 'open',
+      ticket_ref: ref,
+    });
 
     if (insertErr) {
       setError(`We couldn’t submit your ticket. Please email ${CONTACT.support} or call ${CONTACT.phone}.`);
@@ -103,10 +116,10 @@ export default function TicketForm() {
 
     await sendNotification('support_request_admin_alert', {
       ref, priority, topic, subject, description, name: fullName, email,
-      storeUrl: get('storeUrl'), isClient: !!client,
+      storeUrl: get('storeUrl'), isClient: true,
     });
 
-    setDone({ ref, isClient: !!client });
+    setDone({ ref, isClient: true });
     setLoading(false);
   }
 
@@ -187,6 +200,8 @@ export default function TicketForm() {
         </label>
       </div>
 
+      <Honeypot />
+      {!client && <HumanCheck onToken={onToken} />}
       {error && <p className="error-text" aria-live="polite">{error}</p>}
       <div className="form-submit-row">
         <button className="btn btn-primary btn-lg" type="submit" disabled={loading}>

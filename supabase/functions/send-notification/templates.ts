@@ -35,6 +35,9 @@ export const esc = (v: unknown, fallback = '—') =>
     ? fallback
     : String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+const moneyFmt = (v: unknown, cur: unknown) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: String(cur || 'USD') }).format(Number(v) || 0);
+
 const first = (name: unknown) => String(name ?? '').trim().split(/\s+/)[0] || '';
 
 // ── Building blocks ──────────────────────────────────────────────────────────
@@ -482,6 +485,42 @@ export function buildTemplate(type: string, data: Data): Template | null {
         html: layout({ preheader: 'A strategist is reviewing it now. Here’s what happens next.', label: 'Project intake', body, footerNote: 'You’re receiving this because you submitted a project intake to NexaLab.' }),
       };
     }
+
+    case 'invoice_sent': {
+      const amount = moneyFmt(data.total, data.currency);
+      const body = [
+        hero({ kicker: `Invoice ${d('number', '')}`, title: 'Your invoice is', accent: 'ready.', lead: `Hi ${name} — here’s your invoice for <strong style="color:${C.lime};">${d('title', 'our work together')}</strong>.` }),
+        pad(`${infoTable([['Amount due', `<strong style="font-size:20px;">${esc(amount)}</strong>`], ['Due date', d('due', 'On receipt')], ['Invoice', d('number', '')]])}
+          <div style="height:22px;"></div>${button(`${SITE}/invoice/${esc(data.invoiceId, '')}`, 'View & pay invoice →')}
+          <p style="margin:14px 0 0;font-family:${F.sans};font-size:14px;color:${C.ink3};">Pay securely by card online, or reply to this email for bank transfer details.</p>`, 32, 32),
+        divider,
+        pad(p('Questions about this invoice? Just reply — it goes straight to our team.', 15), 28, 36),
+      ].join('');
+      return {
+        subject: `Invoice ${String(data.number ?? '')} — ${amount} due${data.due ? ` ${String(data.due)}` : ''}`,
+        html: layout({ preheader: `${amount} for ${String(data.title ?? 'NexaLab services')}.`, label: 'Billing', body, footerNote: 'You’re receiving this because you’re a NexaLab client.' }),
+      };
+    }
+
+    case 'invoice_paid': {
+      const amount = moneyFmt(data.total, data.currency);
+      const body = [
+        hero({ kicker: 'Payment received', title: 'Thank you,', accent: `${name}.`, lead: `We’ve received your payment of <strong style="color:${C.lime};">${esc(amount)}</strong> for invoice ${d('number', '')}. This email is your receipt.` }),
+        pad(`${infoTable([['Amount paid', esc(amount)], ['Invoice', d('number', '')], ['Paid by', d('method', 'card')], ['Date', new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })]])}
+          <div style="height:22px;"></div>${button(`${SITE}/invoice/${esc(data.invoiceId, '')}`, 'View receipt', C.ink)}`, 32, 40),
+      ].join('');
+      return {
+        subject: `Receipt for invoice ${String(data.number ?? '')} — thank you!`,
+        html: layout({ preheader: `Payment of ${amount} received.`, label: 'Receipt', body, footerNote: 'You’re receiving this because you’re a NexaLab client.' }),
+      };
+    }
+
+    case 'payment_received_admin':
+      return {
+        subject: `💸 Payment received: ${moneyFmt(data.total, data.currency)} from ${String(data.company || data.name || 'a client')}`,
+        html: adminAlert('Payment received', [['Client', `${data.name ?? ''}${data.company ? ` · ${data.company}` : ''}`], ['Invoice', data.number], ['Amount', moneyFmt(data.total, data.currency)], ['Method', data.method]],
+          { href: `${SITE}/admin/billing`, label: 'Open Billing →' }, C.lime),
+      };
 
     // ── Internal alerts ──────────────────────────────────────────────────────
     case 'onboarding_complete_admin':

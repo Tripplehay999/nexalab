@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
-import { adminOrError, getActor } from '@/lib/integrations';
+import { adminOrError, getActor, hashKey } from '@/lib/integrations';
 import { isPublicHost } from '@/lib/net';
+import { randomBytes } from 'node:crypto';
 
 // Connect / sync / disconnect a client's store (Shopify, WooCommerce, BigCommerce).
 // Credentials are tested against the platform before saving, stored in
 // store_integrations (secret columns are not readable from the browser), and the
 // existing `sync-store` Edge Function pulls orders + daily metrics.
 //   POST { action: 'connect', platform, storeUrl, accessToken?, apiKey?, apiSecret?, storeHash?, client? }
+//   POST { action: 'connect-custom' | 'rotate-key', client? }  — custom-built sites: order webhook
 //   POST { action: 'sync' | 'disconnect', client? }
 
 const cleanDomain = (v: string) => v.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase();
@@ -39,6 +41,9 @@ async function testCredentials(b: Record<string, string>) {
   throw new Error('Choose a platform.');
 }
 
+// Custom sites authenticate to /api/ingest/orders with this key; only its hash is stored.
+const newIngestKey = () => `nxk_${randomBytes(24).toString('hex')}`;
+
 async function triggerSync(integrationId: string) {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/sync-store`, {
@@ -61,7 +66,7 @@ export async function POST(request: Request) {
   if (body.action === 'connect') {
     const required = body.platform === 'woocommerce' ? ['storeUrl', 'apiKey', 'apiSecret'] : body.platform === 'bigcommerce' ? ['storeHash', 'accessToken'] : ['storeUrl', 'accessToken'];
     if (required.some((k) => !String(body[k] ?? '').trim())) return NextResponse.json({ error: 'Please fill in every field.' }, { status: 400 });
-    let creds: Record<string, string>;
+    let creds: Record<string, string | undefined>;
     try { creds = await testCredentials(body); } catch (e) { return NextResponse.json({ error: e instanceof Error ? e.message : 'Those details didn’t work.' }, { status: 400 }); }
 
     const row = { client_id: actor.clientId, platform: body.platform, is_active: true, api_key: null, api_secret: null, access_token: null, store_hash: null, ...creds };
@@ -73,9 +78,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, synced });
   }
 
+  if (body.action === 'connect-custom' || body.action === 'rotate-key') {
+    const key = newIngestKey();
+    const { data: profile } = await db.db.from('profiles').select('website').eq('id', actor.clientId).single();
+    const row = { client_id: actor.clientId, platform: 'custom', store_url: profile?.website || 'custom-site', api_key: hashKey(key), api_secret: null, access_token: null, store_hash: null, is_active: true };
+    const { error } = existing
+      ? await db.db.from('store_integrations').update(body.action === 'rotate-key' ? { api_key: row.api_key } : row).eq('id', existing.id)
+      : await db.db.from('store_integrations').insert(row);
+    if (error) return NextResponse.json({ error: 'Couldn’t create the webhook.' }, { status: 500 });
+    const origin = new URL(request.url).origin;
+    return NextResponse.json({ ok: true, key, endpoint: `${origin}/api/ingest/orders` });
+  }
+
   if (!existing) return NextResponse.json({ error: 'No store connected.' }, { status: 404 });
 
   if (body.action === 'sync') {
+    const { data: integ } = await db.db.from('store_integrations').select('platform').eq('id', existing.id).single();
+    if (integ?.platform === 'custom') return NextResponse.json({ ok: true }); // custom sites push orders to us
     const ok = await triggerSync(existing.id);
     return ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: 'Sync failed — the store may have revoked access.' }, { status: 502 });
   }

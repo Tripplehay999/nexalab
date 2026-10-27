@@ -121,7 +121,7 @@ export const PROJECT_STATUS: Record<string, { label: string; tone: string }> = {
   rejected: { label: 'Not accepted', tone: 'rose' },
 };
 
-export const SOURCE_LABEL: Record<string, string> = { manual: 'You', nexalab: 'NexaLab', google_analytics: 'Google Analytics', plausible: 'Plausible' };
+export const SOURCE_LABEL: Record<string, string> = { manual: 'You', nexalab: 'NexaLab', google_analytics: 'Google Analytics', plausible: 'Plausible', tracker: 'Site tracker' };
 
 export const ASSIGNMENT_ROLES = ['Account lead', 'Project manager', 'Developer', 'Designer', 'Growth', 'Support', 'On-call'];
 export const LINK_CATEGORIES = ['Brand', 'Files', 'Design', 'Store', 'Analytics', 'General'];

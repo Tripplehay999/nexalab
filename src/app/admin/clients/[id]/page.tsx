@@ -10,7 +10,7 @@ import {
   ASSIGNMENT_ROLES, LINK_CATEGORIES, METRICS, PROJECT_STATUS, deleteLink, fetchGoals, fetchLinks, fetchMetrics, fetchTeam,
   formatMetric, groupMetrics, hostOf, metricDef, normalizeUrl, slug, SOURCE_LABEL,
 } from '@/lib/portal';
-import type { Activity, Assignment, ClientLink, Deliverable, Goal, Metric, Milestone, MilestoneTask, Profile, Project, Staff } from '@/lib/types';
+import type { Activity, Assignment, ClientBilling, ClientLink, Deliverable, Goal, Invoice, Metric, Milestone, MilestoneTask, Profile, Project, Staff, StoreIntegration } from '@/lib/types';
 import AdminShell from '@/components/portal/AdminShell';
 import { PortalLoading } from '@/components/portal/ClientShell';
 import WebsiteCard from '@/components/portal/WebsiteCard';
@@ -18,10 +18,14 @@ import Avatar from '@/components/portal/Avatar';
 import Icon from '@/components/portal/Icon';
 import { LineChart } from '@/components/portal/Charts';
 import AnalyticsConnections from '@/components/portal/AnalyticsConnections';
+import SiteTracker from '@/components/portal/SiteTracker';
+import { PLANS, invoiceState, money } from '@/lib/billing';
 import FileDropzone from '@/components/portal/FileDropzone';
 import ResourceRow from '@/components/portal/ResourceRow';
+import CodeUpdates from '@/components/portal/CodeUpdates';
+import StoreConnect from '@/components/portal/StoreConnect';
 
-const TABS = ['overview', 'team', 'project', 'deliverables', 'insights', 'resources', 'activity'] as const;
+const TABS = ['overview', 'team', 'project', 'billing', 'deliverables', 'insights', 'resources', 'activity'] as const;
 type Tab = (typeof TABS)[number];
 const today = () => new Date().toISOString().slice(0, 10);
 const shortDate = (d: string | null) => (d ? new Date(d.length === 10 ? `${d}T00:00:00` : d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
@@ -81,6 +85,7 @@ function ClientDetail() {
           {tab === 'overview' && <OverviewTab profile={p} onSaved={reload} />}
           {tab === 'team' && <TeamTab clientId={id} />}
           {tab === 'project' && <ProjectTab client={p} project={project} onChanged={reload} />}
+          {tab === 'billing' && <BillingTab client={p} />}
           {tab === 'deliverables' && <DeliverablesTab project={project} />}
           {tab === 'insights' && <InsightsTab clientId={id} />}
           {tab === 'resources' && <ResourcesTab clientId={id} />}
@@ -97,6 +102,18 @@ function OverviewTab({ profile, onSaved }: { profile: Profile; onSaved: () => vo
   const a = ob.answers ?? {};
   const [site, setSite] = useState({ website: profile.website ?? String(a.website ?? ''), platform: profile.platform ?? String(a.platform ?? '') });
   const [saved, setSaved] = useState(false);
+  const [store, setStore] = useState<StoreIntegration | null | undefined>(undefined);
+
+  const loadStore = useCallback(() => createClient().from('store_integrations')
+    .select('id, client_id, platform, store_url, is_active, last_synced_at, created_at').eq('client_id', profile.id).maybeSingle()
+    .then(({ data }) => setStore((data as StoreIntegration | null) ?? null)), [profile.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    createClient().from('store_integrations').select('id, client_id, platform, store_url, is_active, last_synced_at, created_at').eq('client_id', profile.id).maybeSingle()
+      .then(({ data }) => { if (!cancelled) setStore((data as StoreIntegration | null) ?? null); });
+    return () => { cancelled = true; };
+  }, [profile.id]);
 
   async function saveSite(e: React.FormEvent) {
     e.preventDefault();
@@ -128,7 +145,7 @@ function OverviewTab({ profile, onSaved }: { profile: Profile; onSaved: () => vo
         </ul>
       </section>
       <aside className="pt-stack">
-        <WebsiteCard website={profile.website} platform={profile.platform} clientId={profile.id} />
+        <WebsiteCard website={profile.website} platform={profile.platform} clientId={profile.id} audience="admin" />
         <section className="pt-card">
           <h2 className="pt-card-title">Website details</h2>
           <form className="pt-form" onSubmit={saveSite} style={{ marginTop: '0.8rem' }}>
@@ -138,6 +155,7 @@ function OverviewTab({ profile, onSaved }: { profile: Profile; onSaved: () => vo
             <button className="pt-btn pt-btn-ink pt-btn-sm" style={{ justifySelf: 'start' }}>Save</button>
           </form>
         </section>
+        {store !== undefined && <StoreConnect integration={store} clientId={profile.id} asAdmin onChange={loadStore} />}
       </aside>
     </div>
   );
@@ -394,6 +412,7 @@ function ProjectTab({ client, project, onChanged }: { client: Profile; project: 
             <button className="pt-btn pt-btn-ink">{project ? 'Save project' : 'Create project'}</button>
           </form>
         </section>
+        <CodeUpdates clientId={client.id} asAdmin />
         {project && (
           <section className="pt-card">
             <h2 className="pt-card-title">Add milestone</h2>
@@ -405,6 +424,114 @@ function ProjectTab({ client, project, onChanged }: { client: Profile; project: 
             </form>
           </section>
         )}
+      </aside>
+    </div>
+  );
+}
+
+// ── Billing ─────────────────────────────────────────────────────────────────
+function BillingTab({ client }: { client: Profile }) {
+  const [billing, setBilling] = useState<ClientBilling | null | undefined>(undefined);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [form, setForm] = useState({ plan: '', monthly_rate: '', currency: 'USD', status: 'active', auto_invoice: false, next_invoice_date: '', billing_name: '', billing_email: '', tax_rate: '0', notes: '' });
+  const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+    Promise.all([
+      supabase.from('client_billing').select('*').eq('client_id', client.id).maybeSingle(),
+      supabase.from('invoices').select('*').eq('client_id', client.id).order('created_at', { ascending: false }),
+    ]).then(([b, i]) => {
+      if (cancelled) return;
+      const row = b.data as ClientBilling | null;
+      setBilling(row);
+      setInvoices((i.data ?? []) as Invoice[]);
+      setForm({
+        plan: row?.plan ?? '', monthly_rate: row ? String(row.monthly_rate) : '', currency: row?.currency ?? 'USD', status: row?.status ?? 'active',
+        auto_invoice: row?.auto_invoice ?? false, next_invoice_date: row?.next_invoice_date ?? '', billing_name: row?.billing_name ?? client.company ?? '',
+        billing_email: row?.billing_email ?? '', tax_rate: row ? String(row.tax_rate) : '0', notes: row?.notes ?? '',
+      });
+    });
+    return () => { cancelled = true; };
+  }, [client.id, client.company]);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (form.auto_invoice && (!Number(form.monthly_rate) || !form.next_invoice_date)) { setMsg('Auto-invoicing needs a monthly rate and a first invoice date.'); return; }
+    const { error } = await createClient().from('client_billing').upsert({
+      client_id: client.id, plan: form.plan || null, monthly_rate: Number(form.monthly_rate) || 0, currency: form.currency, status: form.status,
+      auto_invoice: form.auto_invoice, next_invoice_date: form.next_invoice_date || null, billing_name: form.billing_name.trim() || null,
+      billing_email: form.billing_email.trim() || null, tax_rate: Number(form.tax_rate) || 0, notes: form.notes.trim() || null, updated_at: new Date().toISOString(),
+    });
+    setMsg(error ? error.message : 'Saved.');
+  }
+
+  if (billing === undefined) return <p className="pt-muted">Loading…</p>;
+  const paid = invoices.filter((i) => i.status === 'paid').reduce((s, i) => s + Number(i.total), 0);
+  const owed = invoices.filter((i) => i.status === 'open').reduce((s, i) => s + Number(i.total), 0);
+
+  return (
+    <div className="pt-grid pt-grid-main">
+      <div className="pt-stack">
+        <div className="pt-grid pt-grid-3">
+          <div className="pt-metric pt-card"><span className="pt-metric-label">Monthly rate</span><span className="pt-metric-value">{money(Number(form.monthly_rate) || 0, form.currency)}</span><span className="pt-small pt-muted">{form.plan || 'No plan'}</span></div>
+          <div className="pt-metric pt-card"><span className="pt-metric-label">Paid to date</span><span className="pt-metric-value">{money(paid, form.currency)}</span><span className="pt-small pt-muted">{invoices.filter((i) => i.status === 'paid').length} invoices</span></div>
+          <div className="pt-metric pt-card"><span className="pt-metric-label">Outstanding</span><span className={`pt-metric-value ${owed ? 'pt-down' : ''}`}>{money(owed, form.currency)}</span><span className="pt-small pt-muted">{invoices.filter((i) => i.status === 'open').length} open</span></div>
+        </div>
+        <section className="pt-card pt-card-flush">
+          <div className="pt-card-head" style={{ padding: '1.1rem 1.2rem 0' }}>
+            <h2 className="pt-card-title">Invoices</h2>
+            <Link href={`/admin/billing/new?client=${client.id}`} className="pt-btn pt-btn-primary pt-btn-sm"><Icon name="plus" size={15} /> New invoice</Link>
+          </div>
+          {invoices.length === 0 ? <p className="pt-muted" style={{ padding: '0 1.2rem 1.2rem', margin: 0 }}>No invoices yet.</p> : (
+            <div className="pt-table-wrap">
+              <table className="pt-table">
+                <thead><tr><th>Invoice</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+                <tbody>
+                  {invoices.map((i) => {
+                    const st = invoiceState(i);
+                    return (
+                      <tr key={i.id}>
+                        <td><Link href={`/admin/billing/${i.id}`} className="pt-strong">{i.number}</Link><div className="pt-small pt-muted">{i.title}</div></td>
+                        <td className="pt-strong">{money(i.total, i.currency)}</td>
+                        <td><span className={`pt-pill tone-${st.tone}`}>{st.label}</span></td>
+                        <td className="pt-muted">{i.status === 'paid' ? shortDate(i.paid_at) : `Due ${shortDate(i.due_date)}`}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
+      <aside className="pt-card">
+        <h2 className="pt-card-title">Plan &amp; billing settings</h2>
+        <form className="pt-form" onSubmit={save} style={{ marginTop: '0.8rem' }}>
+          <div className="pt-form-row">
+            <label className="pt-field">Plan
+              <select value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}><option value="">—</option>{PLANS.map((pl) => <option key={pl}>{pl}</option>)}</select>
+            </label>
+            <label className="pt-field">Status
+              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>{['active', 'paused', 'cancelled'].map((x) => <option key={x}>{x}</option>)}</select>
+            </label>
+          </div>
+          <div className="pt-form-row">
+            <label className="pt-field">Monthly rate<input inputMode="decimal" value={form.monthly_rate} onChange={(e) => setForm({ ...form, monthly_rate: e.target.value.replace(/[^0-9.]/g, '') })} placeholder="e.g. 4500" /></label>
+            <label className="pt-field">Currency<select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })}>{['USD', 'CAD', 'EUR', 'GBP'].map((c) => <option key={c}>{c}</option>)}</select></label>
+            <label className="pt-field">Tax %<input inputMode="decimal" value={form.tax_rate} onChange={(e) => setForm({ ...form, tax_rate: e.target.value.replace(/[^0-9.]/g, '') })} /></label>
+          </div>
+          <label className="pt-check"><input type="checkbox" checked={form.auto_invoice} onChange={(e) => setForm({ ...form, auto_invoice: e.target.checked })} /> Create &amp; email an invoice every month automatically</label>
+          {form.auto_invoice && <label className="pt-field">Next invoice date<input type="date" value={form.next_invoice_date} onChange={(e) => setForm({ ...form, next_invoice_date: e.target.value })} /></label>}
+          <div className="pt-form-row">
+            <label className="pt-field">Bill to (name)<input value={form.billing_name} onChange={(e) => setForm({ ...form, billing_name: e.target.value })} /></label>
+            <label className="pt-field">Billing email <span className="pt-muted">(optional)</span><input type="email" value={form.billing_email} onChange={(e) => setForm({ ...form, billing_email: e.target.value })} placeholder={client.email ?? ''} /></label>
+          </div>
+          <label className="pt-field">Billing note <span className="pt-muted">(the client can see this)</span><textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
+          {msg && <p className={msg === 'Saved.' ? 'pt-success' : 'pt-error'}>{msg}</p>}
+          <button className="pt-btn pt-btn-ink">Save billing settings</button>
+        </form>
       </aside>
     </div>
   );
@@ -531,6 +658,7 @@ function InsightsTab({ clientId }: { clientId: string }) {
   return (
     <div className="pt-grid pt-grid-main">
       <div className="pt-stack">
+        <SiteTracker clientId={clientId} asAdmin />
         {metrics === null ? <p className="pt-muted">Loading…</p> : grouped.size === 0 ? (
           <div className="pt-card pt-empty"><span className="pt-empty-icon">📈</span><h3>No numbers yet</h3><p>Add figures on the client’s behalf — they appear instantly on their Insights page.</p></div>
         ) : [...grouped.entries()].map(([k, list]) => {

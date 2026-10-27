@@ -31,7 +31,8 @@ const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE
 });
 
 const SELF_TEMPLATES   = new Set(['welcome']);
-const CLIENT_TEMPLATES = new Set(['intake_confirm', 'project_approved', 'project_rejected', 'ticket_reply_client']);
+const CLIENT_TEMPLATES = new Set(['intake_confirm', 'project_approved', 'project_rejected', 'ticket_reply_client', 'invoice_sent', 'invoice_paid']);
+const BILLING_TEMPLATES = new Set(['invoice_sent', 'invoice_paid']);
 
 const cors = {
   'Access-Control-Allow-Origin':  '*',
@@ -59,6 +60,10 @@ function toText(html: string) {
 async function getCaller(req: Request) {
   const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
   if (!token) return null;
+  // The NexaLab app's own server (billing webhook, cron) calls with the service-role key.
+  if (token === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
+    return { user: { id: 'server', email: null as string | null }, profile: { id: 'server', full_name: null, role: 'admin', welcome_sent_at: null as string | null } };
+  }
   const { data } = await admin.auth.getUser(token);
   if (!data.user) return null; // e.g. the public anon key
   const { data: profile } = await admin.from('profiles')
@@ -91,10 +96,19 @@ serve(async (req) => {
       if (typeof data.client_id === 'string') {
         const { data: client } = await admin.from('profiles').select('email').eq('id', data.client_id).single();
         if (client?.email) recipient = client.email;
+        if (BILLING_TEMPLATES.has(type)) {
+          const { data: billing } = await admin.from('client_billing').select('billing_email').eq('client_id', data.client_id).maybeSingle();
+          if (billing?.billing_email) recipient = billing.billing_email;
+        }
       } else if (typeof to === 'string') {
         recipient = to;
       }
       if (recipient === ADMIN_EMAIL) return json({ error: 'Client email not found' }, 404);
+    } else {
+      // Admin alerts: only signed-in users or the app's own server (public forms send
+      // through rate-limited server routes) — anonymous callers can't flood the inbox.
+      const caller = await getCaller(req);
+      if (!caller) return json({ error: 'Sign in required' }, 401);
     }
 
     const emailRes = await fetch('https://api.resend.com/emails', {

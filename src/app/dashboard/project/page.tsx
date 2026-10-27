@@ -9,6 +9,7 @@ import type { Milestone, MilestoneTask } from '@/lib/types';
 import ClientShell, { PortalLoading } from '@/components/portal/ClientShell';
 import Icon from '@/components/portal/Icon';
 import { Progress } from '@/components/portal/Charts';
+import CodeUpdates from '@/components/portal/CodeUpdates';
 
 async function loadMilestones(projectId: string) {
   const supabase = createClient();
@@ -125,6 +126,7 @@ export default function ProjectPage() {
                 <li className="pt-row"><span className="pt-row-main pt-muted">Status</span><strong>{status?.label}</strong></li>
               </ul>
             </div>
+            <CodeUpdates clientId={boot.userId} />
             <div className="pt-card">
               <h2 className="pt-card-title">Questions about the plan?</h2>
               <p className="pt-muted" style={{ margin: '0.4rem 0 1rem' }}>Ask anything — your team usually replies within minutes during support hours.</p>

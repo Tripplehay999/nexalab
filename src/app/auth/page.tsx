@@ -1,10 +1,11 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import HumanCheck from '@/components/HumanCheck';
 import { LiveStatus } from '@/components/site/live';
 import { CONTACT, SUPPORT_TEAM, person, photo } from '@/lib/site-data';
 
@@ -56,6 +57,12 @@ function AuthCard() {
 
   const [checkEmailName, setCheckEmailName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  // Turnstile token for Supabase Auth's captcha protection (only used when configured).
+  const [captcha, setCaptcha] = useState('');
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const onCaptcha = useCallback((t: string) => setCaptcha(t), []);
+  const captchaOpts = captcha ? { captchaToken: captcha } : {};
+  const resetCaptcha = () => { setCaptcha(''); setCaptchaReset((n) => n + 1); };
 
   // Persist plan, redirect if already signed in (except while resetting a password)
   useEffect(() => {
@@ -102,7 +109,8 @@ function AuthCard() {
     e.preventDefault();
     if (!siEmail || !siPassword) { setSiError('Please fill in all fields.'); return; }
     setSiLoading(true); setSiError('');
-    const { error } = await supabase.auth.signInWithPassword({ email: siEmail, password: siPassword });
+    const { error } = await supabase.auth.signInWithPassword({ email: siEmail, password: siPassword, options: captchaOpts });
+    if (error) resetCaptcha();
     if (error) { setSiError(error.message); setSiLoading(false); return; }
     await redirectToDashboard();
   }
@@ -119,9 +127,10 @@ function AuthCard() {
       options: {
         data: { full_name: `${suFname} ${suLname}`, company: suCompany || null, plan: urlPlan || null },
         emailRedirectTo: `${window.location.origin}/auth`,
+        ...captchaOpts,
       },
     });
-    if (error) { setSuError(error.message); setSuLoading(false); return; }
+    if (error) { setSuError(error.message); setSuLoading(false); resetCaptcha(); return; }
     localStorage.setItem('nexalab_new_signup', '1');
     setCheckEmailName(suFname);
     setPanel('check-email');
@@ -133,9 +142,10 @@ function AuthCard() {
     setSiLoading(true); setSiError('');
     const { error } = await supabase.auth.resetPasswordForEmail(siEmail, {
       redirectTo: `${window.location.origin}/auth?mode=reset`,
+      ...captchaOpts,
     });
     setSiLoading(false);
-    if (error) { setSiError(error.message); return; }
+    if (error) { setSiError(error.message); resetCaptcha(); return; }
     setPanel('reset-email');
   }
 
@@ -261,6 +271,7 @@ function AuthCard() {
                   <button type="button" className="lg-pw-toggle" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? 'Hide' : 'Show'}</button>
                 </span>
               </label>
+              <HumanCheck onToken={onCaptcha} resetKey={captchaReset} />
               {siError && <p className="lg-error" aria-live="polite">{siError}</p>}
               <button className="s-btn s-btn-tomato s-btn-lg lg-submit" type="submit" disabled={siLoading}>
                 {siLoading ? <Spinner /> : 'Sign in'}
@@ -282,6 +293,7 @@ function AuthCard() {
                 <label className="lg-field">Confirm * <input type={pwType} placeholder="Repeat password" autoComplete="new-password" required value={suConfirm} onChange={(e) => setSuConfirm(e.target.value)} /></label>
               </div>
               <label className="lg-check"><input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} /> Show passwords</label>
+              <HumanCheck onToken={onCaptcha} resetKey={captchaReset} />
               {suError && <p className="lg-error" aria-live="polite">{suError}</p>}
               <button className="s-btn s-btn-tomato s-btn-lg lg-submit" type="submit" disabled={suLoading}>
                 {suLoading ? <Spinner /> : 'Create account & continue →'}
@@ -309,6 +321,7 @@ function AuthCard() {
                 Email address
                 <input type="email" placeholder="you@brand.com" autoComplete="email" required value={siEmail} onChange={(e) => setSiEmail(e.target.value)} />
               </label>
+              <HumanCheck onToken={onCaptcha} resetKey={captchaReset} />
               {siError && <p className="lg-error" aria-live="polite">{siError}</p>}
               <button className="s-btn s-btn-tomato s-btn-lg lg-submit" type="submit" disabled={siLoading}>
                 {siLoading ? <Spinner /> : 'Send reset link'}

@@ -223,3 +223,60 @@ export interface ClientLink {
   created_at: string;
   signed_url?: string | null;
 }
+
+export interface ClientBilling {
+  client_id: string;
+  plan: string | null;
+  monthly_rate: number;
+  currency: string;
+  status: string;
+  auto_invoice: boolean;
+  next_invoice_date: string | null;
+  billing_name: string | null;
+  billing_email: string | null;
+  tax_rate: number;
+  notes: string | null;
+  updated_at: string;
+}
+
+export interface InvoiceItem {
+  id: string;
+  invoice_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  sort_order: number;
+}
+
+export interface Invoice {
+  id: string;
+  client_id: string;
+  number: string;
+  title: string;
+  status: string;
+  currency: string;
+  subtotal: number;
+  tax_rate: number;
+  tax: number;
+  total: number;
+  due_date: string | null;
+  issued_at: string | null;
+  paid_at: string | null;
+  paid_method: string | null;
+  stripe_session_id: string | null;
+  notes: string | null;
+  is_recurring: boolean;
+  created_at: string;
+  invoice_items?: InvoiceItem[];
+}
+
+export interface Payment {
+  id: string;
+  invoice_id: string | null;
+  client_id: string;
+  amount: number;
+  currency: string;
+  method: string;
+  reference: string | null;
+  received_at: string;
+}

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { Deliverable } from '@/lib/types';
 import ClientShell, { PortalLoading } from '@/components/portal/ClientShell';
 import Icon from '@/components/portal/Icon';
+import { safeHref } from '@/lib/net';
 
 const TYPE: Record<string, { icon: string; label: string; action: string }> = {
   document: { icon: '📄', label: 'Documents', action: 'Download' },
@@ -83,8 +84,8 @@ export default function DeliverablesPage() {
                             : d.due_date ? `Expected ${new Date(d.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'In progress'}
                         </p>
                       </div>
-                      {d.status === 'ready' && d.url ? (
-                        <a href={d.url} target="_blank" rel="noopener noreferrer" className="pt-btn pt-btn-ghost pt-btn-sm">{t.action} <Icon name="external" size={14} /></a>
+                      {d.status === 'ready' && safeHref(d.url) ? (
+                        <a href={safeHref(d.url)} target="_blank" rel="noopener noreferrer" className="pt-btn pt-btn-ghost pt-btn-sm">{t.action} <Icon name="external" size={14} /></a>
                       ) : (
                         <span className={`pt-pill ${d.status === 'ready' ? 'tone-lime' : ''}`}>{d.status === 'ready' ? 'Ready' : 'Coming up'}</span>
                       )}

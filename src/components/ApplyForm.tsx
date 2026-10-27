@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { sendNotification } from '@/lib/utils';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import HumanCheck, { Honeypot } from '@/components/HumanCheck';
 
-const MAX_RESUME_BYTES = 5 * 1024 * 1024;
+const MAX_RESUME_BYTES = 4 * 1024 * 1024;
 const RESUME_TYPES = [
   'application/pdf',
   'application/msword',
@@ -15,30 +14,29 @@ export default function ApplyForm({ jobSlug, jobTitle }: { jobSlug: string; jobT
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [turnstile, setTurnstile] = useState('');
+  const onToken = useCallback((t: string) => setTurnstile(t), []);
+  const openedAt = useRef(0);
+  useEffect(() => { openedAt.current = Date.now(); }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
     const fd = new FormData(e.currentTarget);
-    const get = (k: string) => (fd.get(k) as string || '').trim();
-    const fullName = get('fullName');
-    const email = get('email');
-    const linkedin = get('linkedin');
-    const portfolio = get('portfolio');
-    const coverLetter = get('coverLetter');
+    const get = (k: string) => ((fd.get(k) as string) || '').trim();
     const resume = fd.get('resume') as File | null;
     const hasResume = !!resume && resume.size > 0;
 
-    if (!fullName || !email || !coverLetter) {
+    if (!get('fullName') || !get('email') || !get('coverLetter')) {
       setError('Please complete all required fields.');
       return;
     }
-    if (!hasResume && !linkedin) {
+    if (!hasResume && !get('linkedin')) {
       setError('Please attach a resume or add your LinkedIn profile.');
       return;
     }
     if (hasResume && (resume.size > MAX_RESUME_BYTES || !RESUME_TYPES.includes(resume.type))) {
-      setError('Resume must be a PDF or Word document under 5 MB.');
+      setError('Resume must be a PDF or Word document under 4 MB.');
       return;
     }
     if (!fd.get('consent')) {
@@ -47,52 +45,15 @@ export default function ApplyForm({ jobSlug, jobTitle }: { jobSlug: string; jobT
     }
 
     setLoading(true);
+    if (!hasResume) fd.delete('resume');
+    fd.set('jobSlug', jobSlug);
+    fd.set('_t', String(openedAt.current));
+    fd.set('turnstile', turnstile);
     try {
-      const supabase = createClient();
-      const applicationId = crypto.randomUUID();
-
-      let resumePath: string | null = null;
-      if (hasResume) {
-        const ext = resume.name.split('.').pop()?.toLowerCase() || 'pdf';
-        resumePath = `${jobSlug}/${applicationId}.${ext}`;
-        const { error: uploadErr } = await supabase.storage
-          .from('resumes')
-          .upload(resumePath, resume, { contentType: resume.type });
-        if (uploadErr) {
-          setError('Could not upload your resume. Please try again or email careers@nexalab.studio');
-          setLoading(false);
-          return;
-        }
-      }
-
-      const { error: insertErr } = await supabase.from('job_applications').insert({
-        id: applicationId,
-        job_slug: jobSlug,
-        job_title: jobTitle,
-        full_name: fullName,
-        email,
-        phone: get('phone') || null,
-        location: get('location') || null,
-        linkedin_url: linkedin || null,
-        portfolio_url: portfolio || null,
-        resume_path: resumePath,
-        years_experience: get('experience') || null,
-        work_authorization: get('authorization') || null,
-        start_date: get('startDate') || null,
-        cover_letter: coverLetter,
-        referral_source: get('source') || null,
-      });
-      if (insertErr) {
-        setError('Something went wrong. Please email careers@nexalab.studio');
-        setLoading(false);
-        return;
-      }
-
-      await sendNotification('application_admin_alert', {
-        name: fullName, email, role: jobTitle, linkedin, portfolio,
-        experience: get('experience'), location: get('location'), hasResume,
-      });
-
+      // Rate-limited server route uploads the resume and saves the application.
+      const res = await fetch('/api/forms/apply', { method: 'POST', body: fd });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(j.error || 'Something went wrong. Please email careers@nexalab.studio'); setLoading(false); return; }
       setSuccess(true);
     } catch {
       setError('Could not reach our servers. Please email us directly at careers@nexalab.studio');
@@ -134,7 +95,7 @@ export default function ApplyForm({ jobSlug, jobTitle }: { jobSlug: string; jobT
         <p className="form-section-label">Resume &amp; links <span className="form-label-muted">(resume or LinkedIn required)</span></p>
         <div className="form-grid">
           <label className="form-field file-field">
-            Resume (PDF or Word, max 5 MB)
+            Resume (PDF or Word, max 4 MB)
             <input name="resume" type="file" accept=".pdf,.doc,.docx" />
           </label>
           <label className="form-field">LinkedIn <input name="linkedin" type="url" placeholder="https://linkedin.com/in/..." /></label>
@@ -207,6 +168,8 @@ export default function ApplyForm({ jobSlug, jobTitle }: { jobSlug: string; jobT
         I agree that NexaLab may store my application and contact me about this and future roles.
       </label>
 
+      <Honeypot />
+      <HumanCheck onToken={onToken} />
       {error && <p className="error-text" aria-live="polite">{error}</p>}
       <div className="form-submit-row">
         <button className="btn btn-primary btn-lg" type="submit" disabled={loading}>

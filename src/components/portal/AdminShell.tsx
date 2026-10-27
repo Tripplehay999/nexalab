@@ -30,7 +30,8 @@ export default function AdminShell({ boot, kicker, title, subtitle, actions, chi
     { href: '/admin', label: 'Overview', icon: 'overview', mobile: true },
     { href: '/admin/clients', label: 'Clients', icon: 'user', mobile: true },
     { href: '/admin/team', label: 'Team', icon: 'team' },
-    { href: '/admin/pending', label: 'Pending projects', icon: 'clock', badge: counts.pending, mobile: true },
+    { href: '/admin/billing', label: 'Billing', icon: 'billing', mobile: true },
+    { href: '/admin/pending', label: 'Pending projects', icon: 'clock', badge: counts.pending },
     { href: '/admin/inquiries', label: 'Inquiries', icon: 'inbox', badge: counts.inquiries },
     { href: '/admin/tickets', label: 'Tickets', icon: 'ticket', badge: counts.tickets, mobile: true },
   ];

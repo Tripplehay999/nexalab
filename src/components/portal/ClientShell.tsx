@@ -29,6 +29,7 @@ export function clientNav(openTickets = 0): NavItem[] {
     { href: '/dashboard/analytics', label: 'Insights', icon: 'insights', mobile: true },
     { href: '/dashboard/store', label: 'Store', icon: 'store' },
     { href: '/dashboard/resources', label: 'Resources', icon: 'resources' },
+    { href: '/dashboard/billing', label: 'Billing', icon: 'billing' },
     { href: '/dashboard/support', label: 'Support', icon: 'support', badge: openTickets, mobile: true },
   ];
 }

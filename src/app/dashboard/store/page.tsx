@@ -8,6 +8,7 @@ import { formatMetric, hostOf } from '@/lib/portal';
 import { timeAgo } from '@/lib/utils';
 import type { StoreIntegration, StoreOrder } from '@/lib/types';
 import ClientShell, { PortalLoading } from '@/components/portal/ClientShell';
+import StoreConnect from '@/components/portal/StoreConnect';
 
 type Data = { integration: StoreIntegration | null; orders: StoreOrder[] };
 
@@ -35,6 +36,7 @@ export default function StorePage() {
   }, [userId]);
 
   if (loading || !boot) return <PortalLoading />;
+  const reload = () => loadStore(boot.userId).then(setData);
   const orders = data?.orders ?? [];
   const revenue = orders.reduce((s, o) => s + (Number(o.amount) || 0), 0);
   const counts = orders.reduce<Record<string, number>>((acc, o) => { const k = o.status || 'unknown'; acc[k] = (acc[k] ?? 0) + 1; return acc; }, {});
@@ -49,14 +51,23 @@ export default function StorePage() {
       {data === null ? (
         <p className="pt-muted">Loading…</p>
       ) : !data.integration ? (
-        <div className="pt-card pt-empty">
-          <span className="pt-empty-icon">🛍️</span>
-          <h3>Your store isn’t connected yet</h3>
-          <p>Once your team connects your store, recent orders and revenue appear here automatically. In the meantime, you can add numbers yourself in Insights.</p>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <Link href="/dashboard/analytics" className="pt-btn pt-btn-primary pt-btn-sm">Add numbers</Link>
-            <Link href="/dashboard/support" className="pt-btn pt-btn-ghost pt-btn-sm">Ask us to connect it</Link>
-          </div>
+        <div className="pt-grid pt-grid-main">
+          <StoreConnect integration={null} clientId={boot.userId} onChange={reload} />
+          <aside className="pt-stack">
+            <section className="pt-card">
+              <h2 className="pt-card-title">What you’ll see</h2>
+              <ul className="pt-list" style={{ marginTop: '0.6rem' }}>
+                <li className="pt-row"><span className="pt-row-icon">🧾</span><p className="pt-row-main" style={{ margin: 0 }}>Every new order, customer and status — live.</p></li>
+                <li className="pt-row"><span className="pt-row-icon">📈</span><p className="pt-row-main" style={{ margin: 0 }}>Daily revenue charted in Insights automatically.</p></li>
+                <li className="pt-row"><span className="pt-row-icon">🔒</span><p className="pt-row-main" style={{ margin: 0 }}>Read-only. We can never change orders or settings.</p></li>
+              </ul>
+            </section>
+            <section className="pt-card">
+              <h2 className="pt-card-title">Custom-built site?</h2>
+              <p className="pt-muted" style={{ margin: '0.4rem 0 0' }}>Choose <strong>Custom-built</strong> to get a private order webhook your site can send orders to. You can also link your GitHub repo on the Project page to follow code updates.</p>
+            </section>
+            <p className="pt-small pt-muted" style={{ margin: 0 }}>Rather we do it? <Link href="/dashboard/support" className="pt-link">Ask your team</Link> and we’ll connect it for you.</p>
+          </aside>
         </div>
       ) : (
         <div className="pt-stack">
@@ -91,6 +102,8 @@ export default function StorePage() {
                 </div>
               )}
             </section>
+            <div className="pt-stack">
+            <StoreConnect integration={data.integration} clientId={boot.userId} onChange={reload} />
             <section className="pt-card">
               <h2 className="pt-card-title">Orders by status</h2>
               <ul className="pt-list" style={{ marginTop: '0.6rem' }}>
@@ -99,6 +112,7 @@ export default function StorePage() {
                 ))}
               </ul>
             </section>
+            </div>
           </div>
         </div>
       )}

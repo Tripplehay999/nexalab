@@ -13,7 +13,7 @@ import Avatar from '@/components/portal/Avatar';
 import Icon from '@/components/portal/Icon';
 
 type Overview = {
-  counts: { clients: number; active: number; pending: number; tickets: number; inquiries: number; requests: number };
+  counts: { clients: number; active: number; pending: number; tickets: number; inquiries: number; requests: number; overdue: number };
   unassigned: Profile[];
   recent: Profile[];
   activity: Activity[];
@@ -22,7 +22,7 @@ type Overview = {
 
 async function loadOverview(): Promise<Overview> {
   const supabase = createClient();
-  const [clients, active, pending, tickets, inquiries, requests, act, staff, assigns] = await Promise.all([
+  const [clients, active, pending, tickets, inquiries, requests, act, staff, assigns, overdue] = await Promise.all([
     supabase.from('profiles').select('*').eq('role', 'client').order('created_at', { ascending: false }),
     supabase.from('projects').select('id', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('projects').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -32,6 +32,7 @@ async function loadOverview(): Promise<Overview> {
     supabase.from('activity').select('*').order('created_at', { ascending: false }).limit(8),
     supabase.from('staff').select('*').eq('is_active', true).order('full_name'),
     supabase.from('client_assignments').select('client_id, staff_id, is_primary'),
+    supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('status', 'open').lt('due_date', new Date().toISOString().slice(0, 10)),
   ]);
   const clientRows = (clients.data ?? []) as Profile[];
   const assignRows = (assigns.data ?? []) as Pick<Assignment, 'client_id' | 'staff_id' | 'is_primary'>[];
@@ -39,7 +40,7 @@ async function loadOverview(): Promise<Overview> {
   return {
     counts: {
       clients: clientRows.length, active: active.count ?? 0, pending: pending.count ?? 0,
-      tickets: tickets.count ?? 0, inquiries: inquiries.count ?? 0, requests: requests.count ?? 0,
+      tickets: tickets.count ?? 0, inquiries: inquiries.count ?? 0, requests: requests.count ?? 0, overdue: overdue.count ?? 0,
     },
     unassigned: clientRows.filter((c) => !withLead.has(c.id)).slice(0, 6),
     recent: clientRows.slice(0, 5),
@@ -63,6 +64,7 @@ export default function AdminOverview() {
   const c = data?.counts;
 
   const actions = c ? [
+    { n: c.overdue, label: 'overdue invoice', verb: 'to chase', href: '/admin/billing', icon: '💸' },
     { n: c.pending, label: 'project', verb: 'waiting for approval', href: '/admin/pending', icon: '⏳' },
     { n: c.tickets, label: 'ticket', verb: 'open', href: '/admin/tickets', icon: '🎫' },
     { n: c.inquiries, label: 'new inquiry', verb: 'to review', href: '/admin/inquiries', icon: '📥' },

@@ -347,3 +347,47 @@ body:has(.pt) { background: #F5EFE4; }
 .pt-steps { margin: 0; padding: 0; list-style: none; counter-reset: pts; display: grid; gap: 0.55rem; }
 .pt-steps li { position: relative; padding-left: 2.1rem; font-size: 0.92rem; color: var(--ink-2); counter-increment: pts; }
 .pt-steps li::before { content: counter(pts); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--paper-2); color: var(--ink); font-size: 0.76rem; font-weight: 800; }
+
+/* Code / webhook details */
+.pt-code-card { margin-top: 0.4rem; padding: 1rem; border-radius: var(--r); background: var(--paper); border: 1px solid var(--line); }
+.pt-code { margin: 0; padding: 0.85rem 1rem; border-radius: 12px; background: var(--ink); color: #F5EFE4; font-size: 0.78rem; line-height: 1.5; overflow-x: auto; white-space: pre; }
+.pt code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; background: var(--paper-2); padding: 0.05rem 0.35rem; border-radius: 5px; }
+.pt-code code { background: none; padding: 0; }
+.pt-site-shot img { transition: opacity 0.4s; }
+.pt-site-generating { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.86rem; font-weight: 600; color: var(--ink-3); }
+
+/* ── Invoice (printable) ─────────────────────────────────── */
+body:has(.inv-wrap) { background: #F5EFE4; }
+.inv-wrap { max-width: 860px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+.inv-actions { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.inv-paper { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: clamp(1.4rem, 4vw, 3rem); box-shadow: var(--shadow); }
+.inv-head { display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
+.inv-title { margin: 0; font-family: var(--f-display); font-size: 2.2rem; letter-spacing: -0.03em; }
+.inv-meta { display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; padding: 1.5rem 0; }
+.inv-label { margin: 0 0 0.2rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+.inv-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.inv-table th { text-align: left; padding: 0.6rem 0.5rem; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); border-bottom: 2px solid var(--ink); }
+.inv-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--line); }
+.inv-table th:not(:first-child), .inv-table td:not(:first-child) { text-align: right; white-space: nowrap; }
+.inv-totals { margin: 1rem 0 0 auto; max-width: 320px; display: grid; gap: 0.4rem; }
+.inv-totals div { display: flex; justify-content: space-between; gap: 1rem; }
+.inv-grand { padding-top: 0.6rem; margin-top: 0.3rem; border-top: 2px solid var(--ink); font-family: var(--f-display); font-size: 1.25rem; font-weight: 700; }
+.inv-foot { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 0.86rem; text-align: center; }
+@media print {
+  body:has(.inv-wrap) { background: #fff; }
+  .inv-actions { display: none !important; }
+  .inv-wrap { padding: 0; max-width: none; }
+  .inv-paper { border: 0; box-shadow: none; border-radius: 0; padding: 0; }
+}
+@media (max-width: 560px) { .inv-meta { grid-template-columns: 1fr; } .inv-table th:nth-child(2), .inv-table td:nth-child(2), .inv-table th:nth-child(3), .inv-table td:nth-child(3) { display: none; } }
+
+/* Invoice editor */
+.inv-edit-items { display: grid; gap: 0.5rem; padding: 0.9rem; border-radius: var(--r); background: var(--paper); }
+.inv-edit-row { display: grid; grid-template-columns: minmax(0, 1fr) 64px 110px 100px 38px; gap: 0.5rem; align-items: center; }
+.inv-edit-head { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.inv-edit-head span:nth-child(4) { text-align: right; }
+@media (max-width: 640px) {
+  .inv-edit-row { grid-template-columns: 1fr 1fr; }
+  .inv-edit-row > :first-child { grid-column: 1 / -1; }
+  .inv-edit-head { display: none; }
+}

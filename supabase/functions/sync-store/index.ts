@@ -303,7 +303,7 @@ Deno.serve(async (req: Request) => {
   // Cron mode: sync all active integrations
   if (isCronCall && !body.integration_id) {
     const { data: integrations } = await supabaseAdmin
-      .from('store_integrations').select('id').eq('is_active', true);
+      .from('store_integrations').select('id').eq('is_active', true).neq('platform', 'custom');
 
     const results = await Promise.allSettled(
       (integrations ?? []).map((r: { id: string }) => syncIntegration(r.id))

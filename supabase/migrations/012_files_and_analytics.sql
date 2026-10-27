@@ -59,3 +59,24 @@ ALTER TABLE public.analytics_secrets ENABLE ROW LEVEL SECURITY;
 REVOKE SELECT ON public.store_integrations FROM anon, authenticated;
 GRANT SELECT (id, client_id, platform, store_url, store_hash, is_active, last_synced_at, created_at)
   ON public.store_integrations TO authenticated;
+
+-- ── GitHub repos (custom-built sites): recent code updates on the Project page ─
+CREATE TABLE IF NOT EXISTS public.client_repos (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id  UUID NOT NULL UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
+  full_name  TEXT NOT NULL,              -- "owner/repo"
+  is_private BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE public.client_repos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Admins manage repos" ON public.client_repos;
+CREATE POLICY "Admins manage repos" ON public.client_repos FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+DROP POLICY IF EXISTS "Clients view own repo" ON public.client_repos;
+CREATE POLICY "Clients view own repo" ON public.client_repos FOR SELECT USING (auth.uid() = client_id);
+
+-- Read-only GitHub tokens for private repos — service role only (no policies).
+CREATE TABLE IF NOT EXISTS public.repo_secrets (
+  repo_id UUID PRIMARY KEY REFERENCES public.client_repos(id) ON DELETE CASCADE,
+  token   TEXT NOT NULL
+);
+ALTER TABLE public.repo_secrets ENABLE ROW LEVEL SECURITY;

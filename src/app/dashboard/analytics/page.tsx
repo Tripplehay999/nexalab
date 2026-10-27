@@ -8,6 +8,7 @@ import type { Goal, Metric, StoreMetric } from '@/lib/types';
 import ClientShell, { PortalLoading } from '@/components/portal/ClientShell';
 import Icon from '@/components/portal/Icon';
 import AnalyticsConnections from '@/components/portal/AnalyticsConnections';
+import SiteTracker from '@/components/portal/SiteTracker';
 import { LineChart, Progress } from '@/components/portal/Charts';
 
 type Data = { metrics: Metric[]; goals: Goal[]; store: StoreMetric[] };
@@ -112,6 +113,7 @@ export default function InsightsPage() {
 
       <div className="pt-grid pt-grid-main">
         <div className="pt-stack">
+          <SiteTracker clientId={boot.userId} siteUrl={boot.profile.website} />
           <section className="pt-card">
             <div className="pt-card-head">
               <div>

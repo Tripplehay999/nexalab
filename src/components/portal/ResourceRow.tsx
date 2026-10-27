@@ -1,4 +1,5 @@
 import { formatBytes, hostOf } from '@/lib/portal';
+import { safeHref } from '@/lib/net';
 import type { ClientLink } from '@/lib/types';
 import Icon from './Icon';
 
@@ -16,7 +17,7 @@ const fileIcon = (mime: string | null, name: string) => {
 // One shared resource: an uploaded file (with thumbnail for images) or a link.
 export default function ResourceRow({ link, byYou, canDelete, onDelete }: { link: ClientLink; byYou: boolean; canDelete: boolean; onDelete: () => void }) {
   const isFile = Boolean(link.file_path);
-  const href = isFile ? link.signed_url ?? undefined : link.url ?? undefined;
+  const href = safeHref(isFile ? link.signed_url : link.url);
   const isImage = isFile && link.mime_type?.startsWith('image/') && link.signed_url;
 
   return (
